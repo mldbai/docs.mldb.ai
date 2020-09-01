@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset='utf-8' />
+<title>MLDB Documentation</title>
+<script src='/resources/js/mathjax_TeX-AMS-MML_HTMLorMML.js'></script>
+<link rel='stylesheet' href='/resources/css/prism.css'>
+<link rel='stylesheet' href='/resources/css/doc.css'>
+<script src='/resources/js/jquery-1.11.2.min.js'></script>
+<script src='/resources/js/prism.js'></script>
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  if(window.location.origin == 'http://mldb.ai')
+  { ga('create', 'UA-16909325-9', 'auto'); }
+  else
+  { ga('create', 'UA-16909325-10', {'cookieDomain': 'none'}); }
+  ga('send', 'pageview');
+</script>
+</head>
+<body style='margin-left: 50px; max-width: 1000px'>
+<h1>Filter Stop Words Function</h1>
+
+<p>Functions of this type take a row as an argument and return that same row minus any columns whose names appear on the configured stopword list (case-insensitively). This list is currently the MySQL stopword list.</p>
+
+<h2>Configuration</h2>
+
+<p><p>A new function of type <code>filter_stopwords</code> named <code>&lt;id&gt;</code> can be created as follows:</p><pre><code class="language-python">mldb.put(&quot;/v1/functions/&quot;+&lt;id&gt;, {
+    &quot;type&quot;: &quot;filter_stopwords&quot;
+})</code></pre></p>
+
+<p>This function currently has no configuration options.</p>
+
+<h2>Input and Output Values</h2>
+
+<p>Functions of this type have a single input value named <code>words</code> which is a row, and 
+a single output value also named <code>words</code>.</p>
+</body>
+</html>

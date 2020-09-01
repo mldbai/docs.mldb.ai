@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset='utf-8' />
+<title>MLDB Documentation</title>
+<script src='/resources/js/mathjax_TeX-AMS-MML_HTMLorMML.js'></script>
+<link rel='stylesheet' href='/resources/css/prism.css'>
+<link rel='stylesheet' href='/resources/css/doc.css'>
+<script src='/resources/js/jquery-1.11.2.min.js'></script>
+<script src='/resources/js/prism.js'></script>
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  if(window.location.origin == 'http://mldb.ai')
+  { ga('create', 'UA-16909325-9', 'auto'); }
+  else
+  { ga('create', 'UA-16909325-10', {'cookieDomain': 'none'}); }
+  ga('send', 'pageview');
+</script>
+</head>
+<body style='margin-left: 50px; max-width: 1000px'>
+<h1>Subprocess plugin (EXPERIMENTAL)</h1>
+
+<p>This plugin type allows for a plugin to be implemented by an HTTP server
+that is started in a separate subprocess from the main MLDB server.</p>
+
+<h2>Configuration</h2>
+
+<p><p>A new plugin of type <code>experimental.external</code> named <code>&lt;id&gt;</code> can be created as follows:</p><pre><code class="language-python">mldb.put(&quot;/v1/plugins/&quot;+&lt;id&gt;, {
+    &quot;type&quot;: &quot;experimental.external&quot;,
+    &quot;params&quot;: {
+        "setup": &lt;PolyConfig&gt;,
+        "startup": &lt;PolyConfig&gt;
+    }
+})</code></pre><p>with the following key-value definitions for <code>params</code>:</p><table class="params table" width='100%'><tr><th align='right'>Field, Type, Default</th><th>Description</th></tr>
+<tr><td align='right'><p><strong>setup</strong> <br/> <nobr>PolyConfig</nobr> <br/> <code></code></p></td><td><p>How to set up the plugin</p>
+</td></tr>
+<tr><td align='right'><p><strong>startup</strong> <br/> <nobr>PolyConfig</nobr> <br/> <code></code></p></td><td><p>How to start up the plugin</p>
+</td></tr>
+</table></p>
+
+<p>The <code>commandLine</code> gives the command used to run the subprocess.  This must
+be accessible by MLDB on the local filesystem, for example within the
+<code>mldb_data</code> directory.</p>
+
+<h1>Subprocess Specification</h1>
+
+<p>The subprocess that is started must conform to the following guidelines:</p>
+
+<h2>Startup</h2>
+
+<p>The subprocess will be run by MLDB with the command line specified in
+the configuration.</p>
+
+<h2>Telling MLDB where the HTTP server is</h2>
+
+<p>The subprocess should start an HTTP server, and return to MLDB on standard
+output where the port is.  MLDB will wait for up to 5 seconds for this
+line to appear, and will return an error if it doesn&#39;t.</p>
+
+<p>The line should look like</p>
+
+<pre><code>MLDB PLUGIN http http://localhost:1234
+</code></pre>
+
+<p>with the URI telling MLDB what to connect to.  Note that it is not necessary
+that the port actually be on localhost; it is possible to ask MLDB to
+connect to an external port on the internet (although this is not recommended
+due to security).</p>
+
+<h2>Process lifecycle</h2>
+
+<p>MLDB will send the process a <code>SIGHUP</code> signal when the plugin is deleted or
+MLDB shuts down.  The process should respond to this signal by cleaning up
+and exiting.  It should continue running indefinitely until it receives
+the signal; the behavior is undefined as to what happens if the process
+crashes.</p>
+
+<h2>Debugging plugins</h2>
+
+<p>To debug a plugin, it is possible to run the plugin outside of the MLDB
+container and use normal debugging tools, with a simple script to redirect
+MLDB to the external program on startup.</p>
+
+<h2>Routes</h2>
+
+<p>The HTTP process should respond to the following routes.</p>
+
+<h3>GET /ping</h3>
+
+<p>This method is called by MLDB to check the health of the plugin.  It should
+return a 200 if the plugin is OK.</p>
+
+<h3>GET /status</h3>
+
+<p>This method is called by MLDB when a GET is called on the plugin itself.  It
+should return a JSON payload containing the status of the plugin.</p>
+
+<h3>GET,PUT,POST,DELETE /routes/...</h3>
+
+<p>This method is called by MLDB when a custom route is called on the plugin,
+ie <code>/v1/plugins/&lt;id&gt;/routes/...</code>.  It should implement the route
+and return the payload appropriate for that route.</p>
+
+<h3>GET /doc/...</h3>
+
+<p>This method is called by MLDB when the documentation for the plugin is
+requested.  It should implement the route and return the payload appropriate
+for that route.  Often, it suffices to point the subprocess to a static
+HTTP server that serves up a directory full of documentation.</p>
+
+<h2>Security</h2>
+
+<p>MLDB currently does no authentication of requests to and from subprocess
+plugins, and so it is recommended that they only be run locally.</p>
+</body>
+</html>

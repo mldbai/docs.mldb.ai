@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset='utf-8' />
+<title>MLDB Documentation</title>
+<script src='/resources/js/mathjax_TeX-AMS-MML_HTMLorMML.js'></script>
+<link rel='stylesheet' href='/resources/css/prism.css'>
+<link rel='stylesheet' href='/resources/css/doc.css'>
+<script src='/resources/js/jquery-1.11.2.min.js'></script>
+<script src='/resources/js/prism.js'></script>
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  if(window.location.origin == 'http://mldb.ai')
+  { ga('create', 'UA-16909325-9', 'auto'); }
+  else
+  { ga('create', 'UA-16909325-10', {'cookieDomain': 'none'}); }
+  ga('send', 'pageview');
+</script>
+</head>
+<body style='margin-left: 50px; max-width: 1000px'>
+<h1>Serial Procedure</h1>
+
+<p>The serial procedure type is used to configure a series of other procedure steps to
+run one after the other.  It is the primary means by which procedures can be
+composed.</p>
+
+<h2>Execution</h2>
+
+<p>Each procedure step that is configured will be executed in turn, with all entities
+and artifacts that are created in previous steps available to later steps.</p>
+
+<h2>Errors</h2>
+
+<p>In the case that a procedure step has an error, the entire procedure will stop
+training after the erroneous step.</p>
+
+<h2>Configuration</h2>
+
+<p><p>A new procedure of type <code>serial</code> named <code>&lt;id&gt;</code> can be created as follows:</p><pre><code class="language-python">mldb.put(&quot;/v1/procedures/&quot;+&lt;id&gt;, {
+    &quot;type&quot;: &quot;serial&quot;,
+    &quot;params&quot;: {
+        "steps": &lt;ARRAY [ ProcedureStepConfig ]&gt;,
+        "runOnCreation": &lt;bool&gt;
+    }
+})</code></pre><p>with the following key-value definitions for <code>params</code>:</p><table class="params table" width='100%'><tr><th align='right'>Field, Type, Default</th><th>Description</th></tr>
+<tr><td align='right'><p><strong>steps</strong> <br/> <nobr>ARRAY [ ProcedureStepConfig ]</nobr> <br/> <code></code></p></td><td><p>Steps that will be run (in order) when the procedure is run.</p>
+</td></tr>
+<tr><td align='right'><p><strong>runOnCreation</strong> <br/> <nobr>bool</nobr> <br/> <code>true</code></p></td><td><p>If true, the procedure will be run immediately. The response will contain an extra field called <code>firstRun</code> pointing to the URL of the run.</p>
+</td></tr>
+</table></p>
+
+<p>and the step configuration key-value definitions are:</p>
+
+<p><table class="params table" width='100%'><tr><th align='right'>Field, Type, Default</th><th>Description</th></tr>
+<tr><td align='right'><p><strong>name</strong> <br/> <nobr>string</nobr> <br/> <code></code></p></td><td><p>Name of the step.  Used to make the error messages and log information more comprehensible.</p>
+</td></tr>
+<tr><td align='right'><p><strong>id</strong> <br/> <nobr>string</nobr> <br/> <code></code></p></td><td><p>ID of the entity.  This indicates what name the entity will be called when accessed via the REST API.</p>
+</td></tr>
+<tr><td align='right'><p><strong>type</strong> <br/> <nobr>string</nobr> <br/> <code></code></p></td><td><p>Type of the entity.  This indicates what implementation type to use for the entity.</p>
+</td></tr>
+<tr><td align='right'><p><strong>params</strong> <br/> <nobr>Any</nobr> <br/> <code></code></p></td><td><p>Entity configuration parameters.  This is always an object, and the type of object accepted depends upon the &#39;type&#39; field.</p>
+</td></tr>
+<tr><td align='right'><p><strong>persistent</strong> <br/> <nobr>bool</nobr> <br/> <code>false</code></p></td><td><p>If true, then this element will have its configuration stored and will be reloaded on startup</p>
+</td></tr>
+<tr><td align='right'><p><strong>deterministic</strong> <br/> <nobr>bool</nobr> <br/> <code>true</code></p></td><td><p>If true, the entity has no hidden state </p>
+</td></tr>
+</table></p>
+
+<h2>See also</h2>
+
+<ul>
+<li><a href="Procedures.md.html">Procedures</a> for a description of procedures and what they can do.</li>
+</ul>
+</body>
+</html>

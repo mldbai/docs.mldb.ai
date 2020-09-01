@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset='utf-8' />
+<title>MLDB Documentation</title>
+<script src='/resources/js/mathjax_TeX-AMS-MML_HTMLorMML.js'></script>
+<link rel='stylesheet' href='/resources/css/prism.css'>
+<link rel='stylesheet' href='/resources/css/doc.css'>
+<script src='/resources/js/jquery-1.11.2.min.js'></script>
+<script src='/resources/js/prism.js'></script>
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  if(window.location.origin == 'http://mldb.ai')
+  { ga('create', 'UA-16909325-9', 'auto'); }
+  else
+  { ga('create', 'UA-16909325-10', {'cookieDomain': 'none'}); }
+  ga('send', 'pageview');
+</script>
+</head>
+<body style='margin-left: 50px; max-width: 1000px'>
+<h1>Bag Of Words Stats Table Pos/Neg</h1>
+
+<p>Functions of this type do a lookup in a stats table trained with the 
+<a href="/doc/builtin/procedures/BagOfWordsStatsTableProcedure.md.html"><code>statsTable.bagOfWords.train</code> procedure type</a> and return 
+the probability of outcome for each of the words provided as input.</p>
+
+<h2>Configuration</h2>
+
+<p><p>A new function of type <code>statsTable.bagOfWords.posneg</code> named <code>&lt;id&gt;</code> can be created as follows:</p><pre><code class="language-python">mldb.put(&quot;/v1/functions/&quot;+&lt;id&gt;, {
+    &quot;type&quot;: &quot;statsTable.bagOfWords.posneg&quot;,
+    &quot;params&quot;: {
+        "numPos": &lt;int&gt;,
+        "numNeg": &lt;int&gt;,
+        "minTrials": &lt;int&gt;,
+        "outcomeToUse": &lt;string&gt;,
+        "statsTableFileUrl": &lt;<a href="/doc/builtin/Url.md.html">Url</a>&gt;
+    }
+})</code></pre><p>with the following key-value definitions for <code>params</code>:</p><table class="params table" width='100%'><tr><th align='right'>Field, Type, Default</th><th>Description</th></tr>
+<tr><td align='right'><p><strong>numPos</strong> <br/> <nobr>int</nobr> <br/> <code>50</code></p></td><td><p>Number of top positive words to use</p>
+</td></tr>
+<tr><td align='right'><p><strong>numNeg</strong> <br/> <nobr>int</nobr> <br/> <code>50</code></p></td><td><p>Number of top negative words to use</p>
+</td></tr>
+<tr><td align='right'><p><strong>minTrials</strong> <br/> <nobr>int</nobr> <br/> <code>50</code></p></td><td><p>Minimum number of trials a word needs to have in order to be considered</p>
+</td></tr>
+<tr><td align='right'><p><strong>outcomeToUse</strong> <br/> <nobr>string</nobr> <br/> <code></code></p></td><td><p>This must be one of the outcomes the stats table was trained with.</p>
+</td></tr>
+<tr><td align='right'><p><strong>statsTableFileUrl</strong> <br/> <nobr><a href="/doc/builtin/Url.md.html">Url</a></nobr> <br/> <code></code></p></td><td><p>URL of the model file (with extension &#39;.st&#39;) to load. This file is created by the <a href="/doc/builtin/procedures/BagOfWordsStatsTableProcedure.md.html"><code>statsTable.bagOfWords.train</code> procedure type</a>.</p>
+</td></tr>
+</table></p>
+
+<h2>Input and Output Values</h2>
+
+<p>Functions of this type have a single input value named <code>words</code> which is a row.</p>
+
+<p>Functions of this type have a single output value named <code>probs</code> which is also a row. 
+The row will contain P(outcome | word) for each valid word given the function configuration.</p>
+
+<h2>See also</h2>
+
+<ul>
+<li>The <a href="/doc/builtin/procedures/BagOfWordsStatsTableProcedure.md.html"><code>statsTable.bagOfWords.train</code> procedure type</a> trains a bag of words stats table.</li>
+</ul>
+</body>
+</html>

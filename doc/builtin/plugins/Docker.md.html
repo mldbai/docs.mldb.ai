@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset='utf-8' />
+<title>MLDB Documentation</title>
+<script src='/resources/js/mathjax_TeX-AMS-MML_HTMLorMML.js'></script>
+<link rel='stylesheet' href='/resources/css/prism.css'>
+<link rel='stylesheet' href='/resources/css/doc.css'>
+<script src='/resources/js/jquery-1.11.2.min.js'></script>
+<script src='/resources/js/prism.js'></script>
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  if(window.location.origin == 'http://mldb.ai')
+  { ga('create', 'UA-16909325-9', 'auto'); }
+  else
+  { ga('create', 'UA-16909325-10', {'cookieDomain': 'none'}); }
+  ga('send', 'pageview');
+</script>
+</head>
+<body style='margin-left: 50px; max-width: 1000px'>
+<h1>Docker Plugin</h1>
+
+<p>This plugin allows a binary plugin to be loaded using Docker.</p>
+
+<p><em>WARNING</em> This plugin currently makes no attempt to verify the shared library.
+You should only load from sources that you trust.</p>
+
+<h2>Configuration</h2>
+
+<p>Error running %%config macro with params plugin experimental.docker<pre><code>{&quot;error&quot;:&quot;plugin entry &#39;experimental.docker&#39; does not exist or has been deleted&quot;,&quot;kind&quot;:&quot;plugin&quot;,&quot;resource&quot;:&quot;experimental.docker&quot;}</code></pre></p>
+
+<h2>Startup</h2>
+
+<p>The plugin will attempt to call the function <code>mldbPluginEnter</code> within the
+loaded shared library.  It should have the following signature:</p>
+
+<pre><code class="language-C++">
+#include &quot;mldb/server/plugin.h&quot;
+
+extern &quot;C&quot; {
+
+/// This is the function that MLDB will call to initialize the plugin.
+/// It needs to return a newly created plugin object, that will be managed
+/// by MLDB
+MLDB::Plugin * mldbPluginEnter(MldbServer * server);
+
+} // extern C
+
+</code></pre>
+
+<h2>Notes</h2>
+
+<ol>
+<li> This plugin currently makes no attempt to verify the shared library.
+You should only load from Docker sources that you trust.</li>
+<li> Docker credentials and authentication aren&#39;t supported, so you will
+need to load from public Docker repositories.</li>
+<li> This plugin goes straight to the Docker repository; it does not query
+the local machine to see if it has a cached copy of the plugin.</li>
+<li> Only <code>quay.io</code> has been tested as a supported Docker repository.</li>
+</ol>
+</body>
+</html>

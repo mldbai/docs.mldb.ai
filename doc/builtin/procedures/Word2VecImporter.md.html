@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset='utf-8' />
+<title>MLDB Documentation</title>
+<script src='/resources/js/mathjax_TeX-AMS-MML_HTMLorMML.js'></script>
+<link rel='stylesheet' href='/resources/css/prism.css'>
+<link rel='stylesheet' href='/resources/css/doc.css'>
+<script src='/resources/js/jquery-1.11.2.min.js'></script>
+<script src='/resources/js/prism.js'></script>
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  if(window.location.origin == 'http://mldb.ai')
+  { ga('create', 'UA-16909325-9', 'auto'); }
+  else
+  { ga('create', 'UA-16909325-10', {'cookieDomain': 'none'}); }
+  ga('send', 'pageview');
+</script>
+</head>
+<body style='margin-left: 50px; max-width: 1000px'>
+<h1>Word2Vec importer procedure</h1>
+
+<p>This procedure allows word and phrase embeddings from the
+<a href="https://code.google.com/p/word2vec/" target="_blank">Word2Vec tool</a> to be loaded
+into MLDB.</p>
+
+<p>Using these embeddings, each word or phrase in a language is convertible
+to a multi-dimensional set of coordinates (typically hundreds of coordinates
+are used).  This allows for natural language to be represented in a form
+that is compatible with standard classification or clustering algorithms.</p>
+
+<h2>Configuration</h2>
+
+<p><p>A new procedure of type <code>import.word2vec</code> named <code>&lt;id&gt;</code> can be created as follows:</p><pre><code class="language-python">mldb.put(&quot;/v1/procedures/&quot;+&lt;id&gt;, {
+    &quot;type&quot;: &quot;import.word2vec&quot;,
+    &quot;params&quot;: {
+        "dataFileUrl": &lt;<a href="/doc/builtin/Url.md.html">Url</a>&gt;,
+        "outputDataset": &lt;<a href="/doc/builtin/procedures/OutputDatasetSpec.md.html">OutputDatasetSpec</a>&gt;,
+        "offset": &lt;int&gt;,
+        "limit": &lt;int&gt;,
+        "named": &lt;<a href="/doc/builtin/sql/ValueExpression.md.html">string</a>&gt;,
+        "runOnCreation": &lt;bool&gt;
+    }
+})</code></pre><p>with the following key-value definitions for <code>params</code>:</p><table class="params table" width='100%'><tr><th align='right'>Field, Type, Default</th><th>Description</th></tr>
+<tr><td align='right'><p><strong>dataFileUrl</strong> <br/> <nobr><a href="/doc/builtin/Url.md.html">Url</a></nobr> <br/> <code></code></p></td><td><p>URL to load Excel workbook from</p>
+</td></tr>
+<tr><td align='right'><p><strong>outputDataset</strong> <br/> <nobr><a href="/doc/builtin/procedures/OutputDatasetSpec.md.html">OutputDatasetSpec</a></nobr> <br/> <code>{"type":"embedding"}</code></p></td><td><p>Output dataset for result</p>
+</td></tr>
+<tr><td align='right'><p><strong>offset</strong> <br/> <nobr>int</nobr> <br/> <code>0</code></p></td><td><p>Start at word number (0 = start)</p>
+</td></tr>
+<tr><td align='right'><p><strong>limit</strong> <br/> <nobr>int</nobr> <br/> <code>-1</code></p></td><td><p>Limit of number of rows to record (-1 = all)</p>
+</td></tr>
+<tr><td align='right'><p><strong>named</strong> <br/> <nobr><a href="/doc/builtin/sql/ValueExpression.md.html">string</a></nobr> <br/> <code>"word"</code></p></td><td><p>Row name expression for output dataset. Note that each row must have a unique name.</p>
+</td></tr>
+<tr><td align='right'><p><strong>runOnCreation</strong> <br/> <nobr>bool</nobr> <br/> <code>true</code></p></td><td><p>If true, the procedure will be run immediately. The response will contain an extra field called <code>firstRun</code> pointing to the URL of the run.</p>
+</td></tr>
+</table></p>
+
+<p>The <code>dataFileUri</code> parameter should point to a data file that is produced
+by the <code>word2vec</code> tool.  A good default, containing the 3 billion most
+frequent words and phrases for English, is available
+<a href="https://drive.google.com/file/d/0B7XkCwpI5KDYNlNUTTlSS21pQmM/edit?usp=sharing" target="_blank">here</a>
+(warning: it is a 1.5 GB download), or directly <a href="https://doc-0g-8s-docs.googleusercontent.com/docs/securesc/ha0ro937gcuc7l7deffksulhg5h7mbp1/g4gppkmj8r3k019aau67238mkj789i6m/1444910400000/06848720943842814915/*/0B7XkCwpI5KDYNlNUTTlSS21pQmM?e=download" target="_blank">here</a>.</p>
+
+<p>The file should be copied to a local file system or a high-bandwidth
+service, and optionally decompressed, before being opened from MLDB.  MLDB will
+require around 8GB of memory to hold the entire file in an <code>embedding</code> dataset.</p>
+
+<p>The <code>limit</code> parameter allows only the first n words of a file to be loaded.
+This is useful for when only embeddings for the most frequent words are
+required.</p>
+
+<p>The <code>offset</code> parameter allows a number of words to be skipped.  This is
+useful when loading multiple datasets in parallel.</p>
+
+<h2>Example</h2>
+
+<p>Sample query to load the word2vec dataset into an &quot;embedding&quot; dataset
+type and determine the closest words to &quot;France&quot;.</p>
+
+<pre><code class="language-python">mldb.put(&quot;/v1/procedures/w2vimport&quot;, {
+    &quot;type&quot;: &quot;import.word2vec&quot;,
+    &quot;params&quot;: {
+        &quot;dataFileUrl&quot;: &quot;file:///path/to/GoogleNews-vectors-negative300.bin&quot;,
+        &quot;output&quot;: &quot;w2v&quot;,
+        &quot;limit&quot;: 100000
+    }
+})
+
+mldb.put(&quot;/v1/functions/w2v_neighbors&quot;, {
+    &quot;type&quot;: &quot;embedding.neighbors&quot;,
+    &quot;params&quot;: {
+        &quot;dataset&quot;: &quot;w2v&quot;
+    }
+})
+
+mldb.query(&quot;SELECT w2v_neighbors({coords: &#39;France&#39;})[neighbors] as *&quot;)
+</code></pre>
+
+<p>This gives the output:</p>
+
+<table>
+<thead>
+<tr>
+<th><em>rowName</em></th>
+<th>0</th>
+<th>1</th>
+<th>2</th>
+<th>3</th>
+<th>4</th>
+<th>5</th>
+<th>6</th>
+<th>7</th>
+<th>8</th>
+<th>9</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>result</td>
+<td>France</td>
+<td>Belgium</td>
+<td>French</td>
+<td>Germany</td>
+<td>Paris</td>
+<td>Spain</td>
+<td>Italy</td>
+<td>Europe</td>
+<td>Morocco</td>
+<td>Switzerland</td>
+</tr>
+</tbody>
+</table>
+
+<h1>See also</h1>
+
+<ul>
+<li>The <a href="/doc/builtin/functions/NearestNeighborsFunction.md.html"><code>embedding.neighbors</code> function type</a> is used to get the nearest neighbor rows in an existing embedding dataset</li>
+<li>The <a href="/doc/builtin/functions/Pooling.md.html"><code>pooling</code> function type</a> is used to embed a bag of words in a vector space like Word2Vec</li>
+<li>The <a href="/doc/builtin/datasets/EmbeddingDataset.md.html"><code>embedding</code> dataset type</a> is the perfect dataset to hold
+the output of the word2vec tool.</li>
+<li>The <a href="https://code.google.com/p/word2vec/" target="_blank">Word2Vec tool</a> project page
+contains source code to train your own embeddings.</li>
+</ul>
+</body>
+</html>

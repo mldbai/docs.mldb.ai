@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset='utf-8' />
+<title>MLDB Documentation</title>
+<script src='/resources/js/mathjax_TeX-AMS-MML_HTMLorMML.js'></script>
+<link rel='stylesheet' href='/resources/css/prism.css'>
+<link rel='stylesheet' href='/resources/css/doc.css'>
+<script src='/resources/js/jquery-1.11.2.min.js'></script>
+<script src='/resources/js/prism.js'></script>
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  if(window.location.origin == 'http://mldb.ai')
+  { ga('create', 'UA-16909325-9', 'auto'); }
+  else
+  { ga('create', 'UA-16909325-10', {'cookieDomain': 'none'}); }
+  ga('send', 'pageview');
+</script>
+</head>
+<body style='margin-left: 50px; max-width: 1000px'>
+<h1>Obtaining information about types</h1>
+
+<p>MLDB includes a built-in type introspection system, which is particularly useful for
+building UIs that can be used for multiple algorithms.</p>
+
+<h2>Learning how to congfigure an entity of a given type</h2>
+
+<p>In order to obtain the type used to configure an entity of a given type, you can
+call the</p>
+
+<pre><code class="language-python">mldb.get(&quot;/v1/types/&lt;entityClass&gt;/&lt;entityType&gt;/info&quot;)
+</code></pre>
+
+<p>route, and look at the <code>configType</code> parameter.  For example, for the svd.train procedure,
+you would call</p>
+
+<pre><code class="language-python">mldb.get(&quot;/v1/types/procedures/svd/info&quot;)
+</code></pre>
+
+<p>which returns</p>
+
+<pre><code class="language-python">{
+   &quot;configType&quot; : {
+      &quot;fields&quot; : [
+         {
+            &quot;comment&quot; : &quot;Dataset on which the SVD is trained.&quot;,
+            &quot;default&quot; : {},
+            &quot;name&quot; : &quot;dataset&quot;,
+            &quot;offset&quot; : 0,
+            &quot;type&quot; : {
+               &quot;c++TypeName&quot; : &quot;MLDB::PolyConfigT&lt;MLDB::Dataset const&gt;&quot;,
+               &quot;documentationUri&quot; : &quot;/doc/builtin/datasets/DatasetConfig.md&quot;,
+               &quot;kind&quot; : &quot;STRUCTURE&quot;,
+               &quot;typeName&quot; : &quot;Dataset (read-only)&quot;
+            }
+         },
+         {
+            &quot;comment&quot; : &quot;Output dataset for embedding (column singular vectors go here)&quot;,
+            &quot;default&quot; : {},
+            &quot;name&quot; : &quot;output&quot;,
+            &quot;offset&quot; : 64,
+            &quot;type&quot; : {
+               &quot;c++TypeName&quot; : &quot;MLDB::PolyConfigT&lt;MLDB::Dataset&gt;&quot;,
+               &quot;documentationUri&quot; : &quot;/doc/builtin/datasets/DatasetConfig.md&quot;,
+               &quot;kind&quot; : &quot;STRUCTURE&quot;,
+               &quot;typeName&quot; : &quot;Dataset&quot;
+            }
+         },
+         {
+            &quot;comment&quot; : &quot;Output dataset for embedding (row singular vectors go here)&quot;,
+            &quot;default&quot; : {},
+            &quot;name&quot; : &quot;rowOutput&quot;,
+            &quot;offset&quot; : 128,
+            &quot;type&quot; : {
+               &quot;c++TypeName&quot; : &quot;MLDB::PolyConfigT&lt;MLDB::Dataset&gt;&quot;,
+               &quot;documentationUri&quot; : &quot;/doc/builtin/datasets/DatasetConfig.md&quot;,
+               &quot;kind&quot; : &quot;STRUCTURE&quot;,
+               &quot;typeName&quot; : &quot;Dataset&quot;
+            }
+         },
+         {
+            &quot;comment&quot; : &quot;Uri at which we store the SVD.  Optional.  If empty, the SVD model will not be stored&quot;,
+            &quot;default&quot; : &quot;&quot;,
+            &quot;name&quot; : &quot;svdUri&quot;,
+            &quot;offset&quot; : 192,
+            &quot;type&quot; : {
+               &quot;kind&quot; : &quot;STRING&quot;,
+               &quot;typeName&quot; : &quot;std::string&quot;
+            }
+         },
+         {
+            &quot;comment&quot; : &quot;Maximum number of singular values to work with.  If there are not enough degrees of freedom in the dataset (it is rank-deficient), then less than this number may be used&quot;,
+            &quot;default&quot; : 100,
+            &quot;name&quot; : &quot;numSingularValues&quot;,
+            &quot;offset&quot; : 208,
+            &quot;type&quot; : {
+               &quot;kind&quot; : &quot;INTEGER&quot;,
+               &quot;typeName&quot; : &quot;int&quot;
+            }
+         },
+         {
+            &quot;comment&quot; : &quot;Maximum number of dense basis vectors to use for the SVD.  This parameter gives the number of dimensions into which the project is made.  The runtime goes up with the square of this parameter, in other words 10 times as many is 100 times as long to run.&quot;,
+            &quot;default&quot; : 2000,
+            &quot;name&quot; : &quot;numDenseBasisVectors&quot;,
+            &quot;offset&quot; : 212,
+            &quot;type&quot; : {
+               &quot;kind&quot; : &quot;INTEGER&quot;,
+               &quot;typeName&quot; : &quot;int&quot;
+            }
+         },
+         {
+            &quot;comment&quot; : &quot;Base name of the column that will be written by the SVD.  A number will be appended from 0 to numSingularValues.&quot;,
+            &quot;default&quot; : &quot;svd&quot;,
+            &quot;name&quot; : &quot;outputColumn&quot;,
+            &quot;offset&quot; : 200,
+            &quot;type&quot; : {
+               &quot;kind&quot; : &quot;STRING&quot;,
+               &quot;typeName&quot; : &quot;std::string&quot;
+            }
+         },
+         {
+            &quot;comment&quot; : &quot;Select these columns (default all columns).  Only plain column names may be used; it is not possible to select on an expression (like x + 1)&quot;,
+            &quot;default&quot; : &quot;*&quot;,
+            &quot;name&quot; : &quot;select&quot;,
+            &quot;offset&quot; : 216,
+            &quot;type&quot; : {
+               &quot;c++TypeName&quot; : &quot;MLDB::SelectExpression&quot;,
+               &quot;documentationUri&quot; : &quot;/doc/builtin/sql/SelectExpression.md&quot;,
+               &quot;kind&quot; : &quot;ATOM&quot;,
+               &quot;typeName&quot; : &quot;SqlSelectExpression&quot;
+            }
+         },
+         {
+            &quot;comment&quot; : &quot;Only use rows matching this clause (default all rows)&quot;,
+            &quot;default&quot; : &quot;true&quot;,
+            &quot;name&quot; : &quot;where&quot;,
+            &quot;offset&quot; : 272,
+            &quot;type&quot; : {
+               &quot;c++TypeName&quot; : &quot;std::shared_ptr&lt;MLDB::RowExpression&gt;&quot;,
+               &quot;documentationUri&quot; : &quot;/doc/builtin/sql/RowExpression.md&quot;,
+               &quot;kind&quot; : &quot;ATOM&quot;,
+               &quot;typeName&quot; : &quot;SqlRowExpression&quot;
+            }
+         }
+      ],
+      &quot;kind&quot; : &quot;STRUCTURE&quot;,
+      &quot;typeName&quot; : &quot;MLDB::SvdConfig&quot;
+   }
+}
+</code></pre>
+
+<p>The information is returned in the following format:</p>
+
+<p><table class="params table" width='100%'><tr><th align='right'>Field, Type, Default</th><th>Description</th></tr>
+<tr><td align='right'><p><strong>kind</strong> <br/> <nobr>ValueKind</nobr> <br/> <code>"ATOM"</code></p></td><td><p>Broad categorization of type</p>
+</td></tr>
+<tr><td align='right'><p><strong>c++TypeName</strong> <br/> <nobr>string</nobr> <br/> <code></code></p></td><td><p>C++ type name</p>
+</td></tr>
+<tr><td align='right'><p><strong>typeName</strong> <br/> <nobr>string</nobr> <br/> <code></code></p></td><td><p>Readable human type name</p>
+</td></tr>
+<tr><td align='right'><p><strong>documentationUri</strong> <br/> <nobr>string</nobr> <br/> <code></code></p></td><td><p>URI at which documentation is kept</p>
+</td></tr>
+<tr><td align='right'><p><strong>fields</strong> <br/> <nobr>ARRAY [ StructureFieldRepr ]</nobr> <br/> <code></code></p></td><td><p>Fields of structure</p>
+</td></tr>
+<tr><td align='right'><p><strong>values</strong> <br/> <nobr>ARRAY [ EnumValueRepr ]</nobr> <br/> <code></code></p></td><td><p>Values of enum</p>
+</td></tr>
+<tr><td align='right'><p><strong>contained</strong> <br/> <nobr>ValueDescription const*</nobr> <br/> <code></code></p></td><td><p>Type that is contained</p>
+</td></tr>
+<tr><td align='right'><p><strong>elements</strong> <br/> <nobr>ARRAY [ ValueDescription const* ]</nobr> <br/> <code></code></p></td><td><p>Elements of tuple</p>
+</td></tr>
+</table></p>
+
+<p>The <code>kind</code> field looks like this:</p>
+
+<p><h4>Enumeration <code>ValueKind</code></h4><table class="params table"><tr><th>Value</th><th>Description</th></tr>
+<tr><td><code>ATOM</code></td><td><p>Atomic structured type; normally JSON</td></tr>
+<tr><td><code>INTEGER</code></td><td><p>Integral type</td></tr>
+<tr><td><code>BOOLEAN</code></td><td><p>Boolean type</td></tr>
+<tr><td><code>STRING</code></td><td><p>String type</td></tr>
+<tr><td><code>ENUM</code></td><td><p>Enumerated type</td></tr>
+<tr><td><code>ARRAY</code></td><td><p>Array type</td></tr>
+<tr><td><code>STRUCTURE</code></td><td><p>Structure type</td></tr>
+<tr><td><code>TUPLE</code></td><td><p>Tuple type</td></tr>
+<tr><td><code>VARIANT</code></td><td><p>Variant type</td></tr>
+<tr><td><code>MAP</code></td><td><p>Map (associative array) type</td></tr>
+<tr><td><code>ANY</code></td><td><p>Can be any type</td></tr>
+</table></p>
+
+<p>Structure fields look like this:</p>
+
+<p><table class="params table" width='100%'><tr><th align='right'>Field, Type, Default</th><th>Description</th></tr>
+<tr><td align='right'><p><strong>name</strong> <br/> <nobr>string</nobr> <br/> <code></code></p></td><td><p>Name of the field in the structure</p>
+</td></tr>
+<tr><td align='right'><p><strong>comment</strong> <br/> <nobr>string</nobr> <br/> <code></code></p></td><td><p>Comment on how to use the field</p>
+</td></tr>
+<tr><td align='right'><p><strong>type</strong> <br/> <nobr>ValueDescription const*</nobr> <br/> <code></code></p></td><td><p>Type of the field</p>
+</td></tr>
+<tr><td align='right'><p><strong>offset</strong> <br/> <nobr>int</nobr> <br/> <code>0</code></p></td><td><p>Offset of field in bytes from structure start</p>
+</td></tr>
+<tr><td align='right'><p><strong>default</strong> <br/> <nobr>JSON</nobr> <br/> <code></code></p></td><td><p>Default value of field</p>
+</td></tr>
+</table></p>
+
+<p>and enumeration fields look like this:</p>
+
+<p><table class="params table" width='100%'><tr><th align='right'>Field, Type, Default</th><th>Description</th></tr>
+<tr><td align='right'><p><strong>val</strong> <br/> <nobr>int</nobr> <br/> <code>0</code></p></td><td><p>Integral value of enumeration</p>
+</td></tr>
+<tr><td align='right'><p><strong>name</strong> <br/> <nobr>string</nobr> <br/> <code></code></p></td><td><p>Name of enumeration value</p>
+</td></tr>
+<tr><td align='right'><p><strong>comment</strong> <br/> <nobr>string</nobr> <br/> <code></code></p></td><td><p>Human-readable comment on meaning of value</p>
+</td></tr>
+</table></p>
+
+<h2>Information about other types</h2>
+
+<p>In addition, if you need more information about another type listed in one of those
+fields (for example, a nested structure or the values of an enumeration), you can
+ask for it directly under the route</p>
+
+<pre><code class="language-python">mldb.get(&quot;/v1/typeInfo&quot;, type=&lt;typeName&gt;)
+</code></pre>
+
+<p>which will return similar output to that given above.</p>
+</body>
+</html>

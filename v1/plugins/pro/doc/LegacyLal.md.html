@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset='utf-8' />
+<title>MLDB Documentation</title>
+<script src='/resources/js/mathjax_TeX-AMS-MML_HTMLorMML.js'></script>
+<link rel='stylesheet' href='/resources/css/prism.css'>
+<link rel='stylesheet' href='/resources/css/doc.css'>
+<script src='/resources/js/jquery-1.11.2.min.js'></script>
+<script src='/resources/js/prism.js'></script>
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  if(window.location.origin == 'http://mldb.ai')
+  { ga('create', 'UA-16909325-9', 'auto'); }
+  else
+  { ga('create', 'UA-16909325-10', {'cookieDomain': 'none'}); }
+  ga('send', 'pageview');
+</script>
+</head>
+<body style='margin-left: 50px; max-width: 1000px'>
+<h1>Legacy Lookalikes Function</h1>
+
+<p><strong>This feature is part of the <a href="../../../../doc/builtin/ProPlugin.md.html">MLDB Pro Plugin</a> and so can only be used in compliance with the <a href="../../../../doc/builtin/licenses.md.html">trial license</a> unless a commercial license has been purchased</strong></p>
+
+<p>This function is used to load legacy mldb.ai lookalike models into MLDB.
+Please contact mldb.ai for documentation and contract terms if you
+are a mldb.ai Audience Optimizer customer.</p>
+
+<h2>Configuration</h2>
+
+<p><p>A new function of type <code>legacy.lal</code> named <code>&lt;id&gt;</code> can be created as follows:</p><pre><code class="language-python">mldb.put(&quot;/v1/functions/&quot;+&lt;id&gt;, {
+    &quot;type&quot;: &quot;legacy.lal&quot;,
+    &quot;params&quot;: {
+        "svdModelFileUrl": &lt;<a href="/doc/builtin/Url.md.html">Url</a>&gt;,
+        "classifierModelFileUrl": &lt;<a href="/doc/builtin/Url.md.html">Url</a>&gt;
+    }
+})</code></pre><p>with the following key-value definitions for <code>params</code>:</p><table class="params table" width='100%'><tr><th align='right'>Field, Type, Default</th><th>Description</th></tr>
+<tr><td align='right'><p><strong>svdModelFileUrl</strong> <br/> <nobr><a href="/doc/builtin/Url.md.html">Url</a></nobr> <br/> <code></code></p></td><td><p>URL to load the legacy SVD model from (normally a svd.bin.gz file)</p>
+</td></tr>
+<tr><td align='right'><p><strong>classifierModelFileUrl</strong> <br/> <nobr><a href="/doc/builtin/Url.md.html">Url</a></nobr> <br/> <code></code></p></td><td><p>URL to load the legacy model from (normally a .bin.gz file)</p>
+</td></tr>
+</table></p>
+</body>
+</html>

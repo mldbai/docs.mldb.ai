@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset='utf-8' />
+<title>MLDB Documentation</title>
+<script src='/resources/js/mathjax_TeX-AMS-MML_HTMLorMML.js'></script>
+<link rel='stylesheet' href='/resources/css/prism.css'>
+<link rel='stylesheet' href='/resources/css/doc.css'>
+<script src='/resources/js/jquery-1.11.2.min.js'></script>
+<script src='/resources/js/prism.js'></script>
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  if(window.location.origin == 'http://mldb.ai')
+  { ga('create', 'UA-16909325-9', 'auto'); }
+  else
+  { ga('create', 'UA-16909325-10', {'cookieDomain': 'none'}); }
+  ga('send', 'pageview');
+</script>
+</head>
+<body style='margin-left: 50px; max-width: 1000px'>
+<h1>Script Apply Function</h1>
+
+<p>The script apply function type is used to create functions written in Javascript or Python script.</p>
+
+<h2>Configuration</h2>
+
+<p><p>A new function of type <code>script.apply</code> named <code>&lt;id&gt;</code> can be created as follows:</p><pre><code class="language-python">mldb.put(&quot;/v1/functions/&quot;+&lt;id&gt;, {
+    &quot;type&quot;: &quot;script.apply&quot;,
+    &quot;params&quot;: {
+        "language": &lt;string&gt;,
+        "scriptConfig": &lt;ScriptResource&gt;
+    }
+})</code></pre><p>with the following key-value definitions for <code>params</code>:</p><table class="params table" width='100%'><tr><th align='right'>Field, Type, Default</th><th>Description</th></tr>
+<tr><td align='right'><p><strong>language</strong> <br/> <nobr>string</nobr> <br/> <code></code></p></td><td><p>Script language (python or javascript)</p>
+</td></tr>
+<tr><td align='right'><p><strong>scriptConfig</strong> <br/> <nobr>ScriptResource</nobr> <br/> <code></code></p></td><td><p>Script resource configuration</p>
+</td></tr>
+</table></p>
+
+<p>With <code>ScriptResource</code> defined as:</p>
+
+<p><table class="params table" width='100%'><tr><th align='right'>Field, Type, Default</th><th>Description</th></tr>
+<tr><td align='right'><p><strong>address</strong> <br/> <nobr>string</nobr> <br/> <code></code></p></td><td><p>URI or location of script to run (use this parameter OR &#39;source&#39;)</p>
+</td></tr>
+<tr><td align='right'><p><strong>source</strong> <br/> <nobr>string</nobr> <br/> <code></code></p></td><td><p>source of script to run (use this parameter OR &#39;address&#39;)</p>
+</td></tr>
+<tr><td align='right'><p><strong>args</strong> <br/> <nobr>Any</nobr> <br/> <code></code></p></td><td><p>Arguments to pass to script</p>
+</td></tr>
+<tr><td align='right'><p><strong>writeSourceToFile</strong> <br/> <nobr>bool</nobr> <br/> <code>false</code></p></td><td><p>If passing in the source as a string, write it to disk to a temporary location as if it was downloaded remotely. This should usually not be necessary.</p>
+</td></tr>
+</table></p>
+
+<h2>Input and Output Values</h2>
+
+<p>Functions of this type have a single input value named <code>args</code>, that represents a row. The contents will be available to the script in the args parameter.</p>
+
+<p>These functions output a single value called <code>return</code>. It must be an array of arrays, where the inside array is a 3 element tuple <code>[column_name, value, ts]</code>.</p>
+
+<h2>Example</h2>
+
+<p>Assume a dataset called <code>myData</code> with the following contents:</p>
+
+<table>
+<thead>
+<tr>
+<th>rowName</th>
+<th>x</th>
+<th>y</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>row1</td>
+<td>1</td>
+<td>4</td>
+</tr>
+<tr>
+<td>row2</td>
+<td>2</td>
+<td>2</td>
+</tr>
+</tbody>
+</table>
+
+<p>To create a Python function called <code>myFunction</code> that will take each column an multiply it by two, we can use the following script:</p>
+
+<pre><code class="language-python">results = []
+for colName, cell in mldb.script.args[0]:
+    cellValue, cellTs = cell
+    results.append([colName, cellValue*2, cellTs])
+
+mldb.script.set_return(results)
+</code></pre>
+
+<p>You can now apply <code>myFunction</code> on the <code>myData</code> dataset with the following query:</p>
+
+<pre><code class="language-sql">select myFunction({ {*} as args })[return] from myData
+</code></pre>
+
+<p>The <code>return</code> value will contain:</p>
+
+<pre><code class="language-python">[
+   {
+      &quot;columns&quot; : [
+         [ &quot;x&quot;, 2, &quot;2015-07-17T11:49:46.000Z&quot; ],
+         [ &quot;y&quot;, 8, &quot;2015-07-17T11:49:46.000Z&quot; ]
+      ],
+      &quot;rowHash&quot; : &quot;1c710c9517693187&quot;,
+      &quot;rowName&quot; : &quot;row1&quot;
+   },
+   {
+      &quot;columns&quot; : [
+         [ &quot;x&quot;, 4, &quot;2015-07-17T11:49:46.000Z&quot; ],
+         [ &quot;y&quot;, 4, &quot;2015-07-17T11:49:46.000Z&quot; ]
+      ],
+      &quot;rowHash&quot; : &quot;905abb69bcf24660&quot;,
+      &quot;rowName&quot; : &quot;row2&quot;
+   }
+]
+</code></pre>
+
+<h2>See also</h2>
+
+<ul>
+<li>the <a href="/doc/builtin/lang/Python.md.html"><code>python</code> plugin type</a> Server-Side API</li>
+<li>the <a href="/doc/builtin/lang/Javascript.md.html"><code>javascript</code> plugin type</a> Server-Side API</li>
+</ul>
+</body>
+</html>

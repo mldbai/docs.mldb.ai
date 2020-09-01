@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset='utf-8' />
+<title>MLDB Documentation</title>
+<script src='/resources/js/mathjax_TeX-AMS-MML_HTMLorMML.js'></script>
+<link rel='stylesheet' href='/resources/css/prism.css'>
+<link rel='stylesheet' href='/resources/css/doc.css'>
+<script src='/resources/js/jquery-1.11.2.min.js'></script>
+<script src='/resources/js/prism.js'></script>
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  if(window.location.origin == 'http://mldb.ai')
+  { ga('create', 'UA-16909325-9', 'auto'); }
+  else
+  { ga('create', 'UA-16909325-10', {'cookieDomain': 'none'}); }
+  ga('send', 'pageview');
+</script>
+</head>
+<body style='margin-left: 50px; max-width: 1000px'>
+<h1>JSON Import Procedure</h1>
+
+<p>The JSON Import Procedure type is used to import a text file containing
+one JSON per line in a dataset.</p>
+
+<p>This procedure will process lines using the <a href="../sql/ValueExpression.md.html">parse_json</a> builtin function.</p>
+
+<h2>Configuration</h2>
+
+<p><p>A new procedure of type <code>import.json</code> named <code>&lt;id&gt;</code> can be created as follows:</p><pre><code class="language-python">mldb.put(&quot;/v1/procedures/&quot;+&lt;id&gt;, {
+    &quot;type&quot;: &quot;import.json&quot;,
+    &quot;params&quot;: {
+        "dataFileUrl": &lt;<a href="/doc/builtin/Url.md.html">Url</a>&gt;,
+        "outputDataset": &lt;<a href="/doc/builtin/procedures/OutputDatasetSpec.md.html">OutputDatasetSpec</a>&gt;,
+        "limit": &lt;int&gt;,
+        "offset": &lt;int&gt;,
+        "ignoreBadLines": &lt;bool&gt;,
+        "select": &lt;<a href="/doc/builtin/sql/SelectExpression.md.html">SqlSelectExpression</a>&gt;,
+        "where": &lt;<a href="/doc/builtin/sql/ValueExpression.md.html">string</a>&gt;,
+        "named": &lt;<a href="/doc/builtin/sql/ValueExpression.md.html">string</a>&gt;,
+        "arrays": &lt;JsonArrayHandling&gt;,
+        "runOnCreation": &lt;bool&gt;
+    }
+})</code></pre><p>with the following key-value definitions for <code>params</code>:</p><table class="params table" width='100%'><tr><th align='right'>Field, Type, Default</th><th>Description</th></tr>
+<tr><td align='right'><p><strong>dataFileUrl</strong> <br/> <nobr><a href="/doc/builtin/Url.md.html">Url</a></nobr> <br/> <code></code></p></td><td><p>URL to load text file from</p>
+</td></tr>
+<tr><td align='right'><p><strong>outputDataset</strong> <br/> <nobr><a href="/doc/builtin/procedures/OutputDatasetSpec.md.html">OutputDatasetSpec</a></nobr> <br/> <code>{"type":"tabular"}</code></p></td><td><p>Configuration for output dataset</p>
+</td></tr>
+<tr><td align='right'><p><strong>limit</strong> <br/> <nobr>int</nobr> <br/> <code>0</code></p></td><td><p>Maximum number of lines to process</p>
+</td></tr>
+<tr><td align='right'><p><strong>offset</strong> <br/> <nobr>int</nobr> <br/> <code>0</code></p></td><td><p>Skip the first n lines.</p>
+</td></tr>
+<tr><td align='right'><p><strong>ignoreBadLines</strong> <br/> <nobr>bool</nobr> <br/> <code>false</code></p></td><td><p>If true, any line causing an error will be skipped. Any line with an invalid JSON object will cause an error.</p>
+</td></tr>
+<tr><td align='right'><p><strong>select</strong> <br/> <nobr><a href="/doc/builtin/sql/SelectExpression.md.html">SqlSelectExpression</a></nobr> <br/> <code>"*"</code></p></td><td><p>Which columns to use.</p>
+</td></tr>
+<tr><td align='right'><p><strong>where</strong> <br/> <nobr><a href="/doc/builtin/sql/ValueExpression.md.html">string</a></nobr> <br/> <code>"true"</code></p></td><td><p>Which lines to use to create rows.</p>
+</td></tr>
+<tr><td align='right'><p><strong>named</strong> <br/> <nobr><a href="/doc/builtin/sql/ValueExpression.md.html">string</a></nobr> <br/> <code>"lineNumber()"</code></p></td><td><p>Row name expression for output dataset. Note that each row must have a unique name and that names cannot be objects.</p>
+</td></tr>
+<tr><td align='right'><p><strong>arrays</strong> <br/> <nobr>JsonArrayHandling</nobr> <br/> <code>"parse"</code></p></td><td><p>Describes how arrays are encoded in the JSON output.  For &#39;&#39;parse&#39; (default), the arrays become structured values. For &#39;encode&#39;, arrays containing atoms are sparsified with the values representing one-hot keys and boolean true values</p>
+</td></tr>
+<tr><td align='right'><p><strong>runOnCreation</strong> <br/> <nobr>bool</nobr> <br/> <code>true</code></p></td><td><p>If true, the procedure will be run immediately. The response will contain an extra field called <code>firstRun</code> pointing to the URL of the run.</p>
+</td></tr>
+</table></p>
+
+<p><h4>Enumeration <code>JsonArrayHandling</code></h4><table class="params table"><tr><th>Value</th><th>Description</th></tr>
+<tr><td><code>parse</code></td><td><p>Arrays will be parsed into nested values</td></tr>
+<tr><td><code>encode</code></td><td><p>Arrays will be encoded as one-hot values</td></tr>
+</table></p>
+
+<h2>See also</h2>
+
+<ul>
+<li>The <a href="../sql/ValueExpression.md.html#parse_json">parse_json</a> builtin function can apply the above
+JSON unpacking algorithm to a text cell in an SQL query</li>
+<li>The <a href="/doc/builtin/procedures/importtextprocedure.md.html"><code>import.text</code> procedure type</a> is used to import text files</li>
+<li>The <a href="/doc/builtin/procedures/MeltProcedure.md.html"><code>melt</code> procedure type</a> is used to melt columns into many rows. This is useful
+when dealing with a JSON array of objects</li>
+</ul>
+</body>
+</html>

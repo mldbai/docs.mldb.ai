@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset='utf-8' />
+<title>MLDB Documentation</title>
+<script src='/resources/js/mathjax_TeX-AMS-MML_HTMLorMML.js'></script>
+<link rel='stylesheet' href='/resources/css/prism.css'>
+<link rel='stylesheet' href='/resources/css/doc.css'>
+<script src='/resources/js/jquery-1.11.2.min.js'></script>
+<script src='/resources/js/prism.js'></script>
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  if(window.location.origin == 'http://mldb.ai')
+  { ga('create', 'UA-16909325-9', 'auto'); }
+  else
+  { ga('create', 'UA-16909325-10', {'cookieDomain': 'none'}); }
+  ga('send', 'pageview');
+</script>
+</head>
+<body style='margin-left: 50px; max-width: 1000px'>
+<h1>MLDB Pro</h1>
+
+<p>MLDB Pro is a commercially-available MLDB plugin created by <a href="http://mldb.ai" target="_blank">mldb.ai</a>. It adds to MLDB a number of <a href="datasets/Datasets.md.html">dataset types</a> which are faster and more memory-efficient than the ones available under an open-source license as part of MLDB:</p>
+
+<p>The <a href="/v1/plugins/pro/doc/MutableBehaviourDataset.md.html"><code>beh.mutable</code> dataset type</a> is the most useful dataset type provided by the MLDB Pro plugin. It is a drop-in replacement for the <a href="/doc/builtin/datasets/MutableSparseMatrixDataset.md.html"><code>sparse.mutable</code> dataset type</a> and can make computations 2-10 times faster. It is a write-once sparse mutable dataset which creates a memory-mappable file of type <code>.beh</code> which can then be loaded up immutably with the <a href="/v1/plugins/pro/doc/BehaviourDataset.md.html"><code>beh</code> dataset type</a>. </p>
+
+<p>The <a href="/v1/plugins/pro/doc/BinaryBehaviourDataset.md.html"><code>beh.binary</code> dataset type</a> and <a href="/v1/plugins/pro/doc/MutableBinaryBehaviourDataset.md.html"><code>beh.binary.mutable</code> dataset type</a> have a similar relationship, but are even more efficient because they only store the cell value <code>1</code>.</p>
+
+<p>The MLDB Pro Plugin is part of the <a href="Running.md.html">MLDB Enterprise Edition</a>, which is freely available under the <a href="/resources/MLDB_License.pdf">MLDB End User License Agreement, Non-Commercial Software License version 1.0</a>. A license permitting commercial use can be purchased from mldb.ai by <a href="mailto:info@mldb.ai" target="_blank">contacting sales</a>.</p>
+</body>
+</html>

@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset='utf-8' />
+<title>MLDB Documentation</title>
+<script src='/resources/js/mathjax_TeX-AMS-MML_HTMLorMML.js'></script>
+<link rel='stylesheet' href='/resources/css/prism.css'>
+<link rel='stylesheet' href='/resources/css/doc.css'>
+<script src='/resources/js/jquery-1.11.2.min.js'></script>
+<script src='/resources/js/prism.js'></script>
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  if(window.location.origin == 'http://mldb.ai')
+  { ga('create', 'UA-16909325-9', 'auto'); }
+  else
+  { ga('create', 'UA-16909325-10', {'cookieDomain': 'none'}); }
+  ga('send', 'pageview');
+</script>
+</head>
+<body style='margin-left: 50px; max-width: 1000px'>
+<h1>Classifier configuration</h1>
+
+<p>MLDB supports many algorithms to solve supervised learning tasks for both classification and regression. 
+There are two procedures that are available to train a model:</p>
+
+<ul>
+<li>the <a href="/doc/builtin/procedures/ExperimentProcedure.md.html"><code>classifier.experiment</code> procedure type</a> performs both training and testing of a classifier.</li>
+<li>the <a href="/doc/builtin/procedures/Classifier.md.html"><code>classifier.train</code> procedure type</a> trains a classifier. If testing is required, it needs to be done manually with the <a href="/doc/builtin/procedures/Accuracy.md.html"><code>classifier.test</code> procedure type</a>.</li>
+</ul>
+
+<p>Both of those procedures share the configuration keys <code>algorithm</code>, <code>configuration</code>, <code>configurationFile</code> and <code>equalizationFactor</code>.
+This document explains how to use them.</p>
+
+<h3>Outline</h3>
+
+<ul>
+<li><a href="#methods">Methods of configuring a classifier training</a></li>
+<li><a href="#confFileContents">Configuration file contents</a></li>
+<li><a href="#algos">Algorithms</a>
+
+<ul>
+<li><a href="#dt">Decision Trees</a></li>
+<li><a href="#glz">Generalized Linear Models</a></li>
+<li><a href="#bagging">Bagging</a></li>
+<li><a href="#boosting">Boosting</a></li>
+<li><a href="#nnet">Neural Networks</a></li>
+<li><a href="#naive">Naive Bayes</a></li>
+<li><a href="#fasttext">Fast Text</a></li>
+</ul></li>
+<li><a href="#defConf">Default configuration file</a></li>
+<li><a href="#trainWeight">Training Weighting</a></li>
+</ul>
+
+<p><a name="methods"></a></p>
+
+<h2>Methods of configuring a classifier training</h2>
+
+<p>There are three ways of configuring which classifier will be trained:</p>
+
+<ol>
+<li>Leave the <code>configuration</code> and <code>configurationFile</code> empty, and choose a standard algorithm configuration by name. See below for the contents of the default <code>configurationFile</code>).</li>
+<li>Put the configuration inline in the <code>configuration</code> parameter (JSON) and set
+<code>algorithm</code> to either empty (if the configuration is at the top level) or to
+the dot separated path if it&#39;s not at the top level. See below for details on specifying your own <code>configuration</code>.</li>
+<li>Put the configuration in an external resource identified by the <code>configurationFile</code>
+parameter, and set the algorithm as in number 2. See below for details on specifying your own <code>configurationFile</code>.</li>
+</ol>
+
+<p><a name="confFileContents"></a></p>
+
+<h2>Configuration file contents</h2>
+
+<p>A <code>configuration</code> JSON object or the contents of a <code>configurationFile</code> looks like this
+(see below for the contents of the default, overrideable <code>configurationFile</code>:</p>
+
+<pre><code class="language-python">{
+    &quot;algorithm_name&quot;: {
+        &quot;type&quot;: &quot;classifier_type&quot;,
+        &quot;parameter&quot;: &quot;value&quot;,
+        ...
+    },
+    ...
+}
+</code></pre>
+
+<p>The classifier training procedure includes support for the following types
+of classifiers.</p>
+
+<p>These classifiers tend to be high performance implementations of well known
+classifiers which train and predict fast and are often a good default choice
+when a generic classification step is required.</p>
+
+<p><a name="algos"></a></p>
+
+<h2>Algorithms</h2>
+
+<p><a name="dt"></a></p>
+
+<h3>Decision Trees (type=decision_tree)</h3>
+
+<p><table><tr><th>Parameter</th><th>Range</th><th>Default</th><th>Description</th></tr><tr><td>verbosity</td><td>0-5</td><td>2</td><td>verbosity of information from training</td></tr><tr><td>profile</td><td>true|false|1|0</td><td>false</td><td>whether or not to profile</td></tr><tr><td>validate</td><td>true|false|1|0</td><td>false</td><td>perform expensive internal validation</td></tr><tr><td>trace</td><td>0-</td><td>0</td><td>trace execution of training in a very fine-grained fashion</td></tr><tr><td>max_depth</td><td>0- or -1</td><td>-1</td><td>give maximum tree depth.  -1 means go until data separated</td></tr><tr><td>update_alg</td><td>normal gentle prob</td><td>prob</td><td>select the type of output that the tree gives</td></tr><tr><td>random_feature_propn</td><td>0.0-1.0</td><td>1</td><td>proportion of the features to enable (for random forests)</td></tr></table></p>
+
+<p>The <code>update_alg</code> parameter can take three different values: <code>prob</code>, <code>normal</code> and <code>gentle</code>.
+Here is how they work, using an example with a leaf node that contains 8 positive
+and 2 negative labels:</p>
+
+<ul>
+<li><code>prob</code> is the proportion of positive classes: \(\#pos/(\#pos + \#neg)\). For our example the output is \(8/10=0.8\)</li>
+<li><code>normal</code> uses the margin between both probabilities, 80% positives, 20% negatives. For our example the output is\(0.8 - 0.2 = 0.6\) and \(1 - 0.6 = 0.4\). These scores are fed to a function, \(f\), of the exponential family (bounded between -infinity and +infinity). For our example the output is \(f(0.6) - f(0.4)\)</li>
+<li><code>gentle</code> also uses the margin, but with a different function, \(g\), bounded between -1 and 1.
+In an ensemble, such as boosting or random forest, it is recommended to use this value. For our example the output is \(g(0.6) - g(0.4)\)</li>
+</ul>
+
+<p>For more details, please refer to <a href="http://projecteuclid.org/download/pdf_1/euclid.aos/1016218223" target="_blank">Friedman, Hastie, Tibshirani, &quot;Additive Logistic Regression: A Statistical View of Boosting&quot;</a>
+, The Annals of Statistics 2000, Vol. 28, No. 2, 337–407</p>
+
+<p><a name="glz"></a></p>
+
+<h3>Generalized Linear Models (type=glz)</h3>
+
+<p><table><tr><th>Parameter</th><th>Range</th><th>Default</th><th>Description</th></tr><tr><td>verbosity</td><td>0-5</td><td>2</td><td>verbosity of information from training</td></tr><tr><td>profile</td><td>true|false|1|0</td><td>false</td><td>whether or not to profile</td></tr><tr><td>validate</td><td>true|false|1|0</td><td>false</td><td>perform expensive internal validation</td></tr><tr><td>add_bias</td><td>true|false|1|0</td><td>true</td><td>add a constant bias term to the classifier?</td></tr><tr><td>decode</td><td>true|false|1|0</td><td>true</td><td>run the decoder (link function) after classification?</td></tr><tr><td>link_function</td><td>logit probit comp_log_log linear log</td><td>logit</td><td>which link function to use for the output function</td></tr><tr><td>regularization</td><td>none l1 l2</td><td>l2</td><td>type of regularization on the weights (L1 is slower due to an iterative algorithm)</td></tr><tr><td>regularization_factor</td><td>-1 to infinite</td><td>1.0000000000000001e-05</td><td>regularization factor to use. auto-determined if negative (slower). the bigger this value is, the more regularization on the weights</td></tr><tr><td>max_regularization_iteration</td><td>1 to infinite</td><td>1000</td><td>maximum number of iterations for the L1 regularization</td></tr><tr><td>regularization_epsilon</td><td>positive number</td><td>0.0001</td><td>smallest weight update before assuming convergence for the L1 iterative algorithm</td></tr><tr><td>normalize</td><td>true|false|1|0</td><td>true</td><td>normalize features to have zero mean and unit variance for greater numeric stability (slower training but recommended with L1 regularization)</td></tr><tr><td>condition</td><td>true|false|1|0</td><td>false</td><td>condition features to have no correlation for greater numeric stability (but much slower training)</td></tr><tr><td>feature_proportion</td><td>0 to 1</td><td>1</td><td>use only a (random) portion of available features when training classifier</td></tr></table></p>
+
+<p>The different options for the <code>link_function</code> parameter are defined as follows:</p>
+
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th style="text-align: center">Link Function</th>
+<th style="text-align: center">Activation Function (inverse of the link function)</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>logit</td>
+<td style="text-align: center">\[g(x)=\ln \left( \frac{x}{1-x} \right) \]</td>
+<td style="text-align: center">\[g^{-1}(x) = \frac{1}{1 + e^{-x}}\]</td>
+</tr>
+<tr>
+<td>probit</td>
+<td style="text-align: center">\(g(x)=\Phi^{-1}(x)\) <br><br> where \(\Phi\) is the normal distribution&#39;s CDF</td>
+<td style="text-align: center">\[g^{-1}(x) = \Phi (x)\]</td>
+</tr>
+<tr>
+<td>comp_log_log</td>
+<td style="text-align: center">\[g(x)=\ln \left( - \ln \left( 1-x \right) \right)\]</td>
+<td style="text-align: center">\[g^{-1}(x) = 1 - e^{-e^x}\]</td>
+</tr>
+<tr>
+<td>linear</td>
+<td style="text-align: center">\[g(x)=x\]</td>
+<td style="text-align: center">\[g^{-1}(x) = x\]</td>
+</tr>
+<tr>
+<td>log</td>
+<td style="text-align: center">\[g(x)=\ln x\]</td>
+<td style="text-align: center">\[g^{-1}(x) = e^x\]</td>
+</tr>
+</tbody>
+</table>
+
+<p><a name="bagging"></a></p>
+
+<h3>Bagging (type=bagging)</h3>
+
+<p>The bagging algorithm, also known as bootstrap aggregating, is used in conjunction with another algorithm, for 
+instance with a decision tree to create
+<em>bagged decision trees</em>. There is an example of this in the <a href="#defConf">default configuration file</a> for the <code>bdt</code> key. </p>
+
+<p><table><tr><th>Parameter</th><th>Range</th><th>Default</th><th>Description</th></tr><tr><td>verbosity</td><td>0-5</td><td>54</td><td>verbosity of information from training</td></tr><tr><td>profile</td><td>true|false|1|0</td><td>false</td><td>whether or not to profile</td></tr><tr><td>validate</td><td>true|false|1|0</td><td>false</td><td>perform expensive internal validation</td></tr><tr><td>num_bags</td><td>N>=1</td><td>10</td><td>number of bags to divide classifier into</td></tr><tr><td>validation_split</td><td>0<N<=1</td><td>0.349999994</td><td>how much of training data to hold off as validation data</td></tr><tr><td>weak_leaner</td><td>perceptron, bagging, boosting, naive_bayes, stump, decision_tree, glz, boosted_stumps, null, onevsall, fasttext</td><td><not set></td><td></td></tr></table></p>
+
+<p><em>See also</em> : <a href="https://en.wikipedia.org/wiki/Bootstrap_aggregating" target="_blank">Bagging on Wikipedia</a>.</p>
+
+<p><a name="boosting"></a></p>
+
+<h3>Boosting (type=boosting)</h3>
+
+<p><table><tr><th>Parameter</th><th>Range</th><th>Default</th><th>Description</th></tr><tr><td>verbosity</td><td>0-5</td><td>2</td><td>verbosity of information from training</td></tr><tr><td>profile</td><td>true|false|1|0</td><td>false</td><td>whether or not to profile</td></tr><tr><td>validate</td><td>true|false|1|0</td><td>false</td><td>perform expensive internal validation</td></tr><tr><td>validation_split</td><td>0<N<=1</td><td>0.300000012</td><td>how much of training data to hold off as validation data</td></tr><tr><td>min_iter</td><td>1-max_iter</td><td>10</td><td>minimum number of training iterations to run</td></tr><tr><td>max_iter</td><td>>=min_iter</td><td>500</td><td>maximum number of training iterations to run</td></tr><tr><td>cost_function</td><td>exponential logistic</td><td>exponential</td><td>select cost function for boosting weight update</td></tr><tr><td>short_circuit_window</td><td>0-</td><td>0</td><td>short circuit (stop) training if no improvement for N iter (0 off)</td></tr><tr><td>trace_training_acc</td><td>true|false|1|0</td><td>false</td><td>trace the accuracy of the training set as well as validation</td></tr><tr><td>weak_leaner</td><td>perceptron, bagging, boosting, naive_bayes, stump, decision_tree, glz, boosted_stumps, null, onevsall, fasttext</td><td><not set></td><td></td></tr></table></p>
+
+<p><em>See also</em> : <a href="https://en.wikipedia.org/wiki/Boosting_(machine_learning)" target="_blank">Boosting on Wikipedia</a>.</p>
+
+<p><a name="nnet"></a></p>
+
+<h3>Neural Networks (type=perceptron)</h3>
+
+<p><table><tr><th>Parameter</th><th>Range</th><th>Default</th><th>Description</th></tr><tr><td>verbosity</td><td>0-5</td><td>2</td><td>verbosity of information from training</td></tr><tr><td>profile</td><td>true|false|1|0</td><td>false</td><td>whether or not to profile</td></tr><tr><td>validate</td><td>true|false|1|0</td><td>false</td><td>perform expensive internal validation</td></tr><tr><td>validation_split</td><td>0<N<=1</td><td>0.300000012</td><td>how much of training data to hold off as validation data</td></tr><tr><td>min_iter</td><td>1-max_iter</td><td>10</td><td>minimum number of training iterations to run</td></tr><tr><td>max_iter</td><td>>=min_iter</td><td>100</td><td>maximum number of training iterations to run</td></tr><tr><td>learning_rate</td><td>real</td><td>0.00999999978</td><td>positive: rate of learning relative to dataset size: negative for absolute</td></tr><tr><td>arch</td><td>(see doc)</td><td>%i</td><td>hidden unit specification; %i=in vars, %o=out vars; eg 5_10</td></tr><tr><td>activation</td><td>logsig tanh tanhs identity softmax nonstandard</td><td>tanh</td><td>activation function for neurons</td></tr><tr><td>output_activation</td><td>logsig tanh tanhs identity softmax nonstandard</td><td>tanh</td><td>activation function for output layer of neurons</td></tr><tr><td>decorrelate</td><td>true|false|1|0</td><td>true</td><td>decorrelate the features before training</td></tr><tr><td>normalize</td><td>true|false|1|0</td><td>true</td><td>normalize to zero mean and unit std before training</td></tr><tr><td>batch_size</td><td>0.0-1.0 or 1 - nvectors</td><td>1024</td><td>number of samples in each "mini batch" for stochastic</td></tr><tr><td>target_value</td><td>0.0-1.0</td><td>0.800000012</td><td>the output for a 1 that we ask the network to provide</td></tr></table></p>
+
+<p><a name="naive"></a></p>
+
+<h3>Naive Bayes (type=naive_bayes)</h3>
+
+<p><table><tr><th>Parameter</th><th>Range</th><th>Default</th><th>Description</th></tr><tr><td>verbosity</td><td>0-5</td><td>2</td><td>verbosity of information from training</td></tr><tr><td>profile</td><td>true|false|1|0</td><td>false</td><td>whether or not to profile</td></tr><tr><td>validate</td><td>true|false|1|0</td><td>false</td><td>perform expensive internal validation</td></tr><tr><td>trace</td><td>0-</td><td>0</td><td>trace execution of training in a very fine-grained fashion</td></tr><tr><td>feature_prop</td><td>0.0<N<=1.0</td><td>1</td><td>which proportion of features do we look at</td></tr></table></p>
+
+<p>Note that our version of the Naive Bayes Classifier only supports discrete
+features. Numerical-valued columns (types <code>NUMBER</code> and <code>INTEGER</code>) are accepted,
+but they will be discretized prior to training. To do so, we will simply split
+all the values in two, using the threshold that provides the best separation
+of classes. You can always do your own discretization, for instance using a
+<code>CASE</code> expression.</p>
+
+<p><a name="fasttext"></a></p>
+
+<h3>FastText (type=fasttext)</h3>
+
+<p><table><tr><th>Parameter</th><th>Range</th><th>Default</th><th>Description</th></tr><tr><td>verbosity</td><td>0-5</td><td>2</td><td>verbosity of information from training</td></tr><tr><td>profile</td><td>true|false|1|0</td><td>false</td><td>whether or not to profile</td></tr><tr><td>validate</td><td>true|false|1|0</td><td>false</td><td>perform expensive internal validation</td></tr><tr><td>epoch</td><td>1+</td><td>5</td><td>Number of iterations over the data</td></tr><tr><td>dims</td><td>1+</td><td>100</td><td>Number of dimensions in the embedding</td></tr><tr><td>verbosity</td><td>0+</td><td>0</td><td>Level of verbosity in standard output</td></tr></table></p>
+
+<p>Note that our version of the Fast Text Classifier only supports feature counts, and currently
+does not support regression.</p>
+
+<p><em>See also</em> : <a href="https://arxiv.org/abs/1607.01759v2" target="_blank">fastText on arXiv</a>.</p>
+
+<p><a name="defConf"></a></p>
+
+<h2>Default <code>configurationFile</code></h2>
+
+<p>The default, overrideable <code>configurationFile</code> contains the following predefined configurations, which can be accessed by name with the <code>algorithm</code> parameter:</p>
+
+<pre><code class="language-python">{
+
+    &quot;nn&quot;: { 
+        &quot;_note&quot;: &quot;Neural Network&quot;,
+        
+        &quot;type&quot;: &quot;perceptron&quot;,
+        &quot;arch&quot;: 50,
+        &quot;verbosity&quot;: 3,
+        &quot;max_iter&quot;: 100,
+        &quot;learning_rate&quot;: 0.01,
+        &quot;batch_size&quot;: 10
+    },
+
+
+    &quot;bbdt&quot;: {
+        &quot;_note&quot;: &quot;Bagged boosted decision trees&quot;,
+        
+        &quot;type&quot;: &quot;bagging&quot;,
+        &quot;verbosity&quot;: 3,
+        &quot;weak_learner&quot;: {
+            &quot;type&quot;: &quot;boosting&quot;,
+            &quot;verbosity&quot;: 3,
+            &quot;weak_learner&quot;: {
+                &quot;type&quot;: &quot;decision_tree&quot;,
+                &quot;max_depth&quot;: 3,
+                &quot;verbosity&quot;: 0,
+                &quot;update_alg&quot;: &quot;gentle&quot;,
+                &quot;random_feature_propn&quot;: 0.5
+            },
+            &quot;min_iter&quot;: 5,
+            &quot;max_iter&quot;: 30
+        },
+        &quot;num_bags&quot;: 5
+    },
+
+    &quot;bbdt2&quot;: {
+        &quot;_note&quot;: &quot;Bagged boosted decision trees&quot;,
+        
+        &quot;type&quot;: &quot;bagging&quot;,
+        &quot;verbosity&quot;: 1,
+        &quot;weak_learner&quot;: {
+            &quot;type&quot;: &quot;boosting&quot;,
+            &quot;verbosity&quot;: 3,
+            &quot;weak_learner&quot;: {
+                &quot;type&quot;: &quot;decision_tree&quot;,
+                &quot;max_depth&quot;: 5,
+                &quot;verbosity&quot;: 0,
+                &quot;update_alg&quot;: &quot;gentle&quot;,
+                &quot;random_feature_propn&quot;: 0.8
+            },
+            &quot;min_iter&quot;: 5,
+            &quot;max_iter&quot;: 10,
+            &quot;verbosity&quot;: 0
+        },
+        &quot;num_bags&quot;: 32
+    },
+
+    &quot;bbdt_d2&quot;: {
+        &quot;_note&quot;: &quot;Bagged boosted decision trees&quot;,
+        
+        &quot;type&quot;: &quot;bagging&quot;,
+        &quot;verbosity&quot;: 3,
+        &quot;weak_learner&quot;: {
+            &quot;type&quot;: &quot;boosting&quot;,
+            &quot;verbosity&quot;: 3,
+            &quot;weak_learner&quot;: {
+                &quot;type&quot;: &quot;decision_tree&quot;,
+                &quot;max_depth&quot;: 2,
+                &quot;verbosity&quot;: 0,
+                &quot;update_alg&quot;: &quot;gentle&quot;,
+                &quot;random_feature_propn&quot;: 1
+            },
+            &quot;min_iter&quot;: 5,
+            &quot;max_iter&quot;: 30
+        },
+        &quot;num_bags&quot;: 5
+    },
+
+    &quot;bbdt_d5&quot;: {
+        &quot;_note&quot;: &quot;Bagged boosted decision trees&quot;,
+        
+        &quot;type&quot;: &quot;bagging&quot;,
+        &quot;verbosity&quot;: 3,
+        &quot;weak_learner&quot;: {
+            &quot;type&quot;: &quot;boosting&quot;,
+            &quot;verbosity&quot;: 3,
+            &quot;weak_learner&quot;: {
+                &quot;type&quot;: &quot;decision_tree&quot;,
+                &quot;max_depth&quot;: 5,
+                &quot;verbosity&quot;: 0,
+                &quot;update_alg&quot;: &quot;gentle&quot;,
+                &quot;random_feature_propn&quot;: 1
+            },
+            &quot;min_iter&quot;: 5,
+            &quot;max_iter&quot;: 30
+        },
+        &quot;num_bags&quot;: 5
+    },
+
+    &quot;bdt&quot;: {
+        &quot;_note&quot;: &quot;Bagged decision trees&quot;,
+        
+        &quot;type&quot;: &quot;bagging&quot;,
+        &quot;verbosity&quot;: 3,
+        &quot;weak_learner&quot;: {
+            &quot;type&quot;: &quot;decision_tree&quot;,
+            &quot;verbosity&quot;: 0,
+            &quot;max_depth&quot;: 5
+        },
+        &quot;num_bags&quot;: 20
+    },
+
+    &quot;dt&quot;: {
+        &quot;_note&quot;: &quot;Plain decision tree&quot;,
+        
+        &quot;type&quot;: &quot;decision_tree&quot;,
+        &quot;max_depth&quot;: 8,
+        &quot;verbosity&quot;: 3,
+        &quot;update_alg&quot;: &quot;prob&quot;
+    },
+
+    &quot;glz_linear&quot;: {
+        &quot;_note&quot;: &quot;Generalized Linear Model, linear link function, to be used for &#39;regression&#39; mode&quot;,
+
+        &quot;type&quot;: &quot;glz&quot;,
+        &quot;link_function&quot;: &quot;linear&quot;,
+        &quot;verbosity&quot;: 3,
+        &quot;normalize &quot;: &quot;true&quot;,
+        &quot;regularization&quot; = &quot;l2&quot;
+    },
+
+    &quot;glz&quot;: {
+        &quot;_note&quot;: &quot;Generalized Linear Model.  Very smooth but needs very good features&quot;,
+
+        &quot;type&quot;: &quot;glz&quot;,
+        &quot;verbosity&quot;: 3,
+        &quot;normalize &quot;: &quot; true&quot;,
+        &quot;regularization&quot; = &quot;l2&quot;
+    },
+
+    &quot;glz2&quot;: {
+        &quot;_note&quot;: &quot;Generalized Linear Model.  Very smooth but needs very good features&quot;,
+
+        &quot;type&quot;: &quot;glz&quot;,
+        &quot;verbosity&quot;: 3
+    },
+
+    &quot;bglz&quot;: {
+        &quot;_note&quot;: &quot;Bagged random GLZ&quot;,
+
+        &quot;type&quot;: &quot;bagging&quot;,
+        &quot;verbosity&quot;: 1,
+        &quot;validation_split&quot;: 0.1,
+        &quot;weak_learner&quot;: {
+            &quot;type&quot;: &quot;glz&quot;,
+            &quot;feature_proportion&quot;: 1.0,
+            &quot;verbosity&quot;: 0    
+        },
+        &quot;num_bags&quot;: 32
+    },
+
+
+    &quot;bs&quot;: {
+        &quot;_note&quot;: &quot;Boosted stumps&quot;,
+
+        &quot;type&quot;: &quot;boosted_stumps&quot;,
+        &quot;min_iter&quot;: 10,
+        &quot;max_iter&quot;: 200,
+        &quot;update_alg&quot;: &quot;gentle&quot;,
+        &quot;verbosity&quot;: 3
+    },
+
+    &quot;bs2&quot;: {
+        &quot;_note&quot;: &quot;Boosted stumps&quot;,
+
+        &quot;type&quot;: &quot;boosting&quot;,
+        &quot;verbosity&quot;: 3,
+        &quot;weak_learner&quot;: {
+            &quot;type&quot;: &quot;decision_tree&quot;,
+            &quot;max_depth&quot;: 1,
+            &quot;verbosity&quot;: 0,
+            &quot;update_alg&quot;: &quot;gentle&quot;
+        },
+        &quot;min_iter&quot;: 5,
+        &quot;max_iter&quot;: 300,
+        &quot;trace_training_acc&quot;: &quot;true&quot;
+    },
+
+    &quot;bbs2&quot;: {
+        &quot;_note&quot;: &quot;Bagged boosted stumps&quot;,
+
+        &quot;type&quot;: &quot;bagging&quot;,
+        &quot;num_bags&quot;: 5,
+        &quot;weak_learner&quot;: {
+            &quot;type&quot;: &quot;boosting&quot;,
+            &quot;verbosity&quot;: 3,
+            &quot;weak_learner&quot;: {
+                &quot;type&quot;: &quot;decision_tree&quot;,
+                &quot;max_depth&quot;: 1,
+                &quot;verbosity&quot;: 0,
+                &quot;update_alg&quot;: &quot;gentle&quot;
+            },
+            &quot;min_iter&quot;: 5,
+            &quot;max_iter&quot;: 300,
+            &quot;trace_training_acc&quot;: &quot;true&quot;
+        }
+    },
+
+    &quot;naive_bayes&quot;: {
+        &quot;_note&quot;: &quot;Naive Bayes&quot;,
+
+        &quot;type&quot;: &quot;naive_bayes&quot;,
+        &quot;feature_prop&quot;: &quot;1&quot;,
+        &quot;verbosity&quot;: 3
+    }
+}
+</code></pre>
+
+<p><a name="trainWeight"></a></p>
+
+<h2>Training Weighting</h2>
+
+<p>This section describes how you can set different weights for each example in
+your training set, either based upon the label or based upon a calculation over
+the row, to enable finer control over which examples the classifier makes the
+most effort to classify.</p>
+
+<h3>Equalizing class weights</h3>
+
+<p>The <code>equalizationFactor</code> parameter can be used to adjust an unbalanced training
+set to be more balanced for training, which frequently has the effect of
+requiring the classifiers to focus more on separating the positive and negative
+classes rather then getting really high scores for the dominant class.</p>
+
+<ul>
+<li>Setting this parameter to 0.0 weights the parameters according to
+the <code>weight</code> expression in <code>trainingData</code>.</li>
+<li>Setting this parameter to 1.0 will adjust the weights such that each class has
+exactly identical weight.</li>
+<li>Setting it to something else (0.5, the default, is a good value for most unbalanced training
+set use cases) will multiply the weights of each class according to
+\(
+w_{class} \rightarrow w_{\textrm{class}} \times \left( \sum {w_{\textrm{class}}} \right) ^{-\textrm{equalizationFactor}}
+\)</li>
+</ul>
+
+<h3>Setting example weight explicitly</h3>
+
+<p>The optional <code>weight</code> expression in the <code>trainingData</code> parameter of the
+configuration must evaluate to a positive number that implies how many
+examples this counts for.  For example, a single row with a weight of 2, or the
+same single row duplicated twice with a weight of 1 will have the same effect.</p>
+
+<p>Note that only the relative weights matter.  Before the classifier is trained,
+the weights will be normalized so that they sum to 1 to avoid numerical issues
+in the classifier training process.</p>
+
+<h3>Combining the two</h3>
+
+<p>If the two weighting methods are combined, then the <code>weight</code> expression will be
+used to set the relative weight per example within its label class, and the
+<code>equalizationFactor</code> will adjust the relative weight of each class.</p>
+
+<h2>See also</h2>
+
+<ul>
+<li>The <a href="/doc/builtin/procedures/Classifier.md.html"><code>classifier.train</code> procedure type</a> trains a classifier.</li>
+<li>The <a href="/doc/builtin/procedures/Accuracy.md.html"><code>classifier.test</code> procedure type</a> allows the accuracy of a predictor to be tested against
+held-out data.</li>
+<li>The <a href="/doc/builtin/procedures/ExperimentProcedure.md.html"><code>classifier.experiment</code> procedure type</a> performs both training and testing of a classifier.</li>
+</ul>
+</body>
+</html>

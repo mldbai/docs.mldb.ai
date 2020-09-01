@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset='utf-8' />
+<title>MLDB Documentation</title>
+<script src='/resources/js/mathjax_TeX-AMS-MML_HTMLorMML.js'></script>
+<link rel='stylesheet' href='/resources/css/prism.css'>
+<link rel='stylesheet' href='/resources/css/doc.css'>
+<script src='/resources/js/jquery-1.11.2.min.js'></script>
+<script src='/resources/js/prism.js'></script>
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  if(window.location.origin == 'http://mldb.ai')
+  { ga('create', 'UA-16909325-9', 'auto'); }
+  else
+  { ga('create', 'UA-16909325-10', {'cookieDomain': 'none'}); }
+  ga('send', 'pageview');
+</script>
+</head>
+<body style='margin-left: 50px; max-width: 1000px'>
+<h1>Python Plugins</h1>
+
+<p>This plugin allows for a plugin that is implemented in Python to be loaded
+into MLDB to extend its functionality.</p>
+
+<h2>Configuration</h2>
+
+<p><p>A new plugin of type <code>python</code> named <code>&lt;id&gt;</code> can be created as follows:</p><pre><code class="language-python">mldb.put(&quot;/v1/plugins/&quot;+&lt;id&gt;, {
+    &quot;type&quot;: &quot;python&quot;,
+    &quot;params&quot;: {
+        "address": &lt;string&gt;,
+        "source": &lt;PackageElementSources&gt;,
+        "args": &lt;Any&gt;
+    }
+})</code></pre><p>with the following key-value definitions for <code>params</code>:</p><table class="params table" width='100%'><tr><th align='right'>Field, Type, Default</th><th>Description</th></tr>
+<tr><td align='right'><p><strong>address</strong> <br/> <nobr>string</nobr> <br/> <code></code></p></td><td><p>URI or location of script to run (use this parameter OR &#39;source&#39;)</p>
+</td></tr>
+<tr><td align='right'><p><strong>source</strong> <br/> <nobr>PackageElementSources</nobr> <br/> <code></code></p></td><td><p>source of script to run (use this parameter OR &#39;address&#39;)</p>
+</td></tr>
+<tr><td align='right'><p><strong>args</strong> <br/> <nobr>Any</nobr> <br/> <code></code></p></td><td><p>Arguments to pass to script</p>
+</td></tr>
+</table></p>
+
+<p>With <code>PackageElementSources</code> defined as:</p>
+
+<p><table class="params table" width='100%'><tr><th align='right'>Field, Type, Default</th><th>Description</th></tr>
+<tr><td align='right'><p><strong>main</strong> <br/> <nobr>string</nobr> <br/> <code></code></p></td><td><p>source for the main element of the plugin</p>
+</td></tr>
+<tr><td align='right'><p><strong>routes</strong> <br/> <nobr>string</nobr> <br/> <code></code></p></td><td><p>source for the routes element of the plugin</p>
+</td></tr>
+<tr><td align='right'><p><strong>status</strong> <br/> <nobr>string</nobr> <br/> <code></code></p></td><td><p>source for the status element of the plugin</p>
+</td></tr>
+</table></p>
+
+<p>If the <code>address</code> parameter is used, it may contain:</p>
+
+<ul>
+<li><code>file:///mldb_data/&lt;directory_within_mldb_data&gt;</code>: a directory within the Docker container&#39;s mapped directory (the directory you specified with your <code>docker run</code> command) will be copied and its <code>main.py</code> file will be run, and <code>routes.py</code> will be run to handle REST requests.</li>
+<li><code>git://</code> or <code>gist://</code>: the repo will be cloned and its <code>main.py</code> file will be run to initialize the plugin, and <code>routes.py</code> will be run to handle REST requests. To checkout a specific commit or tag, add the following at the end of the address: <code>#hash</code>.</li>
+<li><code>file:///mldb_data/&lt;file_within_mldb_data&gt;</code>: a Python file will be run from the Docker container&#39;s mapped directory.</li>
+<li><code>http://&lt;url&gt;</code> or <code>https://&lt;url&gt;</code>: a Python file will be downloaded via HTTP(S) and executed.</li>
+</ul>
+
+<p>If the <code>source</code> parameter is used, <code>main</code> will be executed to initialize the plugin and <code>routes</code> will be executed to handle REST requests (see <code>mldb.plugin.rest_params</code> below)</p>
+
+<p>If the <code>args</code> parameter is used, its contents are available to the <code>main</code> Python code via the <code>mldb.plugins.args</code> variable (see below).</p>
+
+<h2><a name="API"></a> Server-side Python API</h2>
+
+<p>Plugins and scripts running within the MLDB instance will have access to an <code>mldb</code> object which lets them manipulate the database more efficiently than via HTTP network round-trips.</p>
+
+<h3><code>mldb</code> object (available to plugins and scripts)</h3>
+
+<ul>
+<li><code>mldb.log(message)</code> basic logging facility.</li>
+<li><code>mldb.create_dataset(dataset_config)</code> creates and returns a dataset object (see below). Equivalent of an HTTP <a href="../../rest.html#POST:/v1/datasets"><code>POST /v1/datasets</code></a>.</li>
+<li><code>mldb.perform(verb, uri, [[query_string_key, query_string_value],...], payload, [[header_name, header_value],...])</code> efficiently emulates HTTP requests. See the <a href="../../rest.html">REST API documentation</a> for available routes and payloads. 
+
+<ul>
+<li>The header <code>async:true</code> is supported to perform asynchronous call when creating expensive resources. When this header is used, the call will return immediately and the object will be created in the background.  One can track the progress of the operation by performing a &quot;GET&quot; on the resource.  The <code>state</code> field part of the <code>response</code> field will be set to <code>initializing</code> while the object is being created.  Once the creation is completed the <code>state</code> field will be set to <code>ok</code>.</li>
+</ul></li>
+</ul>
+
+<h3>Filesystem access</h3>
+
+<p>There are two functions that allow access to the virtual filesystem of MLDB:</p>
+
+<ul>
+<li><code>mldb.read_lines(uri, max_lines)</code> opens the given URI and returns a list with the first <code>max_lines</code> of the file. When <code>max_lines=-1</code> (default), all the lines are returned.</li>
+<li><p><code>mldb.ls(uri)</code> lists the directory-like uri (currently <code>file://</code> and
+<code>s3://</code> URIs support listing) and returns the content.  The returned
+object has two fields: <code>dirs</code> contains an array of subdirectories, as
+URIs, and <code>objects</code> contains an associative array map of the objects
+in the directory, with the URI as the key and the following structure
+as the value:</p>
+
+<p><table class="params table" width='100%'><tr><th align='right'>Field, Type, Default</th><th>Description</th></tr>
+<tr><td align='right'><p><strong>exists</strong> <br/> <nobr>bool</nobr> <br/> <code>false</code></p></td><td><p>Does the object exist?</p>
+</td></tr>
+<tr><td align='right'><p><strong>lastModified</strong> <br/> <nobr>Date</nobr> <br/> <code>"1970-01-01T00:00:00Z"</code></p></td><td><p>Date the object was last modified</p>
+</td></tr>
+<tr><td align='right'><p><strong>size</strong> <br/> <nobr>int</nobr> <br/> <code>0</code></p></td><td><p>Size in bytes of the object</p>
+</td></tr>
+<tr><td align='right'><p><strong>etag</strong> <br/> <nobr>string</nobr> <br/> <code></code></p></td><td><p>Entity tag (unique hash) for object</p>
+</td></tr>
+<tr><td align='right'><p><strong>storageClass</strong> <br/> <nobr>string</nobr> <br/> <code></code></p></td><td><p>Storage class of object if applicable</p>
+</td></tr>
+<tr><td align='right'><p><strong>ownerId</strong> <br/> <nobr>string</nobr> <br/> <code></code></p></td><td><p>ID of owner</p>
+</td></tr>
+<tr><td align='right'><p><strong>ownerName</strong> <br/> <nobr>string</nobr> <br/> <code></code></p></td><td><p>Name of owner</p>
+</td></tr>
+<tr><td align='right'><p><strong>objectMetadata</strong> <br/> <nobr>MAP { string : JSON }</nobr> <br/> <code></code></p></td><td><p>Metadata about the object</p>
+</td></tr>
+<tr><td align='right'><p><strong>userMetadata</strong> <br/> <nobr>MAP { string : JSON }</nobr> <br/> <code></code></p></td><td><p>Metadata placed there by the user</p>
+</td></tr>
+</table></p></li>
+</ul>
+
+<h3><code>dataset</code> object (available to plugins and scripts)</h3>
+
+<ul>
+<li><code>dataset.record_row(row_name, [[col_name, value, timestamp],...])</code> records a row in the dataset</li>
+<li><code>dataset.record_rows([ [ row_name, [[col_name, value, timestamp],...] ], ... ])</code> records multiple rows in the dataset.  It is more efficient than <code>record_row</code> in most circumstances.</li>
+<li><code>dataset.record_column(column_name, [[row_name, value, timestamp],...])</code> records a column in the dataset.  Not all dataset types support recording of columns.</li>
+<li><code>dataset.record_columns([ [ column_name, [[row_name, value, timestamp],...] ], ... ])</code> records multiple columns in the dataset.  Not all dataset types support recording of columns.</li>
+<li><code>dataset.commit()</code> commits a dataset.  The behavior of committing varies by dataset
+type and some types may allow committing only once; see the documentation for the
+dataset type for more details.</li>
+</ul>
+
+<h3><code>mldb.script</code> object (available to scripts)</h3>
+
+<ul>
+<li><code>mldb.script.args</code> contains the value of the <code>args</code> key in the JSON payload of the HTTP request</li>
+<li><code>mldb.script.set_return(return_val)</code> sets the return value of the script to be sent with the HTTP response</li>
+</ul>
+
+<h3><code>mldb.plugin</code> object (available to plugins)</h3>
+
+<ul>
+<li><code>mldb.plugin.args</code> contains the value of the <code>args</code> key in the JSON payload of the HTTP request</li>
+<li><code>mldb.plugin.serve_static_folder(route, dir)</code> serve up static content under <code>dir</code> on the given plugin route <code>GET /v1/plugins/&lt;id&gt;/routes/&lt;route&gt;</code>.</li>
+<li><code>mldb.plugin.serve_documentation_folder(dir)</code> serve up documentation under <code>dir</code> on the plugin&#39;s documentation route (<code>GET /v1/plugins/&lt;id&gt;/doc</code>).  This will render files with a <code>.md</code> extension as HTML.See the <a href="../DocumentationServing.md.html">Documentation Serving</a> page for more details.</li>
+<li><code>mldb.plugin.rest_params</code>: object available within <code>routes.py</code> which represents an HTTP REST call. It has the following fields and methods:
+
+<ul>
+<li><code>verb</code>, <code>remaining</code>, <code>rest_params</code>: route and query-string details such that for <code>GET /v1/plugins/X/routes/hello?who=you</code>
+
+<ul>
+<li><code>verb</code> = <code>GET</code></li>
+<li><code>remaining</code> = <code>hello</code></li>
+<li><code>rest_params</code> = <code>[[&#39;who&#39;, &#39;you&#39;], [&#39;yes&#39;,&#39;you&#39;]</code></li>
+</ul></li>
+<li><code>headers</code>: HTTP headers</li>
+<li><code>payload</code>: HTTP body</li>
+<li><code>contentType</code>: content type of HTTP body</li>
+<li><code>contentLength</code>: content length of HTTP body</li>
+</ul></li>
+<li><code>mldb.plugin.set_return(body)</code>: available within <code>routes.py</code>, function called to write to HTTP response body and HTTP return code</li>
+<li><code>mldb.plugin.get_plugin_dir()</code>: returns the absolute path of the plugin&#39;s installation directory on disk</li>
+</ul>
+
+<h3>Handling a custom route</h3>
+
+<p>Calling <code>/v1/plugins/&lt;id&gt;/routes/&lt;route&gt;</code> will trigger the execution of the code in <code>routes.py</code>. The plugin developer must handle the <code>(verb, remaining)</code> tuple, available in the <code>mldb.plugin.rest_params</code> object. If it represents a valid route, the <code>set_return</code> function must be called with a non-null body, which will be returned in the response. If the function is not called or called with a null body, the HTTP response code will be 404.</p>
+
+<h2>Plugin output</h2>
+
+<p><code>GET /v1/plugins/&lt;id&gt;/routes/lastoutput</code> will return the output of the latest plugin code to have run: either the plugin loader or any subsequent calls to request handlers (see <code>mldb.plugin.set_request_handler()</code> above).</p>
+
+<p>Script output will be returned as the HTTP response.</p>
+
+<p>In either case, the output will look like this:</p>
+
+<pre><code>{
+    &quot;logs&quot;: [&lt;logs&gt;], 
+    &quot;result&quot;: &lt;return_value&gt;,
+}
+</code></pre>
+
+<p>where <code>&lt;logs&gt;</code> come from calls to <code>mldb.log()</code> or using the python <code>print</code> statement to standard output or standard error, and <code>&lt;return_value&gt;</code> comes from a call to <code>mldb.set_return()</code> (see above).</p>
+
+<p>If an exception was thrown, the output will look like</p>
+
+<pre><code>{
+    &quot;logs&quot;: [&lt;logs&gt;], 
+    &quot;exception&quot;: &lt;exception details&gt;,
+}
+</code></pre>
+
+<p>The actual output object looks like this:</p>
+
+<p><table class="params table" width='100%'><tr><th align='right'>Field, Type, Default</th><th>Description</th></tr>
+<tr><td align='right'><p><strong>result</strong> <br/> <nobr>JSON</nobr> <br/> <code></code></p></td><td><p>Result of running script</p>
+</td></tr>
+<tr><td align='right'><p><strong>logs</strong> <br/> <nobr>ARRAY [ ScriptLogEntry ]</nobr> <br/> <code></code></p></td><td><p>Log entries created by script</p>
+</td></tr>
+<tr><td align='right'><p><strong>exception</strong> <br/> <nobr>LINK std::shared_ptr<MLDB::ScriptException></nobr> <br/> <code></code></p></td><td><p>Exception thrown by script</p>
+</td></tr>
+<tr><td align='right'><p><strong>extra</strong> <br/> <nobr>Any</nobr> <br/> <code></code></p></td><td><p>Extra information from language</p>
+</td></tr>
+</table></p>
+
+<p>with log entries looking like</p>
+
+<p><table class="params table" width='100%'><tr><th align='right'>Field, Type, Default</th><th>Description</th></tr>
+<tr><td align='right'><p><strong>ts</strong> <br/> <nobr>Date</nobr> <br/> <code>"1970-01-01T00:00:00Z"</code></p></td><td><p>Timestamp at which message was received</p>
+</td></tr>
+<tr><td align='right'><p><strong>s</strong> <br/> <nobr>string</nobr> <br/> <code></code></p></td><td><p>Stream on which message was received</p>
+</td></tr>
+<tr><td align='right'><p><strong>c</strong> <br/> <nobr>ScriptLogContent</nobr> <br/> <code></code></p></td><td><p>Content of stream</p>
+</td></tr>
+<tr><td align='right'><p><strong>closed</strong> <br/> <nobr>bool</nobr> <br/> <code>false</code></p></td><td><p>Stream is closed</p>
+</td></tr>
+</table></p>
+
+<p>Exceptions are represented as</p>
+
+<p><table class="params table" width='100%'><tr><th align='right'>Field, Type, Default</th><th>Description</th></tr>
+<tr><td align='right'><p><strong>message</strong> <br/> <nobr>string</nobr> <br/> <code></code></p></td><td><p>Exception description</p>
+</td></tr>
+<tr><td align='right'><p><strong>where</strong> <br/> <nobr>string</nobr> <br/> <code></code></p></td><td><p>Full description of where exception came from</p>
+</td></tr>
+<tr><td align='right'><p><strong>scriptUri</strong> <br/> <nobr>string</nobr> <br/> <code></code></p></td><td><p>URI of script that caused the exception</p>
+</td></tr>
+<tr><td align='right'><p><strong>lineNumber</strong> <br/> <nobr>int</nobr> <br/> <code>-1</code></p></td><td><p>Number of the line that caused the exception</p>
+</td></tr>
+<tr><td align='right'><p><strong>columnStart</strong> <br/> <nobr>int</nobr> <br/> <code>-1</code></p></td><td><p>Start column in the line</p>
+</td></tr>
+<tr><td align='right'><p><strong>columnEnd</strong> <br/> <nobr>int</nobr> <br/> <code>-1</code></p></td><td><p>End column in the line</p>
+</td></tr>
+<tr><td align='right'><p><strong>lineContents</strong> <br/> <nobr>string</nobr> <br/> <code></code></p></td><td><p>Contents of the line indicating where the exception was</p>
+</td></tr>
+<tr><td align='right'><p><strong>context</strong> <br/> <nobr>ARRAY [ string ]</nobr> <br/> <code></code></p></td><td><p>What we were doing when we threw the exception</p>
+</td></tr>
+<tr><td align='right'><p><strong>stack</strong> <br/> <nobr>ARRAY [ ScriptStackFrame ]</nobr> <br/> <code></code></p></td><td><p>Call stack for exception</p>
+</td></tr>
+<tr><td align='right'><p><strong>extra</strong> <br/> <nobr>Any</nobr> <br/> <code></code></p></td><td><p>Extra information from language about exception</p>
+</td></tr>
+</table></p>
+
+<p>with stack frames like</p>
+
+<p><table class="params table" width='100%'><tr><th align='right'>Field, Type, Default</th><th>Description</th></tr>
+<tr><td align='right'><p><strong>scriptUri</strong> <br/> <nobr>string</nobr> <br/> <code></code></p></td><td><p>URI of script in this frame</p>
+</td></tr>
+<tr><td align='right'><p><strong>functionName</strong> <br/> <nobr>string</nobr> <br/> <code></code></p></td><td><p>Name of function in this frame</p>
+</td></tr>
+<tr><td align='right'><p><strong>where</strong> <br/> <nobr>string</nobr> <br/> <code></code></p></td><td><p>Where is the frame, in natural format for language</p>
+</td></tr>
+<tr><td align='right'><p><strong>lineNumber</strong> <br/> <nobr>int</nobr> <br/> <code>-1</code></p></td><td><p>Line number</p>
+</td></tr>
+<tr><td align='right'><p><strong>columnStart</strong> <br/> <nobr>int</nobr> <br/> <code>-1</code></p></td><td><p>Column number of error</p>
+</td></tr>
+<tr><td align='right'><p><strong>columnEnd</strong> <br/> <nobr>int</nobr> <br/> <code>-1</code></p></td><td><p>End column number of error</p>
+</td></tr>
+<tr><td align='right'><p><strong>extra</strong> <br/> <nobr>Any</nobr> <br/> <code></code></p></td><td><p>Extra stack from information from language</p>
+</td></tr>
+</table></p>
+
+<p>Note that the Python plugin only fills in the <code>where</code> field of stack frame
+entries.</p>
+
+<h2>Debugging</h2>
+
+<p>The following are useful for debugging MLDB, but should not be used in normal
+use of MLDB:</p>
+
+<ul>
+<li><code>mldb.debugSetPathOptimizationLevel(level)</code> controls whether MLDB takes
+optimized or generic paths.  It can be used to unit-test the equivalence
+of optimized and non-optimized paths.  Setting to <code>&quot;always&quot;</code> (the default)
+will make MLDB always use optimized implementations when possible.  Setting
+to <code>&quot;never&quot;</code> has the opposite effect.  Setting to <code>&quot;sometimes&quot;</code> will
+randomly and non-deterministically choose whether or not to use an
+optimized path each time that one is encountered (50% probability of each).
+Note that this setting applies to the entire MLDB instance, and so should
+not be used in production.</li>
+</ul>
+
+<h2>mldb_wrapper</h2>
+
+<p>A higher level object named <code>mldb_wrapper</code> can be used to wrap the <code>mldb</code> object. Key features are:</p>
+
+<ul>
+<li>REST calls (GET, POST, PUT, DELETE) validate the returned status_code. If it&#39;s not between 200 and 399,
+it raises <code>mldb_wrapper.ResponseException</code>. It eliminates the need to validate the status code after each call.</li>
+<li>The <code>log(thing)</code> function acts differently based on <code>thing</code> type. <code>dicts</code> and <code>lists</code> are formatted using <code>json.dumps</code>.
+<code>str</code> and <code>unicode</code> are output as is. Any other type will output the string representation of <code>thing</code></li>
+<li>The <code>query(query)</code> function, which is a shorhand for <code>GET /v1/query?q=&lt;query&gt;&amp;format=table</code>. It returns a list of the
+rows. Whenever you work without dates, that is likely the go-to function for querying.</li>
+<li>The <code>post_run_and_track_procedure(payload, refresh_rate_sesc)</code>, which creates a procedure based on <code>payload</code>, runs it and prints its progress status every <code>refresh_rate_sec</code> seconds. It returns as soon as the procedure stops running. Useful to
+see what&#39;s going on for long running procedures.</li>
+<li>The <code>run_tests()</code> function, which executes python unittest of the current context.</li>
+</ul>
+
+<h3>Example</h3>
+
+<p>Code
+```python</p>
+
+<h1>We create the mldb_wrapper object</h1>
+
+<p>wrapper = mldb_wrapper.wrap(mldb)</p>
+
+<h1>The functions of the mldb object are still accessible. Here we use</h1>
+
+<h1>create_dataset, record 2 rows and commit.</h1>
+
+<p>ds = wrapper.create<em>dataset({&#39;id&#39; : &#39;ds&#39;, &#39;type&#39; : &#39;sparse.mutable&#39;})
+ds.record</em>row(&#39;row 1&#39;, [[&#39;ColA&#39;, &#39;A&#39;, 0]])
+ds.record_row(&#39;row 2&#39;, [[&#39;ColB&#39;, &#39;B&#39;, 0]])
+ds.commit()</p>
+
+<h1>We use the query function which returns a list of the rows.</h1>
+
+<p>res = wrapper.query(&quot;SELECT * FROM ds&quot;)</p>
+
+<h1>Output the result. Since it&#39;s a list the log function will format it.</h1>
+
+<p>wrapper.log(res)</p>
+
+<h1>The way to set the return is the same as before. Here we set &quot;success&quot;.</h1>
+
+<p>mldb.script.set_return(&quot;success&quot;)</p>
+
+<pre><code>
+Output
+```
+2016-10-19 20:37:34.535 script runner plugin [
+    [
+        &quot;_rowName&quot;,
+        &quot;ColB&quot;,
+        &quot;ColA&quot;
+    ],
+    [
+        &quot;row 2&quot;,
+        &quot;B&quot;,
+        null
+    ],
+    [
+        &quot;row 1&quot;,
+        null,
+        &quot;A&quot;
+    ]
+]
+```
+
+For more examples, refer to the python tests, which are mostly written with the `mldb_wrapper`.
+</code></pre>
+</body>
+</html>

@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset='utf-8' />
+<title>MLDB Documentation</title>
+<script src='/resources/js/mathjax_TeX-AMS-MML_HTMLorMML.js'></script>
+<link rel='stylesheet' href='/resources/css/prism.css'>
+<link rel='stylesheet' href='/resources/css/doc.css'>
+<script src='/resources/js/jquery-1.11.2.min.js'></script>
+<script src='/resources/js/prism.js'></script>
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  if(window.location.origin == 'http://mldb.ai')
+  { ga('create', 'UA-16909325-9', 'auto'); }
+  else
+  { ga('create', 'UA-16909325-10', {'cookieDomain': 'none'}); }
+  ga('send', 'pageview');
+</script>
+</head>
+<body style='margin-left: 50px; max-width: 1000px'>
+<h1>MongoDB Record Dataset</h1>
+
+<p>The MongoDB Record Dataset is a write-only
+<a href="/doc/builtin/datasets/Datasets.md.html">dataset</a> that writes to a MongoDB
+collection.</p>
+
+<p>Rows are stored in collections with the following format:</p>
+
+<pre><code>{
+    &quot;_id&quot; : &lt;row name&gt;,
+    &quot;&lt;column name&gt;&quot;, &lt;column value&gt;,
+    ...
+}
+</code></pre>
+
+<h2>Caveats</h2>
+
+<ul>
+<li>Timestamps are not recorded into MongoDB.</li>
+<li>Column names containing a dot (.) or starting with a dollar sign ($) will
+fail to be recorded as MongoDB doesn&#39;t support them.</li>
+<li>Trying to record a row with a row name that was already recorded will fail.</li>
+</ul>
+
+<h2>Configuration</h2>
+
+<p><p>A new dataset of type <code>mongodb.record</code> named <code>&lt;id&gt;</code> can be created as follows:</p><pre><code class="language-python">mldb.put(&quot;/v1/datasets/&quot;+&lt;id&gt;, {
+    &quot;type&quot;: &quot;mongodb.record&quot;,
+    &quot;params&quot;: {
+        "uriConnectionScheme": &lt;string&gt;,
+        "collection": &lt;string&gt;
+    }
+})</code></pre><p>with the following key-value definitions for <code>params</code>:</p><table class="params table" width='100%'><tr><th align='right'>Field, Type, Default</th><th>Description</th></tr>
+<tr><td align='right'><p><strong>uriConnectionScheme</strong> <br/> <nobr>string</nobr> <br/> <code></code></p></td><td><p>MongoDB connection scheme. mongodb://[username:password@]host1[:port1][,host2[:port2],...[,hostN[:portN]]][/[database]]</p>
+</td></tr>
+<tr><td align='right'><p><strong>collection</strong> <br/> <nobr>string</nobr> <br/> <code></code></p></td><td><p>The collection to record to.</p>
+</td></tr>
+</table></p>
+
+<h2>Example</h2>
+
+<p>Here we create the dataset named <code>mldb_to_mongodb</code> which will write to mongodb
+database <code>zips</code> collection <code>mldb_coll</code>.</p>
+
+<pre><code class="language-python">mldb.put(&quot;/v1/datasets/mldb_to_mongodb&quot;, {
+    &quot;type&quot;: &quot;mongodb.record&quot;,
+    &quot;params&quot;: {
+        &quot;connectionScheme&quot;: &#39;mongodb://somehost.mldb.ai:11712/zips&#39;,
+        &quot;collection&quot;: &#39;mldb_coll&#39;
+    }
+})
+
+</code></pre>
+
+<p>Then we record a row with 2 columns.</p>
+
+<pre><code class="language-python">print mldb.post(&#39;/v1/datasets/mldb_to_mongodb/rows&#39;, {
+    &#39;rowName&#39; : &#39;row1&#39;,
+    &#39;columns&#39; : [
+        [&#39;colA&#39;, &#39;valA&#39;, 0],
+        [&#39;colB&#39;, &#39;valB&#39;, 0]
+    ]
+})
+</code></pre>
+</body>
+</html>

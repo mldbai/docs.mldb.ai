@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset='utf-8' />
+<title>MLDB Documentation</title>
+<script src='/resources/js/mathjax_TeX-AMS-MML_HTMLorMML.js'></script>
+<link rel='stylesheet' href='/resources/css/prism.css'>
+<link rel='stylesheet' href='/resources/css/doc.css'>
+<script src='/resources/js/jquery-1.11.2.min.js'></script>
+<script src='/resources/js/prism.js'></script>
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  if(window.location.origin == 'http://mldb.ai')
+  { ga('create', 'UA-16909325-9', 'auto'); }
+  else
+  { ga('create', 'UA-16909325-10', {'cookieDomain': 'none'}); }
+  ga('send', 'pageview');
+</script>
+</head>
+<body style='margin-left: 50px; max-width: 1000px'>
+<script>
+$("body").css({margin: "20px"});
+$.getJSON("/version.json?t="+Date.now(), function(v){ $("#version").text("version "+v.version) });
+</script>
+
+<style>
+p, li {
+    line-height: 1.4;
+}
+ul {
+    padding-left: 25px;
+}
+</style>
+
+<p><base target="rh">
+<div align="center">
+<a href="/" target="_top"><img src="/resources/images/mldb_ipython_logo.png" alt="MLDB Logo" /></a><br>
+<span id="version" style="font-size: 12px;"></span>
+</div></p>
+
+<form action="/doc/search.html">
+<input style="
+     font: 13px/1.6 'open sans', sans-serif;
+    color: #333;
+    padding: 12px 12px 12px 40px;
+    width: 170px;
+    border: 1px solid #e2e2e2;
+    border-radius: 0;
+    -moz-appearance: none;
+    -webkit-appearance: none;
+     box-shadow: none; 
+    outline: 0;
+    margin: 0;
+    background: #fff url('/resources/js/tipuesearch/img/search.png') no-repeat 15px 15px;
+" placeholder="search documentation" name="q" autocomplete="off" required>
+</form>
+
+<h3>General Documentation</h3>
+
+<ul>
+<li><a href="Overview.md.html">MLDB Overview</a></li>
+<li><a href="Running.md.html">Running MLDB</a></li>
+<li><a href="WorkingWithRest.md.html">Working with the REST API</a></li>
+<li><a href="../rest.html">REST API Interactive Docs</a></li>
+<li><a href="Notebooks.md.html">Notebooks and pymldb</a></li>
+<li><a href="Demos.md.html">Demos &amp; Tutorials</a></li>
+<li><a href="Url.md.html">Files and URLs</a></li>
+<li><a href="ProPlugin.md.html">MLDB Pro</a></li>
+<li><a href="Algorithms.md.html">Algorithm Support</a></li>
+<li><a href="ClassifierConf.md.html">Classifier configuration</a></li>
+<li><a href="Scaling.md.html">Scaling MLDB</a></li>
+<li><a href="help.md.html">Help and Feedback</a></li>
+<li><a href="licenses.md.html">Licenses</a></li>
+</ul>
+
+<h3>SQL Support</h3>
+
+<ul>
+<li><a href="sql/Sql.md.html">SQL Queries</a></li>
+<li><a href="sql/QueryAPI.md.html">Query API</a></li>
+<li><a href="sql/TypeSystem.md.html">Type System</a></li>
+<li><a href="sql/ValueExpression.md.html">Value Expressions</a>
+
+<ul>
+<li><a href="sql/ValueExpression.md.html#operators">Operators</a></li>
+<li><a href="sql/ValueExpression.md.html#builtinfunctions">Built-in functions</a></li>
+</ul></li>
+<li><a href="sql/SelectExpression.md.html">Select Expressions</a></li>
+<li><a href="sql/FromExpression.md.html">From Expressions</a></li>
+<li><a href="sql/WhenExpression.md.html">When Expressions</a></li>
+<li><a href="sql/WhereExpression.md.html">Where Expressions</a></li>
+<li><a href="sql/GroupByExpression.md.html">Group-By Expressions</a></li>
+<li><a href="sql/OrderByExpression.md.html">Order-By Expressions</a></li>
+</ul>
+
+<h3>Datasets</h3>
+
+<ul>
+<li><a href="datasets/Datasets.md.html">Intro to Datasets</a></li>
+<li><a href="datasets/DatasetConfig.md.html">Dataset Configuration</a></li>
+<li><a href="datasets/Persistence.md.html">Data Persistence</a></li>
+<li>Available Dataset types: <ul>
+<li><a href="/v1/plugins/pro/doc/BehaviourDataset.md.html">beh</a></li>
+<li><a href="/v1/plugins/pro/doc/BinaryBehaviourDataset.md.html">beh.binary</a></li>
+<li><a href="/v1/plugins/pro/doc/MutableBinaryBehaviourDataset.md.html">beh.binary.mutable</a></li>
+<li><a href="/v1/plugins/pro/doc/MutableBehaviourDataset.md.html">beh.mutable</a></li>
+<li><a href="/doc/builtin/datasets/EmbeddingDataset.md.html">embedding</a></li>
+<li><a href="/doc/builtin/datasets/MergedDataset.md.html">merged</a></li>
+<li><a href="/v1/plugins/mongodb/doc/MongoDataset.md.html">mongodb.dataset</a></li>
+<li><a href="/v1/plugins/mongodb/doc/MongoRecord.md.html">mongodb.record</a></li>
+<li><a href="/doc/builtin/datasets/SampledDataset.md.html">sampled</a></li>
+<li><a href="/doc/builtin/datasets/MutableSparseMatrixDataset.md.html">sparse.mutable</a></li>
+<li><a href="/doc/builtin/datasets/SqliteSparseDataset.md.html">sqliteSparse</a></li>
+<li><a href="/doc/builtin/datasets/TabularDataset.md.html">tabular</a></li>
+<li><a href="/doc/builtin/datasets/TransposedDataset.md.html">transposed</a></li>
+<li><a href="/doc/builtin/datasets/UnionDataset.md.html">union</a></li>
+</ul></li>
+</ul>
+
+<h3>Procedures</h3>
+
+<ul>
+<li><a href="procedures/Procedures.md.html">Intro to Procedures</a></li>
+<li><a href="procedures/ProcedureConfig.md.html">Procedure Configuration</a></li>
+<li><a href="procedures/InputQuery.md.html">Input Queries</a></li>
+<li><a href="procedures/OutputDatasetSpec.md.html">Output Dataset Specification</a></li>
+<li>Available Procedure types: <ul>
+<li><a href="/doc/builtin/procedures/ExperimentProcedure.md.html">classifier.experiment</a></li>
+<li><a href="/doc/builtin/procedures/Accuracy.md.html">classifier.test</a></li>
+<li><a href="/doc/builtin/procedures/Classifier.md.html">classifier.train</a></li>
+<li><a href="/doc/builtin/procedures/CsvExportProcedure.md.html">export.csv</a></li>
+<li><a href="/doc/builtin/procedures/GitImporter.md.html">import.git</a></li>
+<li><a href="/doc/builtin/procedures/JSONImporter.md.html">import.json</a></li>
+<li><a href="/doc/builtin/procedures/SentiWordNetImporter.md.html">import.sentiwordnet</a></li>
+<li><a href="/doc/builtin/procedures/importtextprocedure.md.html">import.text</a></li>
+<li><a href="/doc/builtin/procedures/Word2VecImporter.md.html">import.word2vec</a></li>
+<li><a href="/doc/builtin/procedures/KmeansProcedure.md.html">kmeans.train</a></li>
+<li><a href="/doc/builtin/procedures/MeltProcedure.md.html">melt</a></li>
+<li><a href="/v1/plugins/mongodb/doc/MongoImport.md.html">mongodb.import</a></li>
+<li><a href="/doc/builtin/procedures/PermuterProcedure.md.html">permuter.run</a></li>
+<li><a href="/doc/builtin/procedures/Probabilizer.md.html">probabilizer.train</a></li>
+<li><a href="/doc/builtin/procedures/RandomForest.md.html">randomforest.binary.train</a></li>
+<li><a href="/doc/builtin/procedures/BagOfWordsStatsTableProcedure.md.html">statsTable.bagOfWords.train</a></li>
+<li><a href="/doc/builtin/procedures/StatsTableProcedure.md.html">statsTable.train</a></li>
+<li><a href="/doc/builtin/procedures/SummaryStatisticsProcedure.md.html">summary.statistics</a></li>
+<li><a href="/doc/builtin/procedures/Svd.md.html">svd.train</a></li>
+<li><a href="/doc/builtin/procedures/TfidfProcedure.md.html">tfidf.train</a></li>
+<li><a href="/doc/builtin/procedures/TransformDataset.md.html">transform</a></li>
+<li><a href="/doc/builtin/procedures/TsneProcedure.md.html">tsne.train</a></li>
+</ul></li>
+</ul>
+
+<h3>Functions</h3>
+
+<ul>
+<li><a href="functions/Functions.md.html">Intro to Functions</a></li>
+<li><a href="functions/Application.md.html">Function Application via REST</a></li>
+<li><a href="functions/FunctionConfig.md.html">Function Configuration</a></li>
+<li>Available Function types: <ul>
+<li><a href="/doc/builtin/functions/ClassifierApply.md.html">classifier</a></li>
+<li><a href="/doc/builtin/functions/ClassifierExplain.md.html">classifier.explain</a></li>
+<li><a href="/doc/builtin/functions/NearestNeighborsFunction.md.html">embedding.neighbors</a></li>
+<li><a href="/doc/builtin/functions/FeatureHashingFunction.md.html">feature_hasher</a></li>
+<li><a href="/doc/builtin/functions/Fetcher.md.html">fetcher</a></li>
+<li><a href="/doc/builtin/functions/ParseUserAgent.md.html">http.useragent</a></li>
+<li><a href="/doc/builtin/functions/ProximateVoxelsFunction.md.html">image.proximatevoxels</a></li>
+<li><a href="/doc/builtin/functions/ReadPixelsFunction.md.html">image.readpixels</a></li>
+<li><a href="/doc/builtin/functions/Kmeans.md.html">kmeans</a></li>
+<li><a href="/v1/plugins/mongodb/doc/MongoQueryFunction.md.html">mongodb.query</a></li>
+<li><a href="/doc/builtin/functions/Pooling.md.html">pooling</a></li>
+<li><a href="/doc/builtin/functions/ApplyProbabilizer.md.html">probabilizer</a></li>
+<li><a href="/doc/builtin/functions/SqlExpressionFunction.md.html">sql.expression</a></li>
+<li><a href="/doc/builtin/functions/SqlQueryFunction.md.html">sql.query</a></li>
+<li><a href="/doc/builtin/functions/BagOfWordsStatsTablePosNeg.md.html">statsTable.bagOfWords.posneg</a></li>
+<li><a href="/doc/builtin/functions/StatsTableGetCounts.md.html">statsTable.getCounts</a></li>
+<li><a href="/doc/builtin/functions/Stemmer.md.html">stemmer</a></li>
+<li><a href="/doc/builtin/functions/Stemmer.md.html">stemmerdoc</a></li>
+<li><a href="/doc/builtin/functions/SvdEmbedRow.md.html">svd.embedRow</a></li>
+<li><a href="/v1/plugins/tensorflow/doc/TensorflowGraph.md.html">tensorflow.graph</a></li>
+<li><a href="/doc/builtin/functions/Tfidf.md.html">tfidf</a></li>
+<li><a href="/doc/builtin/functions/TokenSplit.md.html">tokensplit</a></li>
+</ul></li>
+</ul>
+
+<h3>Plugins</h3>
+
+<ul>
+<li><a href="plugins/Plugins.md.html">Intro to Plugins</a></li>
+<li><a href="plugins/PluginConfig.md.html">Plugin Configuration</a></li>
+<li><a href="plugins/ExamplePlugins.md.html">Example Plugins</a></li>
+<li><a href="rest/Types.md.html">Type Introspection</a></li>
+<li><a href="DocumentationServing.md.html">Writing Documentation</a></li>
+<li>Available Plugin types: <ul>
+<li><a href="/doc/builtin/lang/Javascript.md.html">javascript</a></li>
+<li><a href="/doc/builtin/lang/Python.md.html">python</a></li>
+<li><a href="/doc/builtin/plugins/SharedLibrary.md.html">sharedLibrary</a></li>
+</ul></li>
+</ul>
+</body>
+</html>

@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset='utf-8' />
+<title>MLDB Documentation</title>
+<script src='/resources/js/mathjax_TeX-AMS-MML_HTMLorMML.js'></script>
+<link rel='stylesheet' href='/resources/css/prism.css'>
+<link rel='stylesheet' href='/resources/css/doc.css'>
+<script src='/resources/js/jquery-1.11.2.min.js'></script>
+<script src='/resources/js/prism.js'></script>
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  if(window.location.origin == 'http://mldb.ai')
+  { ga('create', 'UA-16909325-9', 'auto'); }
+  else
+  { ga('create', 'UA-16909325-10', {'cookieDomain': 'none'}); }
+  ga('send', 'pageview');
+</script>
+</head>
+<body style='margin-left: 50px; max-width: 1000px'>
+<h1>Plugins</h1>
+
+<p>MLDB is a totally modular system, with very little functionality in the core. The <a href="../datasets/DatasetConfig.md.html">dataset types</a>, <a href="../procedures/ProcedureConfig.md.html">procedure types</a> and <a href="../functions/FunctionConfig.md.html">function types</a> that are available are all loaded via MLDB&#39;s plugins mechanism.</p>
+
+<p>MLDB plugins have access to a low-level C API which they can use to define new dataset types, procedure types and function types, and can even be used to define new plugin types to make it easier to write additional plugins in languages other than C (e.g. the <a href="/doc/builtin/lang/Python.md.html"><code>python</code> plugin type</a> uses the C API to make it possible to write plugins in Python by wrapping parts of the C API and embedding a Python runtime in MLDB).</p>
+
+<p>Creating new dataset types enables developers to integrate MLDB with new sources of data: datasets can pull from other databases, or can subscribe to event streams. Creating new procedure and function types enables developers to bring their own algorithms into MLDB.</p>
+
+<p>Beyond defining new entity types, MLDB plugins allow developers to extend MLDB&#39;s <a href="../WorkingWithRest.md.html">REST API</a> by adding new routes. This mechanism can be used to create rich user interfaces that interact with and are served by MLDB. See this <a href="ExamplePlugins.md.html">list of plugins</a> for examples of what plugins can do.</p>
+
+<h2>Loading plugins</h2>
+
+<p>Plugins are loaded into MLDB via a <a href="PluginConfig.md.html">REST API call</a>.</p>
+
+<h2>Auto-loading plugins</h2>
+
+<p>MLDB will load up system plugins from <code>/opt/mldb/plugins</code> automatically on startup.</p>
+
+<p>MLDB will recursively scan the directory <code>/mldb_data/plugins/autoload</code>, and for each file named <code>mldb_plugin.json</code> found,
+it will autoload the plugin described by it. <code>mldb_plugin.json</code> must contain a JSON payload with a single top key, <code>config</code>,
+having as a value an object similar to what needs to be <code>POST</code> or <code>PUT</code> when creating a plugin.</p>
+
+<p>Here is an example for a python plugin.
+<code>
+{
+    &quot;config&quot; : {
+        &quot;id&quot; : &quot;demo_plugin&quot;,
+        &quot;type&quot; : &quot;python&quot;,
+        &quot;params&quot; : { }
+    }
+}
+</code>
+<code>params</code> can be left empty as MLDB will automatically set the &quot;address&quot; value to the path where the plugin was found.</p>
+
+<h2>Writing Plugins</h2>
+
+<p>The C API SDK is not currently public, so only the <a href="/doc/builtin/lang/Python.md.html"><code>python</code> plugin type</a> allows developers to create their own plugins, and the API it exposes allows plugins to execute Python code once at load-time, as well as in response to HTTP calls, by registering route-handlers. In addition, these plugins can serve up static and documentation content.</p>
+
+<p>The process of writing a Python plugin is as follows:</p>
+
+<ul>
+<li>create a directory where the Python plugin-type can access it: in a public Git repository like Github or in the mapped <code>mldb_data</code> directory
+
+<ul>
+<li>this directory must contain a <code>main.py</code> file, containing code which will have access to the <code>mldb</code> object</li>
+<li>this directory should contain a <code>doc</code> directory with an <code>index.md</code> file</li>
+</ul></li>
+<li>load the plugin using the main UI or the Notebook interface</li>
+<li>iterate</li>
+</ul>
+</body>
+</html>

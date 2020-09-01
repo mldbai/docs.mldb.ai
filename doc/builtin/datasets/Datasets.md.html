@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset='utf-8' />
+<title>MLDB Documentation</title>
+<script src='/resources/js/mathjax_TeX-AMS-MML_HTMLorMML.js'></script>
+<link rel='stylesheet' href='/resources/css/prism.css'>
+<link rel='stylesheet' href='/resources/css/doc.css'>
+<script src='/resources/js/jquery-1.11.2.min.js'></script>
+<script src='/resources/js/prism.js'></script>
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  if(window.location.origin == 'http://mldb.ai')
+  { ga('create', 'UA-16909325-9', 'auto'); }
+  else
+  { ga('create', 'UA-16909325-10', {'cookieDomain': 'none'}); }
+  ga('send', 'pageview');
+</script>
+</head>
+<body style='margin-left: 50px; max-width: 1000px'>
+<h1>Intro to Datasets</h1>
+
+<p>Datasets are schema-less, append-only named sets of <em>data points</em>, which are contained in <em>cells</em>, which sit at the intersection of <em>rows</em> and <em>columns</em>. Data points are composed of a <em>value</em> and a <em>timestamp</em>. Each data point can thus be represented as a (row, column, timestamp, value) tuple, and datasets can be thought of as sparse 3-dimensional matrices. The rows and columns of a dataset can be interchanged by transposing the matrix. Datasets can contain billions of data points arranged in millions of rows with millions of columns.</p>
+
+<p>Rows and columns have structured identifiers, called <em>paths</em>. A path is an array of UTF-8 strings without null characters called <em>path elements</em> (e.g. <code>[&#39;a&#39;,&#39;b&#39;]</code>) and can be represented as strings called <em>names</em> with dots between the path elements (e.g. <code>&#39;a.b&#39;</code>). Dots can appear in path elements, causing their string representation to be surrounded by double-quote characters, which can themselves appear in path elements, and are doubled up in the string representation: the path <code>[&#39;a.b&#39;, &#39;&quot;hello&quot;&#39;]</code> is stringified as <code>&quot;a.b&quot;.&quot;&quot;&quot;hello&quot;&quot;&quot;</code>. These rules make it possible to manipulate hierarchically-structured (i.e. JSON) data within <a href="../sql/Sql.md.html">SQL queries</a>.</p>
+
+<p>Datasets can be created and data can be appended to them via the <a href="../WorkingWithRest.md.html">REST API</a> and they can also loaded from or saved to files via <a href="../procedures/Procedures.md.html">Procedures</a>.</p>
+
+<h2>Matrix View</h2>
+
+<p>The following diagram shows this as a 3-dimensional matrix, and shows what
+happens when we &quot;slice&quot; the matrix at a particular point in time.</p>
+
+<p><img src="../img/SlicedDataset.svg" alt="Sliced Dataset"/></p>
+
+<p>Ignoring the time dimension, you can imagine that the data looks something like this:</p>
+
+<table cellpadding="0" cellspacing="0" class="c17"><tbody><tr class="c3"><td class="c5" colspan="1" rowspan="1"><p class="c8 c12"><span class="c7"></span></p></td><td class="c5" colspan="1" rowspan="1"><p class="c8"><span class="c7">ColumnA</span></p></td><td class="c5" colspan="1" rowspan="1"><p class="c8"><span class="c7">ColumnB</span></p></td><td class="c5" colspan="1" rowspan="1"><p class="c8"><span class="c7">ColumnC</span></p></td><td class="c5" colspan="1" rowspan="1"><p class="c8"><span class="c7">ColumnD</span></p></td><td class="c5" colspan="1" rowspan="1"><p class="c8"><span class="c7">ColumnE</span></p></td></tr><tr class="c3"><td class="c5" colspan="1" rowspan="1"><p class="c8"><span class="c7">RowA</span></p></td><td class="c5" colspan="1" rowspan="1"><p class="c8 c12"><span class="c0"></span></p></td><td class="c5" colspan="1" rowspan="1"><p class="c8 c12"><span class="c0"></span></p></td><td class="c5" colspan="1" rowspan="1"><p class="c8 c12"><span class="c0"></span></p></td><td class="c5" colspan="1" rowspan="1"><p class="c8 c12"><span class="c0"></span></p></td><td class="c5" colspan="1" rowspan="1"><p class="c8 c12"><span class="c0"></span></p></td></tr><tr class="c3"><td class="c5" colspan="1" rowspan="1"><p class="c8"><span class="c7">RowB</span></p></td><td class="c5" colspan="1" rowspan="1"><p class="c8"><span class="c0">123</span></p></td><td class="c5" colspan="1" rowspan="1"><p class="c8 c12"><span class="c0"></span></p></td><td class="c5" colspan="1" rowspan="1"><p class="c8"><span class="c0">7634.2</span></p></td><td class="c5" colspan="1" rowspan="1"><p class="c8 c12"><span class="c0"></span></p></td><td class="c5" colspan="1" rowspan="1"><p class="c8 c12"><span class="c0"></span></p></td></tr><tr class="c3"><td class="c5" colspan="1" rowspan="1"><p class="c8"><span class="c7">RowC</span></p></td><td class="c5" colspan="1" rowspan="1"><p class="c8 c12"><span class="c0"></span></p></td><td class="c5" colspan="1" rowspan="1"><p class="c8"><span class="c0">&quot;hello&quot;</span></p></td><td class="c5" colspan="1" rowspan="1"><p class="c8 c12"><span class="c0"></span></p></td><td class="c5" colspan="1" rowspan="1"><p class="c8 c12"><span class="c0"></span></p></td><td class="c5" colspan="1" rowspan="1"><p class="c8 c12"><span class="c0"></span></p></td></tr><tr class="c3"><td class="c5" colspan="1" rowspan="1"><p class="c8"><span class="c7">RowD</span></p></td><td class="c5" colspan="1" rowspan="1"><p class="c8 c12"><span class="c0"></span></p></td><td class="c5" colspan="1" rowspan="1"><p class="c8 c12"><span class="c0"></span></p></td><td class="c5" colspan="1" rowspan="1"><p class="c8 c12"><span class="c0"></span></p></td><td class="c5" colspan="1" rowspan="1"><p class="c8 c12"><span class="c0"></span></p></td><td class="c5" colspan="1" rowspan="1"><p class="c8 c12"><span class="c0"></span></p></td></tr><tr class="c3"><td class="c5" colspan="1" rowspan="1"><p class="c8"><span class="c7">RowE</span></p></td><td class="c5" colspan="1" rowspan="1"><p class="c8 c12"><span class="c0"></span></p></td><td class="c5" colspan="1" rowspan="1"><p class="c8 c12"><span class="c0"></span></p></td><td class="c5" colspan="1" rowspan="1"><p class="c8 c12"><span class="c0"></span></p></td><td class="c5" colspan="1" rowspan="1"><p class="c8 c12"><span class="c0"></span></p></td><td class="c5" colspan="1" rowspan="1"><p class="c8 c12"><span class="c0"></span></p></td></tr></tbody></table>
+
+<h2>Events View</h2>
+
+<p>Another way of looking at the data is as a series of events, as follows:</p>
+
+<table cellpadding="0" cellspacing="0" class="c17"><tbody><tr class="c3"><td class="c4" colspan="1" rowspan="1"><p class="c8"><span class="c7">Timestamp</span></p></td><td class="c4" colspan="1" rowspan="1"><p class="c8"><span class="c7">Row Name</span></p></td><td class="c4" colspan="1" rowspan="1"><p class="c8"><span class="c7">Column Name</span></p></td><td class="c4" colspan="1" rowspan="1"><p class="c8"><span class="c7">Value</span></p></td></tr><tr class="c3"><td class="c4" colspan="1" rowspan="1"><p class="c8"><span class="c0">2013-04-20 10:02:01</span></p></td><td class="c4" colspan="1" rowspan="1"><p class="c8"><span class="c0">User123</span></p></td><td class="c4" colspan="1" rowspan="1"><p class="c8"><span class="c0">First Name</span></p></td><td class="c4" colspan="1" rowspan="1"><p class="c8"><span class="c0">&quot;Bob&quot;</span></p></td></tr><tr class="c3"><td class="c4" colspan="1" rowspan="1"><p class="c8"><span class="c0">2013-04-20 10:02:01</span></p></td><td class="c4" colspan="1" rowspan="1"><p class="c8"><span class="c0">User123</span></p></td><td class="c4" colspan="1" rowspan="1"><p class="c8"><span class="c0">Test Score 1</span></p></td><td class="c4" colspan="1" rowspan="1"><p class="c8"><span class="c0">0.78</span></p></td></tr><tr class="c3"><td class="c4" colspan="1" rowspan="1"><p class="c8"><span class="c0">2013-04-20 10:03:33</span></p></td><td class="c4" colspan="1" rowspan="1"><p class="c8"><span class="c0">User456</span></p></td><td class="c4" colspan="1" rowspan="1"><p class="c8"><span class="c0">First Name</span></p></td><td class="c4" colspan="1" rowspan="1"><p class="c8"><span class="c0">&quot;Jill&quot;</span></p></td></tr><tr class="c3"><td class="c4" colspan="1" rowspan="1"><p class="c8"><span class="c0">2013-04-20 10:03:33</span></p></td><td class="c4" colspan="1" rowspan="1"><p class="c8"><span class="c0">User456</span></p></td><td class="c4" colspan="1" rowspan="1"><p class="c8"><span class="c0">Test Score 1</span></p></td><td class="c4" colspan="1" rowspan="1"><p class="c8"><span class="c0">0.45</span></p></td></tr><tr class="c3"><td class="c4" colspan="1" rowspan="1"><p class="c8"><span class="c0">2013-04-22 11:10:22</span></p></td><td class="c4" colspan="1" rowspan="1"><p class="c8"><span class="c0">User123</span></p></td><td class="c4" colspan="1" rowspan="1"><p class="c8"><span class="c0">Test Score 1</span></p></td><td class="c4" colspan="1" rowspan="1"><p class="c8"><span class="c0">0.0</span></p></td></tr><tr class="c3"><td class="c4" colspan="1" rowspan="1"><p class="c8"><span class="c0">2013-04-22 11:10:22</span></p></td><td class="c4" colspan="1" rowspan="1"><p class="c8"><span class="c0">User123</span></p></td><td class="c4" colspan="1" rowspan="1"><p class="c8"><span class="c0">Revision Reason</span></p></td><td class="c4" colspan="1" rowspan="1"><p class="c8"><span class="c0">&quot;Cheating&quot;</span></p></td></tr><tr class="c3"><td class="c4" colspan="1" rowspan="1"><p class="c8"><span class="c0">...</span></p></td><td class="c4" colspan="1" rowspan="1"><p class="c8"><span class="c0">...</span></p></td><td class="c4" colspan="1" rowspan="1"><p class="c8"><span class="c0">...</span></p></td><td class="c4" colspan="1" rowspan="1"><p class="c8"><span class="c0">...</span></p></td></tr></tbody></table>
+
+<p>The ability to record multiple states of the world at different times
+is a fundamental part of the design of MLDB as a database for machine
+learning.  The two versions of
+Bob&#39;s score are both recorded, along with the time at which it changed.
+This allows MLDB to reconstruct what was known at a given point in time,
+making historical data far more useful to learn from.</p>
+
+<h2>Available Dataset Types</h2>
+
+<p>Datasets are created via a <a href="DatasetConfig.md.html">REST API call</a> with one of the following types:</p>
+
+<p><table class="table"><tr><th>Type</th><th>Description</th><th>Doc</th></tr>
+<tr><td><code>beh</code></td><td>Memory-mappable dataset type to efficiently store behavioural data</td><td><a href="/v1/plugins/pro/doc/BehaviourDataset.md.html">[doc]</a></td></tr>
+<tr><td><code>beh.binary</code></td><td>Memory-mappable dataset type to efficiently store binary valued behavioural data</td><td><a href="/v1/plugins/pro/doc/BinaryBehaviourDataset.md.html">[doc]</a></td></tr>
+<tr><td><code>beh.binary.mutable</code></td><td>Recordable dataset designed to store binary valued behavioral data</td><td><a href="/v1/plugins/pro/doc/MutableBinaryBehaviourDataset.md.html">[doc]</a></td></tr>
+<tr><td><code>beh.mutable</code></td><td>Recordable dataset designed to store behavioral data</td><td><a href="/v1/plugins/pro/doc/MutableBehaviourDataset.md.html">[doc]</a></td></tr>
+<tr><td><code>embedding</code></td><td>Dataset to record a set of coordinates per row</td><td><a href="/doc/builtin/datasets/EmbeddingDataset.md.html">[doc]</a></td></tr>
+<tr><td><code>merged</code></td><td>Merges together several datasets into one virtual dataset</td><td><a href="/doc/builtin/datasets/MergedDataset.md.html">[doc]</a></td></tr>
+<tr><td><code>mongodb.dataset</code></td><td>Dataset type that forwards records to a MongoDB database</td><td><a href="/v1/plugins/mongodb/doc/MongoDataset.md.html">[doc]</a></td></tr>
+<tr><td><code>mongodb.record</code></td><td>Dataset type that forwards records to a MongoDB database</td><td><a href="/v1/plugins/mongodb/doc/MongoRecord.md.html">[doc]</a></td></tr>
+<tr><td><code>sampled</code></td><td>Dataset that samples another dataset</td><td><a href="/doc/builtin/datasets/SampledDataset.md.html">[doc]</a></td></tr>
+<tr><td><code>sparse.mutable</code></td><td>Sparse dataset which can be recorded to</td><td><a href="/doc/builtin/datasets/MutableSparseMatrixDataset.md.html">[doc]</a></td></tr>
+<tr><td><code>sqliteSparse</code></td><td>SQLite-backed fully consistent, persistent, mutable sparse database</td><td><a href="/doc/builtin/datasets/SqliteSparseDataset.md.html">[doc]</a></td></tr>
+<tr><td><code>tabular</code></td><td>Dense dataset which can be recorded to</td><td><a href="/doc/builtin/datasets/TabularDataset.md.html">[doc]</a></td></tr>
+<tr><td><code>transposed</code></td><td>Dataset that interchanges rows and columns</td><td><a href="/doc/builtin/datasets/TransposedDataset.md.html">[doc]</a></td></tr>
+<tr><td><code>union</code></td><td>Unify together several datasets</td><td><a href="/doc/builtin/datasets/UnionDataset.md.html">[doc]</a></td></tr>
+</table></p>
+
+<h2>See also</h2>
+
+<ul>
+<li><a href="../sql/QueryAPI.md.html">Query API reference</a></li>
+<li><a href="/doc/nblink.html#_tutorials/Loading%20Data%20Tutorial" target="_blank">Loading Data Tutorial</a> </li>
+<li><a href="/doc/nblink.html#_tutorials/Querying%20Data%20Tutorial" target="_blank">Querying Data Tutorial</a> </li>
+</ul>
+</body>
+</html>

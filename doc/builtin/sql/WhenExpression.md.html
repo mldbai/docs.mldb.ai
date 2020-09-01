@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset='utf-8' />
+<title>MLDB Documentation</title>
+<script src='/resources/js/mathjax_TeX-AMS-MML_HTMLorMML.js'></script>
+<link rel='stylesheet' href='/resources/css/prism.css'>
+<link rel='stylesheet' href='/resources/css/doc.css'>
+<script src='/resources/js/jquery-1.11.2.min.js'></script>
+<script src='/resources/js/prism.js'></script>
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  if(window.location.origin == 'http://mldb.ai')
+  { ga('create', 'UA-16909325-9', 'auto'); }
+  else
+  { ga('create', 'UA-16909325-10', {'cookieDomain': 'none'}); }
+  ga('send', 'pageview');
+</script>
+</head>
+<body style='margin-left: 50px; max-width: 1000px'>
+<h1>SQL When Expressions</h1>
+
+<p>An SQL When expression is a standard SQL <a href="ValueExpression.md.html">Value Expression</a>, and is coerced to a boolean type after evaluation. The <code>WHEN</code> clause is used to select values based on their timestamp. Only values with timestamps (accesed via the special <code>value_timestamp()</code> function) that cause the expression to evaluate true are kept; values resulting in evaluations of null or false are discarded.</p>
+
+<p>Note that this syntax is not part of SQL, it is an MLDB extension, and is evaluated after the <code>WHERE</code> clause.</p>
+
+<h2>Using When and Where Clauses</h2>
+
+<p>The <code>WHERE</code> clause is evaluated before the <code>WHEN</code> clause.  To illustrate that, consider the
+browse <em>events</em> dataset containing these values</p>
+
+<table>
+<thead>
+<tr>
+<th>users / event</th>
+<th>click</th>
+<th>view</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>bob</td>
+<td>link1 @ 2015-01-01T00:00:00</td>
+<td>google.com @ 2015-01-01T00:01:00</td>
+</tr>
+<tr>
+<td>alice</td>
+<td>link2 @ 2015-01-01T00:03:00</td>
+<td>mldb.ai @ 2015-01-01T00:06:00</td>
+</tr>
+</tbody>
+</table>
+
+<p>One can select the events in the first five minutes of 2015 with this query</p>
+
+<pre><code class="language-sql">SELECT * FROM events 
+WHEN value_timestamp() BETWEEN &#39;2015-01-01T00:00:00&#39; AND &#39;2015-01-01T00:05:00&#39;
+</code></pre>
+
+<p>The output is</p>
+
+<table>
+<thead>
+<tr>
+<th>users / event</th>
+<th>click</th>
+<th>view</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>bob</td>
+<td>link1 @ 2015-01-01T00:00:00</td>
+<td>google.com @ 2015-01-01T00:01:00</td>
+</tr>
+<tr>
+<td>alice</td>
+<td>link2 @ 2015-01-01T00:03:00</td>
+<td>null</td>
+</tr>
+</tbody>
+</table>
+
+<p>Similarly, one can select users who viewed <em>mldb.ai</em> with this query</p>
+
+<pre><code class="language-sql">SELECT * FROM events 
+WHERE view = &#39;mldb.ai&#39;
+</code></pre>
+
+<table>
+<thead>
+<tr>
+<th>users / event</th>
+<th>click</th>
+<th>view</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>alice</td>
+<td>link2 @ 2015-01-01T00:03:00</td>
+<td>mldb.ai @ 2015-01-01T00:06:00</td>
+</tr>
+</tbody>
+</table>
+
+<p>Lastly, if we combined the <code>WHEN</code> and the <code>WHERE</code> clauses together </p>
+
+<pre><code class="language-sql">SELECT * FROM events 
+WHEN value_timestamp() BETWEEN &#39;2015-01-01T00:00:00&#39; AND &#39;2015-01-01T00:05:00&#39; 
+WHERE view = &#39;mldb.ai&#39;
+</code></pre>
+
+<p>we get:</p>
+
+<table>
+<thead>
+<tr>
+<th>users / event</th>
+<th>click</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>alice</td>
+<td>link2 @ 2015-01-01T00:03:00</td>
+</tr>
+</tbody>
+</table>
+
+<p>This is because the <code>WHERE</code> clause is evaluated prior to the <code>WHEN</code> clause.</p>
+</body>
+</html>

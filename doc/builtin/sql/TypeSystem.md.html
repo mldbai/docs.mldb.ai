@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset='utf-8' />
+<title>MLDB Documentation</title>
+<script src='/resources/js/mathjax_TeX-AMS-MML_HTMLorMML.js'></script>
+<link rel='stylesheet' href='/resources/css/prism.css'>
+<link rel='stylesheet' href='/resources/css/doc.css'>
+<script src='/resources/js/jquery-1.11.2.min.js'></script>
+<script src='/resources/js/prism.js'></script>
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  if(window.location.origin == 'http://mldb.ai')
+  { ga('create', 'UA-16909325-9', 'auto'); }
+  else
+  { ga('create', 'UA-16909325-10', {'cookieDomain': 'none'}); }
+  ga('send', 'pageview');
+</script>
+</head>
+<body style='margin-left: 50px; max-width: 1000px'>
+<h1>MLDB Type System</h1>
+
+<p>This page describes the type system MLDB uses to store and process data.</p>
+
+<h2>Atomic types</h2>
+
+<p>MLDB&#39;s atomic types are the following:</p>
+
+<ul>
+<li>A null value
+
+<ul>
+<li>Null values can appear in queries as <code>null</code> (case-insensitive)</li>
+<li>Null takes its standard SQL significance meaning &quot;unknown&quot;. This means that the vast majority of expressions which contain a null value as an argument will evaluate to <code>null</code>, unless it is impossible for its value to be unknown. Cases of note:
+
+<ul>
+<li><code>null = null</code> will evaluate to <code>null</code> as neither value is known, so the equality is unknown. The way to check for null values is to use the <code>IS</code> operator: <code>null IS NULL</code> will evaluate to <code>true</code>.</li>
+<li><code>false AND x</code> cannot evaluate to <code>true</code> for any value of <code>x</code> so this will evaluate to <code>false</code> even if <code>x</code> is <code>null</code>.</li>
+<li><code>true OR x</code> cannot evaluate to <code>false</code> for any value of <code>x</code> so this will evaluate to <code>true</code> even if <code>x</code> is <code>null</code>.</li>
+</ul></li>
+</ul></li>
+<li>An integer, which can take any value of a signed or unsigned 64 bit integer
+
+<ul>
+<li>Integers can appear in queries directly i.e. <code>1</code> or <code>-3</code></li>
+<li><code>true</code> is a synonym for <code>1</code> and <code>false</code> is a synonym for <code>0</code></li>
+</ul></li>
+<li>A double precision floating point value, including infinity, negative infinity
+and NaN (not a number)
+
+<ul>
+<li>Doubles can appear in queries directly, optionally in exponential notation: <code>12.2</code>, <code>1.22e1</code>, <code>inf</code>, <code>nan</code> (case-insensitive)</li>
+</ul></li>
+<li>A string, which is any UTF8 encoded sequence of characters.
+
+<ul>
+<li>String literals can appear in queries surrounded in single-quote characters (i.e. <code>&#39;</code>). Single-quote characters within string literals must be doubled (i.e. <code>&#39;&#39;</code>). Strings are <em>always</em> encoded as UTF-8 Unicode characters.</li>
+</ul></li>
+<li>A timestamp, which is a point in time that is independent of any timezone.  It is
+internally represented as the number of seconds since the 1st of January, 1970,
+at GMT.
+
+<ul>
+<li>Timestamps can appear queries using the <code>TIMESTAMP</code> keyword, for example <code>TIMESTAMP &#39;2010-01-02T23:45:33Z&#39;</code> or <code>TIMESTAMP 1234</code>. Strings are parsed as ISO8601 strings and require a timezone offset and numbers are treated as seconds since &#39;1970-01-01T00:00:00Z&#39;.</li>
+</ul></li>
+<li>A time interval, which is a difference between two timestamps.  It is
+internally represented as three fields expressing months, days, and seconds.
+
+<ul>
+<li>Time intervals can appear in queries using the  using the <code>INTERVAL</code> keyword and a string containing a sequence of values 
+followed by one of the supported time units: second, minute, hour, day, week, month, and year, e.g. <code>INTERVAL &#39;2 day 37 minute&#39;</code>
+The time units can be wholly capilalized (e.g. <code>YEAR</code>), and are always singular. 
+The following abreviations also work in upper and lower case: &#39;s&#39; for second, &#39;m&#39; for minute, &#39;h&#39; for hour, &#39;d&#39; for day,
+&#39;w&#39; for week, and &#39;y&#39; for years
+A single leading <code>-</code> in the string will reverse the direction of the interval, e.g. <code>INTERVAL &#39;-3 month 2 week&#39;</code>.</li>
+</ul></li>
+<li>A binary blob.  This
+can be used to store or process arbitrary binary data, including that which
+contains characters that can&#39;t be represented as a string.
+
+<ul>
+<li>Binary blobs can appear in queries using the <code>base64_decode</code> function
+with a string as its argument.</li>
+</ul></li>
+<li>A path.  This type is a list of coordinates into an array or object, and is
+used as row and column names.  For example, the value <code>3</code> inside
+<code>{ &quot;x&quot;: [ 1, 2, 3 ] }</code> will be represented by the path <code>x.2</code>, ie the structure
+<code>x</code> with the 3rd (zero-based) element.  Paths are in some ways similar to
+strings, but are internally structured as arrays of elements.  See the
+<a href="../datasets/Datasets.md.html">Intro to Datasets</a> documentation for more
+information about names and paths.  A path may contain any UTF-8 or ASCII
+characters, including control characters, apart from the null character <code>\0</code>.</li>
+</ul>
+
+<h2>Data Point Timestamps</h2>
+
+<p>Every data point stored or manipulated by MLDB has an associated timestamp, even if the data point is itself of type timestamp. Data point timestamps are specified on row creation or as inputs to procedures which create datasets. Literals appearing in queries have a timestamp of <code>-inf</code> but any value&#39;s timestamp can be modified in a query with the special <code>@</code> operator (which takes the same right-hand value as the <code>TIMESTAMP</code> keyword). For example, <code>1 @ &#39;2010-01-02T23:45:33Z&#39;</code> will have a finite timestamp in 2010.</p>
+
+<h2>Complex types</h2>
+
+<p>Within SQL expressions and functions, the type system is more sophisticated.  In
+addition to the types mentioned above, the following are permitted:</p>
+
+<ul>
+<li>Rows, which model the row of a dataset.  They are a set of
+(column, value, timestamp) tuples where each value is either an atomic type or a complex type.
+
+<ul>
+<li>Rows can appear as literals in queries as <a href="SelectExpression.md.html">Select Expressions</a> surrounded by curly braces (i.e. <code>{ }</code>). For example <code>{1 as x, &#39;a&#39; as y}</code> or the equivalent <code>{x: 1, y: &#39;a&#39;}</code>.</li>
+</ul></li>
+<li><p>Embeddings, which model coordinates in a multi dimensional space.  Each
+is addressed by one or more coordinates, starting at zero and counting
+up by one.</p>
+
+<p>An embedding can be:</p>
+
+<ul>
+<li>a scalar is convertible to a zero-dimensional embedding with length
+one;</li>
+<li>a single dimensional array with an arbitrary length and all values of
+a common type (string, integer, floating point number, etc).
+A one-dimensional array is known as a vector.</li>
+<li>a two-dimensional array, with dimensions \((x,y)\).  This is known as
+a matrix.</li>
+<li>a three or more dimensional array.  This is known as a 3-tensor, 4-tensor,
+etc.</li>
+</ul>
+
+<p>Embeddings can only contain atomic types as elements, not complex types.</p>
+
+<p>Embeddings can appear as literals in queries as comma-delimited
+<a href="ValueExpression.md.html">Value Expressions</a> surrounded by square brackets
+(i.e. <code>[ ]</code>). For example <code>[1, 2, 3]</code> for  a vector or
+<code>[ [x,0], [0,x] ]</code> for a diagonal matrix that depends upon the value
+of the variable <code>x</code> (which must be an atomic type).</p></li>
+</ul>
+
+<p>When comparing rows, MLDB first sorts the columns by name and performs a lexicographical comparison of the column&#39;s names and values.
+To illustrate this, consider these rows:</p>
+
+<table>
+<thead>
+<tr>
+<th>id</th>
+<th>unflattened_row</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>id_1</td>
+<td>{ python : 1, java : 1, c++ : 3 }</td>
+</tr>
+<tr>
+<td>id_2</td>
+<td>{ scala : 4, java : 3, c++ : 1 }</td>
+</tr>
+<tr>
+<td>id_3</td>
+<td>{ python : 1, ada : 2 }</td>
+</tr>
+</tbody>
+</table>
+
+<p>The rows are ordered in this way by MLDB when doing comparison:</p>
+
+<table>
+<thead>
+<tr>
+<th>id</th>
+<th>unflattened_row</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>id_3</td>
+<td>{ ada : 2, python : 1 }</td>
+</tr>
+<tr>
+<td>id_2</td>
+<td>{ c++ : 1, java : 3, scala : 4 }</td>
+</tr>
+<tr>
+<td>id_1</td>
+<td>{ c++ : 3, java : 1, python : 1 }</td>
+</tr>
+</tbody>
+</table>
+
+<p>Similarly, MLDB uses embedding&#39;s values to lexicographical order embeddings.</p>
+
+<h3>Complex type flattening</h3>
+
+<p>When a complex type is returned as part of an SQL query result or stored in a dataset, it is flattened into a set of columns with atomic values.</p>
+
+<p><strong>Rows</strong> are flattened column by column into the parent row with their existing name, either unprefixed if using the query syntax <code>as *</code> or prefixed with <code>&lt;prefix&gt;.</code> if using the query syntax <code>as &lt;prefix&gt;</code>. </p>
+
+<p>For example, <code>select {x: 1, y: 2} as output, {x: 3, y: 4} as *</code> yields </p>
+
+<table>
+<thead>
+<tr>
+<th style="text-align: center">output.x</th>
+<th style="text-align: center">output.y</th>
+<th style="text-align: center">x</th>
+<th style="text-align: center">y</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td style="text-align: center">1</td>
+<td style="text-align: center">2</td>
+<td style="text-align: center">3</td>
+<td style="text-align: center">4</td>
+</tr>
+</tbody>
+</table>
+
+<p><strong>Embeddings</strong> are flattened by creating one column per value, with
+the name being an incrementing integer from 0 upwards, prefixed with <code>&lt;prefix&gt;.</code> if using the query syntax <code>as &lt;prefix&gt;</code>, otherwise a prefix will be automatically generated. </p>
+
+<p>For example, <code>select [1,2] as x</code> yields</p>
+
+<table>
+<thead>
+<tr>
+<th style="text-align: center">x.0</th>
+<th style="text-align: center">x.1</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td style="text-align: center">4</td>
+<td style="text-align: center">6</td>
+</tr>
+</tbody>
+</table>
+
+<p>As a result, sorting by column names where there are more than 9 columns
+may give strange results, with 10 sorting before 2.  This can be
+addressed at the application level.</p>
+
+<!-- NTD: will be addressed at the MLDB level with structured column names -->
+</body>
+</html>

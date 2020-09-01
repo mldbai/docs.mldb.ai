@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset='utf-8' />
+<title>MLDB Documentation</title>
+<script src='/resources/js/mathjax_TeX-AMS-MML_HTMLorMML.js'></script>
+<link rel='stylesheet' href='/resources/css/prism.css'>
+<link rel='stylesheet' href='/resources/css/doc.css'>
+<script src='/resources/js/jquery-1.11.2.min.js'></script>
+<script src='/resources/js/prism.js'></script>
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  if(window.location.origin == 'http://mldb.ai')
+  { ga('create', 'UA-16909325-9', 'auto'); }
+  else
+  { ga('create', 'UA-16909325-10', {'cookieDomain': 'none'}); }
+  ga('send', 'pageview');
+</script>
+</head>
+<body style='margin-left: 50px; max-width: 1000px'>
+<h1>Probabilizer Training Procedure</h1>
+
+<p>This procedure
+trains a probabilizer model and stores the model file to disk.</p>
+
+<p>The probabilizer plays the role of transforming the output of a classifier,
+which may have any range, into a calibrated pseudo-probability that can
+be used for value calculations.  It is used for five main purposes:</p>
+
+<ol>
+<li> When there are multiple classifiers, or multiple types of classifiers,
+who need their output to be comparable.  For example, if you want to
+compare the output of a decision tree with probabilistic buckets with
+the output of a neural network with a softmax activation function, you
+need to transform them into comparable quantities (ie, probabilities).
+The probabilizer allows you to do this.</li>
+<li> When you have trained a classifier that outputs something other than a
+probability, and you need to turn this into a probability.</li>
+<li> When you need to set thresholds that are independent of the type of
+classifier used.  For example, if you are implementing business logic
+that says that only applications with a 70% probability of being
+fraudulent may be skipped, you need a way of turning the &quot;0.1033&quot; from
+the classifier into &quot;71.2% probably of being fraudulent&quot;.</li>
+<li> When you have trained a classifier on biased data, for example by sampling or
+weighting the positive and negative examples differently, and you need
+to correct for this bias.  As an example, imagine that you have 1 million
+examples of browsing sessions that didn&#39;t result in the purchase of a product,
+and 10,000 that did.  You may choose to train a classifier on the 10,000
+positive examples but sample 20,000 of the negative examples.  In this
+dataset, the purchase prior is 33% but in the real data, it&#39;s around 1%.  The
+probabilizer can help correct for the bias.</li>
+<li> When a classifier is frequently retrained, but the output from one
+training to the next needs to be consistent (for example, it feeds
+into the same business logic or a subsequent processing step that
+is retrained less frequently).</li>
+</ol>
+
+<h2>Algorithm</h2>
+
+<p>The probabilizer training uses a generalized linear model to learn a monotonic
+transformation of the output of the classifier onto a probability space.</p>
+
+<h2>Configuration</h2>
+
+<p><p>A new procedure of type <code>probabilizer.train</code> named <code>&lt;id&gt;</code> can be created as follows:</p><pre><code class="language-python">mldb.put(&quot;/v1/procedures/&quot;+&lt;id&gt;, {
+    &quot;type&quot;: &quot;probabilizer.train&quot;,
+    &quot;params&quot;: {
+        "trainingData": &lt;<a href="/doc/builtin/procedures/InputQuery.md.html">InputQuery</a>&gt;,
+        "link": &lt;ML::Link_Function&gt;,
+        "modelFileUrl": &lt;<a href="/doc/builtin/Url.md.html">Url</a>&gt;,
+        "functionName": &lt;string&gt;,
+        "runOnCreation": &lt;bool&gt;
+    }
+})</code></pre><p>with the following key-value definitions for <code>params</code>:</p><table class="params table" width='100%'><tr><th align='right'>Field, Type, Default</th><th>Description</th></tr>
+<tr><td align='right'><p><strong>trainingData</strong> <br/> <nobr><a href="/doc/builtin/procedures/InputQuery.md.html">InputQuery</a></nobr> <br/> <code></code></p></td><td><p>SQL query that specifies the scores, labels and optional weights for the probabilizer training procedure. The query should be of the form <code>select x as score, y as label from ds</code>.</p>
+
+<p>The select expression must contain these two columns: </p>
+
+<ul>
+<li><code>score</code>: output of a classifier function applied to that row</li>
+<li><code>label</code>: one boolean (0 or 1), so training a probabilizer only works for a classifier trained with mode <code>boolean</code>. Rows with null labels will be ignored.</li>
+<li><code>weight</code>: relative importance of examples. It must be a real number. A weight of 2.0 is equivalent to including the identical row twice in the training dataset.  If the <code>weight</code> is not specified each row will have a weight of 1. Rows with a null weight will cause a training error. This can be used to counteract the effect of sampling or weighting over the dataset that the probabilizer is trained on. The default will weight each example the same.</li>
+</ul>
+
+<p>The query must not contain <code>GROUP BY</code> or <code>HAVING</code> clauses and, unlike most select expressions, this one can only select whole columns, not expressions involving columns. So <code>X</code> will work, but not <code>X + 1</code>. If you need derived values in the query, create a dataset with the derived columns as a previous step and use a query on that dataset instead.</p>
+</td></tr>
+<tr><td align='right'><p><strong>link</strong> <br/> <nobr>ML::Link_Function</nobr> <br/> <code>"LOGIT"</code></p></td><td><p>Link function to use.</p>
+</td></tr>
+<tr><td align='right'><p><strong>modelFileUrl</strong> <br/> <nobr><a href="/doc/builtin/Url.md.html">Url</a></nobr> <br/> <code></code></p></td><td><p>URL where the model file (with extension &#39;.prb&#39;) should be saved. This file can be loaded by the <a href="/doc/builtin/functions/ApplyProbabilizer.md.html"><code>probabilizer</code> function type</a>. This parameter is optional unless the <code>functionName</code> parameter is used.</p>
+</td></tr>
+<tr><td align='right'><p><strong>functionName</strong> <br/> <nobr>string</nobr> <br/> <code></code></p></td><td><p>If specified, an instance of the <a href="/doc/builtin/functions/ApplyProbabilizer.md.html"><code>probabilizer</code> function type</a> of this name will be created using the trained model. Note that to use this parameter, the <code>modelFileUrl</code> must also be provided.</p>
+</td></tr>
+<tr><td align='right'><p><strong>runOnCreation</strong> <br/> <nobr>bool</nobr> <br/> <code>true</code></p></td><td><p>If true, the procedure will be run immediately. The response will contain an extra field called <code>firstRun</code> pointing to the URL of the run.</p>
+</td></tr>
+</table></p>
+
+<p><h4>Enumeration <code>ML::Link_Function</code></h4><table class="params table"><tr><th>Value</th><th>Description</th></tr>
+<tr><td><code>LOGIT</code></td><td><p>Logit, good generic link for probabilistic</td></tr>
+<tr><td><code>PROBIT</code></td><td><p>Probit, advanced usage</td></tr>
+<tr><td><code>COMP_LOG_LOG</code></td><td><p>Also good for probabilistic</td></tr>
+<tr><td><code>LINEAR</code></td><td><p>Linear; makes it solve linear least squares (identity)</td></tr>
+<tr><td><code>LOG</code></td><td><p>Logarithm; good for transforming the output of boosting</td></tr>
+</table></p>
+
+<h3>Important note</h3>
+
+<p>A probabilizer is trained on the output of a classifier applied over a
+dataset. The dataset should <em>not</em> have been used to train the classifier,
+as this will result in a biased probabilizer.</p>
+
+<h2>See also</h2>
+
+<ul>
+<li>The <a href="/doc/builtin/procedures/Classifier.md.html"><code>classifier.train</code> procedure type</a> trains a classifier.</li>
+<li>The <a href="/doc/builtin/procedures/Accuracy.md.html"><code>classifier.test</code> procedure type</a> allows the accuracy of a predictor to be tested against
+held-out data.</li>
+<li>The <a href="/doc/builtin/procedures/Probabilizer.md.html"><code>probabilizer.train</code> procedure type</a> trains a probabilizer.</li>
+<li>The <a href="/doc/builtin/functions/ClassifierApply.md.html"><code>classifier</code> function type</a> applies a classifier to a feature vector, producing a classification score.</li>
+<li>The <a href="/doc/builtin/functions/ClassifierExplain.md.html"><code>classifier.explain</code> function type</a> explains how a classifier produced its output.</li>
+<li>The <a href="/doc/builtin/functions/ApplyProbabilizer.md.html"><code>probabilizer</code> function type</a> works with classifier.apply to convert scores to probabilities.</li>
+</ul>
+</body>
+</html>

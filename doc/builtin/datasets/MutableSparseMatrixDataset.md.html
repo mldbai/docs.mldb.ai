@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset='utf-8' />
+<title>MLDB Documentation</title>
+<script src='/resources/js/mathjax_TeX-AMS-MML_HTMLorMML.js'></script>
+<link rel='stylesheet' href='/resources/css/prism.css'>
+<link rel='stylesheet' href='/resources/css/doc.css'>
+<script src='/resources/js/jquery-1.11.2.min.js'></script>
+<script src='/resources/js/prism.js'></script>
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  if(window.location.origin == 'http://mldb.ai')
+  { ga('create', 'UA-16909325-9', 'auto'); }
+  else
+  { ga('create', 'UA-16909325-10', {'cookieDomain': 'none'}); }
+  ga('send', 'pageview');
+</script>
+</head>
+<body style='margin-left: 50px; max-width: 1000px'>
+<h1>Mutable Sparse Matrix Dataset</h1>
+
+<p>The Sparse Matrix Dataset is used to store high cardinality sparse data.
+It provides a reasonable baseline performance over all data types,
+cardinalities and data shapes.</p>
+
+<p>It is designed for the following situations:</p>
+
+<ul>
+<li>Datasets with up to millions of rows.</li>
+<li>Datasets with up to millions of columns.</li>
+<li>Data that is very sparse to dense</li>
+<li>To store discrete values, or continuous values</li>
+</ul>
+
+<p>This dataset type is mutable, and only keeps its data in memory.  Saving
+and loading will come in a future iteration.</p>
+
+<p>The dataset is transactional.  Each row or set of rows will atomically
+become visible on commit.</p>
+
+<p>The dataset is fully indexed.  It can efficiently perform both row and
+column based operations, as well as be transposed.</p>
+
+<p>The dataset can store atomic types.  Rows will be flattened upon storage.</p>
+
+<p>Each string based value is only stored once, so longer value like strings
+can be stored, and the same value may be in many columns at once.</p>
+
+<p>This is an experimental dataset.  It is not guaranteed to remain available
+or compatible across releases.</p>
+
+<h2>Configuration</h2>
+
+<p><p>A new dataset of type <code>sparse.mutable</code> named <code>&lt;id&gt;</code> can be created as follows:</p><pre><code class="language-python">mldb.put(&quot;/v1/datasets/&quot;+&lt;id&gt;, {
+    &quot;type&quot;: &quot;sparse.mutable&quot;,
+    &quot;params&quot;: {
+        "timeQuantumSeconds": &lt;float&gt;,
+        "consistencyLevel": &lt;WriteTransactionLevel&gt;,
+        "favor": &lt;TransactionFavor&gt;
+    }
+})</code></pre><p>with the following key-value definitions for <code>params</code>:</p><table class="params table" width='100%'><tr><th align='right'>Field, Type, Default</th><th>Description</th></tr>
+<tr><td align='right'><p><strong>timeQuantumSeconds</strong> <br/> <nobr>float</nobr> <br/> <code>1.0</code></p></td><td><p>a number that controls the resolution of timestamps stored in the dataset, in seconds. 1 means one second, 0.001 means one millisecond, 60 means one minute. Higher resolution requires more memory to store timestamps.</p>
+</td></tr>
+<tr><td align='right'><p><strong>consistencyLevel</strong> <br/> <nobr>WriteTransactionLevel</nobr> <br/> <code>"consistentAfterCommit"</code></p></td><td><p>Transaction level for reading of written values.  In the default level, which is <code>consistentAfterCommit</code>, a value is only guaranteed to be readable after a commit (so it may seem like data is being lost if read before a commit) but writes are fast. With the <code>consistentAfterWrite</code> level, a written value can immediately be read back but writes are slower.</p>
+</td></tr>
+<tr><td align='right'><p><strong>favor</strong> <br/> <nobr>TransactionFavor</nobr> <br/> <code>"favorReads"</code></p></td><td><p>Whether to favor reads or writes.  Only has effect for when <code>consistencyLevel</code> is set to <code>consistentAfterWrite</code>.</p>
+</td></tr>
+</table></p>
+
+<p>The <code>consistencyLevel</code> values are as follows:</p>
+
+<p><h4>Enumeration <code>WriteTransactionLevel</code></h4><table class="params table"><tr><th>Value</th><th>Description</th></tr>
+<tr><td><code>consistentAfterWrite</code></td><td><p>A value written will be available immediately after writing.  This provides the most consistency as operations are serializable, at the expense of slower writes and reads.</td></tr>
+<tr><td><code>consistentAfterCommit</code></td><td><p>A value written will only be guaranteed to be available after a `commit()` call has returned successfully, and may not be readable until that point.  This provides much faster write performance and should be used in any batch insertion scenario.</td></tr>
+</table></p>
+
+<p>The <code>favor</code> values are as follows:</p>
+
+<p><h4>Enumeration <code>TransactionFavor</code></h4><table class="params table"><tr><th>Value</th><th>Description</th></tr>
+<tr><td><code>favorReads</code></td><td><p>Values will be written in an indexed manner that favors read speed over write speed.  This will reduce the write volume, but make reads fast.</td></tr>
+<tr><td><code>favorWrites</code></td><td><p>Values will be written quickly in a non-indexed manner that favors write speed over read speed.  Values written will still be readable, but reads may take longer as there are no indexes maintained on recent writes.</td></tr>
+</table></p>
+
+<h2>Committing</h2>
+
+<p>The dataset is transactional, which means that each record operation will
+atomically become visible once it&#39;s completed.</p>
+
+<p>It is better to record to the dataset in chunks of 1000 to 100,000 rows
+at a time to avoid having too many separate, individually visible
+chunks of data available at any one time.</p>
+
+<p>The <code>commit</code> operation will cause the dataset to optimize its internal
+storage for maximum query speed.  This should be used once the entire
+dataset has been recorded or infrequently during recording.  Note that
+the commit operation can take several seconds on a large dataset and
+will block all writes (but not reads) while it&#39;s taking place (the
+writes will end up completing once the commit operation is done).</p>
+
+<h1>See also</h1>
+
+<ul>
+<li><a href="/v1/plugins/pro/doc/MutableBehaviourDataset.md.html"><code>beh.mutable</code> dataset type</a></li>
+</ul>
+</body>
+</html>

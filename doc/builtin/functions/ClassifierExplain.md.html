@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset='utf-8' />
+<title>MLDB Documentation</title>
+<script src='/resources/js/mathjax_TeX-AMS-MML_HTMLorMML.js'></script>
+<link rel='stylesheet' href='/resources/css/prism.css'>
+<link rel='stylesheet' href='/resources/css/doc.css'>
+<script src='/resources/js/jquery-1.11.2.min.js'></script>
+<script src='/resources/js/prism.js'></script>
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  if(window.location.origin == 'http://mldb.ai')
+  { ga('create', 'UA-16909325-9', 'auto'); }
+  else
+  { ga('create', 'UA-16909325-10', {'cookieDomain': 'none'}); }
+  ga('send', 'pageview');
+</script>
+</head>
+<body style='margin-left: 50px; max-width: 1000px'>
+<h1>Classifier Explain Function</h1>
+
+<p>This function explains how a classifier  model previously trained by a <a href="/doc/builtin/procedures/Classifier.md.html"><code>classifier.train</code> procedure type</a> produced its output, allowing for
+feedback on which features were causing the classifier result.</p>
+
+<h2>Configuration</h2>
+
+<p><p>A new function of type <code>classifier.explain</code> named <code>&lt;id&gt;</code> can be created as follows:</p><pre><code class="language-python">mldb.put(&quot;/v1/functions/&quot;+&lt;id&gt;, {
+    &quot;type&quot;: &quot;classifier.explain&quot;,
+    &quot;params&quot;: {
+        "modelFileUrl": &lt;<a href="/doc/builtin/Url.md.html">Url</a>&gt;
+    }
+})</code></pre><p>with the following key-value definitions for <code>params</code>:</p><table class="params table" width='100%'><tr><th align='right'>Field, Type, Default</th><th>Description</th></tr>
+<tr><td align='right'><p><strong>modelFileUrl</strong> <br/> <nobr><a href="/doc/builtin/Url.md.html">Url</a></nobr> <br/> <code></code></p></td><td><p>URL of the model file (with extension &#39;.cls&#39;) to load. This file is created by the <a href="/doc/builtin/procedures/Classifier.md.html"><code>classifier.train</code> procedure type</a>.</p>
+</td></tr>
+</table></p>
+
+<h2>Input and Output Values</h2>
+
+<p>Functions of this type have two input values: <code>label</code> which is a scalar expression and <code>features</code> which is a row. The value of <code>label</code> should be compatible with the labels used to train the classifier. The columns that
+are expected in the <code>feature</code> row depend on the features that were trained into the classifier.
+For example, if in the training the input was <code>&quot;select&quot;: &quot;x,y&quot;</code>, then the function will 
+expect two columns called <code>x</code> and <code>y</code>.</p>
+
+<p>These functions output two values, <code>explanation</code> which returns a row and <code>bias</code> which returns a float.
+The <code>explanation</code> row contains a column for each feature which influenced the classifier&#39;s output for this
+input, the value of which is a numerical score for the influence of that feature in this case.
+The sum of the value of the <code>bias</code> column and the influence of each feature is the score that
+the classifier assigns to the input feature vector. This means that the higher the influence
+assigned to a given value of a feature (in the context of the others), the more that feature
+contributes to the score, and the heavier that feature weighs in favour of the <code>label</code>.
+Negative values indicate that the feature value in question pushes the classifier away from assigning
+the <code>label</code>. The <code>bias</code> value is the score the classifier would assign in the absence of any 
+features.</p>
+
+<h2>Examples</h2>
+
+<ul>
+<li>The <a href="/doc/nblink.html#_demos/Predicting%20Titanic%20Survival" target="_blank">Predicting Titanic Survival</a> demo notebook</li>
+</ul>
+
+<h2>See also</h2>
+
+<ul>
+<li>The <a href="/doc/builtin/procedures/Classifier.md.html"><code>classifier.train</code> procedure type</a> trains a classifier.</li>
+<li>The <a href="/doc/builtin/procedures/Accuracy.md.html"><code>classifier.test</code> procedure type</a> allows the accuracy of a predictor to be tested against
+held-out data.</li>
+<li>The <a href="/doc/builtin/procedures/Probabilizer.md.html"><code>probabilizer.train</code> procedure type</a> trains a probabilizer.</li>
+<li>The <a href="/doc/builtin/functions/ClassifierApply.md.html"><code>classifier</code> function type</a> applies a classifier to a feature vector, producing a classification score.</li>
+<li>The <a href="/doc/builtin/functions/ClassifierExplain.md.html"><code>classifier.explain</code> function type</a> explains how a classifier produced its output.</li>
+<li>The <a href="/doc/builtin/functions/ApplyProbabilizer.md.html"><code>probabilizer</code> function type</a> works with classifier.apply to convert scores to probabilities.</li>
+</ul>
+</body>
+</html>

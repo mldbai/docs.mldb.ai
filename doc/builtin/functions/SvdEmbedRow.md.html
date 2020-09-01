@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset='utf-8' />
+<title>MLDB Documentation</title>
+<script src='/resources/js/mathjax_TeX-AMS-MML_HTMLorMML.js'></script>
+<link rel='stylesheet' href='/resources/css/prism.css'>
+<link rel='stylesheet' href='/resources/css/doc.css'>
+<script src='/resources/js/jquery-1.11.2.min.js'></script>
+<script src='/resources/js/prism.js'></script>
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  if(window.location.origin == 'http://mldb.ai')
+  { ga('create', 'UA-16909325-9', 'auto'); }
+  else
+  { ga('create', 'UA-16909325-10', {'cookieDomain': 'none'}); }
+  ga('send', 'pageview');
+</script>
+</head>
+<body style='margin-left: 50px; max-width: 1000px'>
+<h1>SVD Row Embedding</h1>
+
+<p>Functions of this type embed a row of a dataset into an SVD space, producing a singular vector,
+using a model previously trained by an  <a href="/doc/builtin/procedures/Svd.md.html"><code>svd.train</code> procedure type</a>.</p>
+
+<h2>Configuration</h2>
+
+<p><p>A new function of type <code>svd.embedRow</code> named <code>&lt;id&gt;</code> can be created as follows:</p><pre><code class="language-python">mldb.put(&quot;/v1/functions/&quot;+&lt;id&gt;, {
+    &quot;type&quot;: &quot;svd.embedRow&quot;,
+    &quot;params&quot;: {
+        "modelFileUrl": &lt;<a href="/doc/builtin/Url.md.html">Url</a>&gt;,
+        "maxSingularValues": &lt;int&gt;,
+        "acceptUnknownValues": &lt;bool&gt;
+    }
+})</code></pre><p>with the following key-value definitions for <code>params</code>:</p><table class="params table" width='100%'><tr><th align='right'>Field, Type, Default</th><th>Description</th></tr>
+<tr><td align='right'><p><strong>modelFileUrl</strong> <br/> <nobr><a href="/doc/builtin/Url.md.html">Url</a></nobr> <br/> <code></code></p></td><td><p>URL of the model file (with extension &#39;.svd&#39;) to load. This file is created by the <a href="/doc/builtin/procedures/Svd.md.html"><code>svd.train</code> procedure type</a>.</p>
+</td></tr>
+<tr><td align='right'><p><strong>maxSingularValues</strong> <br/> <nobr>int</nobr> <br/> <code>-1</code></p></td><td><p>Maximum number of singular values to use (-1 = all)</p>
+</td></tr>
+<tr><td align='right'><p><strong>acceptUnknownValues</strong> <br/> <nobr>bool</nobr> <br/> <code>false</code></p></td><td><p>This parameter (which defaults to false) tells us whether or not unknown values should be accepted by the SVD.  An unknown value occurs when a column that was always a number in training is presented with a string value, or vice versa, or when a string valued column is presented with a value unknown in training.  If its value is true, an unknown value will be silently ignored.  If its value is false, an unknown value will return an error when the function is applied.</p>
+</td></tr>
+</table></p>
+
+<h2>Input and Output Value</h2>
+
+<p>Functions of this type has a single input value called <code>row</code> which is a row. The columns that
+are expected in this row depend on the features that were trained into the SVD model.
+For example, if in the training the input value was <code>&quot;select&quot;: &quot;x,y&quot;</code>, then the function will 
+expect two columns called <code>x</code> and <code>y</code>.</p>
+
+<p>These functions have a single output value called <code>embedding</code> which contains a row. This row
+will contain columns with names prefixed with the <code>outputColumn</code> parameter of the <a href="/doc/builtin/procedures/Svd.md.html"><code>svd.train</code> procedure type</a> that trained the model, followed by a 4 digit number for each of the singular values. By default, the <code>outputColumn</code> parameter is <code>svd</code> so the columns of the output row will be <code>svd0001</code>, <code>svd0002</code>, etc.</p>
+
+<h2>Validation</h2>
+
+<p>When an SVD procedure is trained, it infers the type of input values and does feature
+extraction based upon the types seen in training.  If the type of an input
+value passed into the function doesn&#39;t match the input value type seen in training, then the
+SVD may not give sensible outputs.  This happens in the following
+situations:</p>
+
+<ul>
+<li>A column was always a number in training, but a string value is passed in
+on the corresponding input value;</li>
+<li>A column had string values in training, but the string value passed in was
+not seen at all in training.</li>
+</ul>
+
+<p>The <code>acceptUnknownValues</code> parameter controls what happens in this situation.
+If the value of that parameter is <code>true</code>, then a column with an unknown value
+will be ignored completely.  If the value of the parameter is <code>false</code>, then
+the application of the function will return an error.</p>
+
+<p>The main use of that parameter is to catch errors in the development phase,
+for example accidentially encoding a parameter as a string when it should be
+an int or mixing column names.</p>
+
+<h2>Examples</h2>
+
+<ul>
+<li>The <a href="/doc/nblink.html#_demos/Recommending%20Movies" target="_blank">Recommending Movies</a> demo notebook</li>
+</ul>
+
+<h2>See Also</h2>
+
+<ul>
+<li><a href="http://en.wikipedia.org/wiki/Singular_value_decomposition" target="_blank">Wikipedia SVD Article</a></li>
+<li>the <a href="/doc/builtin/procedures/Svd.md.html"><code>svd.train</code> procedure type</a> trains an SVD</li>
+</ul>
+</body>
+</html>

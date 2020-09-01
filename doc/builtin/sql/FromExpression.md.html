@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset='utf-8' />
+<title>MLDB Documentation</title>
+<script src='/resources/js/mathjax_TeX-AMS-MML_HTMLorMML.js'></script>
+<link rel='stylesheet' href='/resources/css/prism.css'>
+<link rel='stylesheet' href='/resources/css/doc.css'>
+<script src='/resources/js/jquery-1.11.2.min.js'></script>
+<script src='/resources/js/prism.js'></script>
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  if(window.location.origin == 'http://mldb.ai')
+  { ga('create', 'UA-16909325-9', 'auto'); }
+  else
+  { ga('create', 'UA-16909325-10', {'cookieDomain': 'none'}); }
+  ga('send', 'pageview');
+</script>
+</head>
+<body style='margin-left: 50px; max-width: 1000px'>
+<h1>SQL From Expressions</h1>
+
+<p>An SQL From expression specifies the dataset(s) on which a query will run.</p>
+
+<h2>Datasets and Aliases</h2>
+
+<p>The simplest type of From expression is simply a dataset name.  In that
+case, the query will run on the given dataset. The dataset name can be followed by <code>as &lt;alias&gt;</code>, in which case the query will be run on the given dataset, as if it was named <code>&lt;alias&gt;</code>. For example:</p>
+
+<pre><code class="language-sql">SELECT x.* FROM dataset AS x
+</code></pre>
+
+<h2>Subqueries</h2>
+
+<p>A full query in parentheses (i.e. <code>( )</code>) can be substituted for a dataset name. For example:</p>
+
+<pre><code class="language-sql">SELECT * FROM (SELECT * FROM dataset WHERE column1 = 2) as subselect WHERE column2 = 4&#39;
+</code></pre>
+
+<h2>Joins</h2>
+
+<p>From Expressions can be combined together to perform joins with the pattern <code>&lt;FromExpression1&gt; &lt;JoinType&gt; &lt;FromExpression2&gt; ON &lt;ValueExpression&gt;</code>. For example:</p>
+
+<pre><code class="language-sql">SELECT * 
+FROM (SELECT * FROM dataset WHERE column1 = 2) as subselect 
+    JOIN  dataset2 as x ON subselect.column2 = x.column3 + 1
+
+</code></pre>
+
+<p><code>&lt;FromExpression1&gt;</code> and <code>&lt;FromExpression2&gt;</code> are called the &quot;left side&quot; and &quot;right side&quot; of the join, respectively, and the <code>&lt;ValueExpression&gt;</code> is called the &quot;join condition&quot;.</p>
+
+<p>The following <code>&lt;JoinType&gt;</code>s are supported:</p>
+
+<p><strong><code>left JOIN right</code>, <code>left INNER JOIN right</code></strong></p>
+
+<p>The output contains a row for each combination of rows of <code>left</code> and rows of <code>right</code> that satisfies the join condition.</p>
+
+<p><strong><code>left LEFT JOIN right</code>, <code>left LEFT OUTER JOIN right</code></strong></p>
+
+<p>First, an inner join is performed. Then, for each row in <code>left</code> that does not satisfy the join condition with any row in <code>right</code>, a joined row is added with null values in columns of <code>right</code>. The output therefore always has at least one row for each row in <code>left</code>.</p>
+
+<p><strong><code>left RIGHT JOIN right</code>, <code>left RIGHT OUTER JOIN right</code></strong></p>
+
+<p>First, an inner join is performed. Then, for each row in <code>right</code> that does not satisfy the join condition with any row in <code>left</code>, a joined row is added with null values in columns of <code>left</code>. This is the converse of a left join: the output will always have a row for each row in <code>right</code>.</p>
+
+<p><strong><code>left OUTER JOIN right</code>, <code>left FULL JOIN right</code>, <code>left FULL OUTER JOIN right</code></strong></p>
+
+<p>First, an inner join is performed. Then, for each row in <code>left</code> that does not satisfy the join condition with any row in <code>right</code>, a joined row is added with null values in columns of <code>right</code>. Also, for each row of <code>right</code> that does not satisfy the join condition with any row in <code>left</code>, a joined row with null values in the columns of <code>left</code> is added. The output therefore always has at least one row for each row of both <code>left</code> and <code>right</code>.</p>
+
+<h2><a name="sample-function"></a>Sample</h2>
+
+<p>Queries can be made to a sample of a dataset by using the <code>sample</code> function in the FROM expression. For example:</p>
+
+<pre><code class="language-sql">SELECT x.* FROM sample(dataset, {rows: 25, withReplacement: FALSE}) AS x
+</code></pre>
+
+<p>The second argument, a row expression  with the dataset&#39;s configuration, is optional. When it is not specified, it 
+use the sampled dataset&#39;s default parameters.</p>
+
+<p>See <a href="/doc/builtin/datasets/SampledDataset.md.html"><code>sampled</code> dataset type</a> for more details.</p>
+
+<h2><a name="transpose-function"></a> Transpose</h2>
+
+<p>Queries can be made to the transpose of a dataset by using the transpose() function in the FROM expression. For example:</p>
+
+<pre><code class="language-sql">SELECT x.* FROM transpose(dataset) AS x
+</code></pre>
+
+<p>See <a href="/doc/builtin/datasets/TransposedDataset.md.html"><code>transposed</code> dataset type</a> for more details.</p>
+
+<h2><a name="merge-function"></a>Merge</h2>
+
+<p>Queries can be made to the union of several datasets by using the merge() function in the FROM expression. For example:</p>
+
+<pre><code class="language-sql">SELECT x.* FROM merge(dataset1, dataset2, dataset3) AS x
+</code></pre>
+
+<p>See <a href="/doc/builtin/datasets/MergedDataset.md.html"><code>merged</code> dataset type</a> for more details.</p>
+
+<h2>Using rows as a dataset</h2>
+
+<p>In some circumstances, it may be useful to use a row as a dataset,
+particularly when using the <a href="/doc/builtin/functions/SqlQueryFunction.md.html"><code>sql.query</code> function type</a> or a
+sub-select.  This can be done using the syntax</p>
+
+<pre><code class="language-sql">SELECT ... FROM row_dataset(expression) ...
+</code></pre>
+
+<p>if a dataset with one row per <em>column</em> in the input row is required, or</p>
+
+<pre><code class="language-sql">SELECT ... FROM atom_dataset(expression) ...
+</code></pre>
+
+<p>if a dataset with one row per <em>atom</em> in the input row is required
+(in other words, the row is pre-flattened and a table is made of
+the scalar values at the leaf nodes).</p>
+
+<p>When this construct is used, a dataset is constructed with one row
+for each column or atom in the expression, with one column called <code>value</code>
+containing the value of the column, and one column called <code>column</code>
+with the column name.  For example, the query</p>
+
+<pre><code class="language-sql">SELECT * FROM row_dataset({x: 1, y:2, z: &#39;three&#39;})
+</code></pre>
+
+<p>would yield the following result for both <code>row_dataset</code> and <code>atom_dataset</code>:</p>
+
+<table>
+<thead>
+<tr>
+<th style="text-align: center">column</th>
+<th style="text-align: center">value</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td style="text-align: center">x</td>
+<td style="text-align: center">1</td>
+</tr>
+<tr>
+<td style="text-align: center">y</td>
+<td style="text-align: center">2</td>
+</tr>
+<tr>
+<td style="text-align: center">z</td>
+<td style="text-align: center">&quot;three&quot;</td>
+</tr>
+</tbody>
+</table>
+
+<p>whereas the following query</p>
+
+<pre><code class="language-sql">SELECT * FROM row_dataset({w: {x: 1, y:1, y:2, z: &#39;three&#39;}})
+</code></pre>
+
+<p>would yield the following:</p>
+
+<table>
+<thead>
+<tr>
+<th style="text-align: center">column</th>
+<th style="text-align: center">value</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td style="text-align: center">w</td>
+<td style="text-align: center">{x: 1, y:1, y:2, z: &#39;three&#39;}</td>
+</tr>
+</tbody>
+</table>
+
+<p>whereas replacing <code>row_dataset</code> with <code>atom_dataset</code> would yield</p>
+
+<pre><code class="language-sql">SELECT * FROM atom_dataset({w: {x: 1, y:1, y:2, z: &#39;three&#39;}})
+</code></pre>
+
+<table>
+<thead>
+<tr>
+<th style="text-align: center">column</th>
+<th style="text-align: center">value</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td style="text-align: center">w.x</td>
+<td style="text-align: center">1</td>
+</tr>
+<tr>
+<td style="text-align: center">w.y</td>
+<td style="text-align: center">2</td>
+</tr>
+<tr>
+<td style="text-align: center">w.z</td>
+<td style="text-align: center">&quot;three&quot;</td>
+</tr>
+</tbody>
+</table>
+
+<p>The <code>COLUMN EXPR</code> and <code>STRUCTURED COLUMN EXPR</code> constructs can be used to
+similar effect when the goal is to apply a function or transformation to
+each element of a row, rather then convert it into a table.</p>
+
+<h3>Caveats</h3>
+
+<p>The <code>column</code> column of the <code>row_dataset</code> and <code>atom_dataset</code> functions will
+be of type <code>PATH</code>.  This will not compare true with any literal string,
+which can be surprising.  If it is necessary to compare it with a string, it is
+necessary to convert the string into a path with <code>CAST (&#39;stringtocomparewith&#39; AS PATH)</code> or <code>parse_path(&#39;stringtocomparewith&#39;)</code>.</p>
+
+<h2>See also</h2>
+
+<ul>
+<li>The <a href="/doc/nblink.html#_tutorials/Virtual%20Manipulation%20of%20Datasets%20Tutorial" target="_blank">Virtual Manipulation of Datasets Tutorial</a> for examples of <code>sample</code> and <code>transpose</code></li>
+<li>The <a href="/doc/nblink.html#_demos/Investigating%20the%20Panama%20Papers" target="_blank">Investigating the Panama Papers</a> demo for examples of <code>join</code></li>
+</ul>
+</body>
+</html>

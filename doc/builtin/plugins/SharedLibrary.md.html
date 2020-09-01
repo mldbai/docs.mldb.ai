@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset='utf-8' />
+<title>MLDB Documentation</title>
+<script src='/resources/js/mathjax_TeX-AMS-MML_HTMLorMML.js'></script>
+<link rel='stylesheet' href='/resources/css/prism.css'>
+<link rel='stylesheet' href='/resources/css/doc.css'>
+<script src='/resources/js/jquery-1.11.2.min.js'></script>
+<script src='/resources/js/prism.js'></script>
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  if(window.location.origin == 'http://mldb.ai')
+  { ga('create', 'UA-16909325-9', 'auto'); }
+  else
+  { ga('create', 'UA-16909325-10', {'cookieDomain': 'none'}); }
+  ga('send', 'pageview');
+</script>
+</head>
+<body style='margin-left: 50px; max-width: 1000px'>
+<h1>Shared Library Plugin</h1>
+
+<p>This plugin allows the loading of Linux shared libraries to extend the functionality
+of MLDB.</p>
+
+<p>The shared libraries should use the MLDB API exposed in the MLDB SDK, and
+register all functionality during their static initialization phase.</p>
+
+<h2>Configuration</h2>
+
+<p><p>A new plugin of type <code>sharedLibrary</code> named <code>&lt;id&gt;</code> can be created as follows:</p><pre><code class="language-python">mldb.put(&quot;/v1/plugins/&quot;+&lt;id&gt;, {
+    &quot;type&quot;: &quot;sharedLibrary&quot;,
+    &quot;params&quot;: {
+        "address": &lt;string&gt;,
+        "library": &lt;string&gt;,
+        "doc": &lt;string&gt;,
+        "static": &lt;string&gt;,
+        "apiVersion": &lt;string&gt;,
+        "version": &lt;string&gt;,
+        "allowInsecureLoading": &lt;bool&gt;
+    }
+})</code></pre><p>with the following key-value definitions for <code>params</code>:</p><table class="params table" width='100%'><tr><th align='right'>Field, Type, Default</th><th>Description</th></tr>
+<tr><td align='right'><p><strong>address</strong> <br/> <nobr>string</nobr> <br/> <code></code></p></td><td><p>Address to load the shared library code from</p>
+</td></tr>
+<tr><td align='right'><p><strong>library</strong> <br/> <nobr>string</nobr> <br/> <code></code></p></td><td><p>Library to load to start plugin</p>
+</td></tr>
+<tr><td align='right'><p><strong>doc</strong> <br/> <nobr>string</nobr> <br/> <code></code></p></td><td><p>Path to serve documentation from</p>
+</td></tr>
+<tr><td align='right'><p><strong>static</strong> <br/> <nobr>string</nobr> <br/> <code></code></p></td><td><p>Path to serve static assets from</p>
+</td></tr>
+<tr><td align='right'><p><strong>apiVersion</strong> <br/> <nobr>string</nobr> <br/> <code></code></p></td><td><p>Version of the interface required by the shared library</p>
+</td></tr>
+<tr><td align='right'><p><strong>version</strong> <br/> <nobr>string</nobr> <br/> <code></code></p></td><td><p>Version of the plugin in this directory</p>
+</td></tr>
+<tr><td align='right'><p><strong>allowInsecureLoading</strong> <br/> <nobr>bool</nobr> <br/> <code>false</code></p></td><td><p>Allow loading of code that comes from an insecure location</p>
+</td></tr>
+</table></p>
+
+<h2>Initialization</h2>
+
+<p>During the initialization, the plugin&#39;s shared library will be initialized as
+normal, including running static initializers.  Thus, a plugin that simply
+needs to run these doesn&#39;t need to do anything special: it will initialize
+itself as it is loaded.</p>
+
+<p>If the plugin needs extra initialization, or needs to register custom handlers
+for routes, etc, it can expose an initialization function.</p>
+
+<p>This function must be in the root namespace, and have the following
+signature:</p>
+
+<pre><code>MLDB::Plugin *
+mldbPluginEnterV100(MLDB::MldbServer * server);
+</code></pre>
+
+<p>That function will be called by the plugin loader each time a plugin is
+registered, and will be passed the MldbServer instance of the server
+that owns it.</p>
+
+<p>The return value of that function is:</p>
+
+<ul>
+<li><code>nullptr</code>, if the plugin doesn&#39;t need to override the plugin
+functionality;</li>
+<li>a pointer to a <code>MLDB::Plugin</code> instance constructed
+by the plugin using the <code>new</code> operator.  All of the plugin methods
+(routes, status, version, etc) will forward to that object, which will
+be freed when the plugin is unloaded.</li>
+</ul>
+
+<p>This allows the plugin to provide additional functionality that is
+linked to the MLDB server it&#39;s running under.</p>
+
+<h2>Linking a plugin implemented in multiple libraries</h2>
+
+<p>If the plugin is implemented in multiple libraries, it will need to add
+an <code>rpath</code> entry that points to the current directory, or otherwise it
+may fail with a message like the following:</p>
+
+<pre><code>error loading plugin file:///mldb_data/plugins/myplugin/: couldn&#39;t load plugin library `libmyplugin.so`: libmyplugin-dependency.so: cannot open shared object file: No such file or directory
+plugin will be ignored
+</code></pre>
+
+<p>To do this, typically the following should be added to the compiler
+command line in the linking phase:</p>
+
+<pre><code>-Wl,-rpath,&#39;$ORIGIN&#39;
+</code></pre>
+
+<p>to enable to library loader to look in the current directory for other
+libraries associated with the plugin.  By default, it will only look in
+the MLDB and system library directories.</p>
+
+<p>See the discussion in the manual page here: http://man7.org/linux/man-pages/man8/ld.so.8.html</p>
+</body>
+</html>

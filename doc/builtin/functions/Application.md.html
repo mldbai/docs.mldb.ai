@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset='utf-8' />
+<title>MLDB Documentation</title>
+<script src='/resources/js/mathjax_TeX-AMS-MML_HTMLorMML.js'></script>
+<link rel='stylesheet' href='/resources/css/prism.css'>
+<link rel='stylesheet' href='/resources/css/doc.css'>
+<script src='/resources/js/jquery-1.11.2.min.js'></script>
+<script src='/resources/js/prism.js'></script>
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  if(window.location.origin == 'http://mldb.ai')
+  { ga('create', 'UA-16909325-9', 'auto'); }
+  else
+  { ga('create', 'UA-16909325-10', {'cookieDomain': 'none'}); }
+  ga('send', 'pageview');
+</script>
+</head>
+<body style='margin-left: 50px; max-width: 1000px'>
+<h1>Function Application via REST</h1>
+
+<p>All MLDB user-defined Functions (including machine learning models created by <a href="../procedures/Procedures.md.html">Procedures</a>) are not only available within <a href="../sql/ValueExpression.md.html#CallingFunctions">SQL queries</a> also automatically accessible as REST Endpoints, which can be used to apply machine learning models in a streaming/real-time process. Functions support input values passed in as query string parameters or as a JSON payload. In both cases, the REST call must be a GET. For example, functions can be applied with query string parameters via a REST API call like <code>GET /v1/functions/&lt;id&gt;/application?input={&lt;values&gt;}</code>.</p>
+
+<h3>Example</h3>
+
+<p>Let&#39;s look at a hypothetical Function with id <code>example</code> whose type defined the following input and output values:</p>
+
+<ul>
+<li>Input
+
+<ul>
+<li><code>x</code>: integer</li>
+<li><code>y</code>: row of integers</li>
+</ul></li>
+<li>Output:
+
+<ul>
+<li><code>scaled_y</code>: row of integers, each of which is the corresponding value of <code>y</code> times <code>x</code></li>
+<li><code>sum_scaled_y</code>: integer, the sum of the values of <code>scaled_y</code></li>
+</ul></li>
+</ul>
+
+<p>We could apply this Function via REST like so:</p>
+
+<pre><code class="language-python">mldb.get(&quot;/v1/functions/example/application&quot;, input={&quot;x&quot;:2,&quot;y&quot;:{&quot;a&quot;:3,&quot;b&quot;:4}})
+</code></pre>
+
+<p>And we would receive the following output:</p>
+
+<pre><code class="language-python">{
+    &quot;output&quot;: {
+        &quot;sum_scaled_y&quot;: 14,
+        &quot;scaled_y&quot;: [
+            [ &quot;a&quot;, [ 6, &quot;-Inf&quot; ] ], 
+            [ &quot;b&quot;, [ 8, &quot;-Inf&quot; ] ]
+        ]
+    }
+}
+</code></pre>
+
+<p>The same output can be obtained by providing the arguments using a JSON payload:</p>
+
+<pre><code class="language-python">mldb.get(&quot;/v1/functions/example/application&quot;, data={&quot;input&quot;: {&quot;x&quot;:2,&quot;y&quot;:{&quot;a&quot;:3,&quot;b&quot;:4}}})
+</code></pre>
+
+<h2>See also</h2>
+
+<ul>
+<li><a href="/doc/nblink.html#_tutorials/Procedures%20and%20Functions%20Tutorial" target="_blank">Procedures and Functions Tutorial</a> </li>
+</ul>
+</body>
+</html>

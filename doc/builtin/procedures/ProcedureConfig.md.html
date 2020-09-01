@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset='utf-8' />
+<title>MLDB Documentation</title>
+<script src='/resources/js/mathjax_TeX-AMS-MML_HTMLorMML.js'></script>
+<link rel='stylesheet' href='/resources/css/prism.css'>
+<link rel='stylesheet' href='/resources/css/doc.css'>
+<script src='/resources/js/jquery-1.11.2.min.js'></script>
+<script src='/resources/js/prism.js'></script>
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  if(window.location.origin == 'http://mldb.ai')
+  { ga('create', 'UA-16909325-9', 'auto'); }
+  else
+  { ga('create', 'UA-16909325-10', {'cookieDomain': 'none'}); }
+  ga('send', 'pageview');
+</script>
+</head>
+<body style='margin-left: 50px; max-width: 1000px'>
+<h1>Procedure Configuration</h1>
+
+<p>A procedure configuration object is used to create or load a <a href="Procedures.md.html">procedure</a>.</p>
+
+<p>It is a JSON object that looks like this:</p>
+
+<pre><code class="language-json">{ 
+  &quot;id&quot;: &lt;id&gt;, 
+  &quot;type&quot;: &lt;type&gt;, 
+  &quot;params&quot;: { 
+    &lt;params&gt; 
+  } 
+}
+</code></pre>
+
+<ul>
+<li><code>id</code> is a string that defines the URL at which the procedure will be available via the REST API</li>
+<li><code>type</code> is a string that specified the procedure&#39;s type (see below)</li>
+<li><code>params</code> is an object that configures the procedure, and whose contents will vary according to the type</li>
+</ul>
+
+<p>Not all three of these fields are required in all contexts:</p>
+
+<ul>
+<li>one or both of <code>id</code> and <code>type</code> must be specified
+
+<ul>
+<li>if only <code>id</code> is specified, MLDB will assume this is a pre-existing procedure and will try to load it (an error will ensue if it doesn&#39;t already exist)</li>
+<li>if <code>type</code> is specified, MLDB will assume that the procedure doesn&#39;t exist yet and will try to create it (an error will ensue if it already exists)
+
+<ul>
+<li>if <code>type</code> is specified without <code>id</code>, an id will be auto-generated</li>
+<li>if <code>type</code> is specified with <code>id</code>, the procedure will be created with the specified <code>id</code> unless a procedure already exists with that id</li>
+<li>if <code>type</code> is specified, then a corresponding <code>params</code> function must be specified if the type requires it</li>
+</ul></li>
+</ul></li>
+</ul>
+
+<p>The following types of procedures are available:</p>
+
+<p><table class="table"><tr><th>Type</th><th>Description</th><th>Doc</th></tr>
+<tr><td><code>classifier.experiment</code></td><td>Train and test a classifier</td><td><a href="/doc/builtin/procedures/ExperimentProcedure.md.html">[doc]</a></td></tr>
+<tr><td><code>classifier.test</code></td><td>Calculate the accuracy of a classifier on held-out data</td><td><a href="/doc/builtin/procedures/Accuracy.md.html">[doc]</a></td></tr>
+<tr><td><code>classifier.train</code></td><td>Train a supervised classifier</td><td><a href="/doc/builtin/procedures/Classifier.md.html">[doc]</a></td></tr>
+<tr><td><code>export.csv</code></td><td>Exports a dataset to a target location as a CSV</td><td><a href="/doc/builtin/procedures/CsvExportProcedure.md.html">[doc]</a></td></tr>
+<tr><td><code>import.git</code></td><td>Import a Git repository&#39;s metadata into MLDB</td><td><a href="/doc/builtin/procedures/GitImporter.md.html">[doc]</a></td></tr>
+<tr><td><code>import.json</code></td><td>Import a text file with one JSON per line into MLDB</td><td><a href="/doc/builtin/procedures/JSONImporter.md.html">[doc]</a></td></tr>
+<tr><td><code>import.sentiwordnet</code></td><td>Import a SentiWordNet file into MLDB</td><td><a href="/doc/builtin/procedures/SentiWordNetImporter.md.html">[doc]</a></td></tr>
+<tr><td><code>import.text</code></td><td>Import from a text file, line by line.</td><td><a href="/doc/builtin/procedures/importtextprocedure.md.html">[doc]</a></td></tr>
+<tr><td><code>import.word2vec</code></td><td>Import a word2vec file into MLDB</td><td><a href="/doc/builtin/procedures/Word2VecImporter.md.html">[doc]</a></td></tr>
+<tr><td><code>kmeans.train</code></td><td>Simple clustering algorithm based on cluster centroids in embedding space</td><td><a href="/doc/builtin/procedures/KmeansProcedure.md.html">[doc]</a></td></tr>
+<tr><td><code>melt</code></td><td>Performs a melt operation on a dataset</td><td><a href="/doc/builtin/procedures/MeltProcedure.md.html">[doc]</a></td></tr>
+<tr><td><code>mongodb.import</code></td><td>Import a dataset from MongoDB</td><td><a href="/v1/plugins/mongodb/doc/MongoImport.md.html">[doc]</a></td></tr>
+<tr><td><code>permuter.run</code></td><td>Run a child procedure with permutations of its configuration</td><td><a href="/doc/builtin/procedures/PermuterProcedure.md.html">[doc]</a></td></tr>
+<tr><td><code>probabilizer.train</code></td><td>Trains a model to calibrate a score into a probability</td><td><a href="/doc/builtin/procedures/Probabilizer.md.html">[doc]</a></td></tr>
+<tr><td><code>randomforest.binary.train</code></td><td>Train a supervised binary random forest</td><td><a href="/doc/builtin/procedures/RandomForest.md.html">[doc]</a></td></tr>
+<tr><td><code>statsTable.bagOfWords.train</code></td><td>Create statistical tables of trials against outcomes for bag of words</td><td><a href="/doc/builtin/procedures/BagOfWordsStatsTableProcedure.md.html">[doc]</a></td></tr>
+<tr><td><code>statsTable.train</code></td><td>Create statistical tables of trials against outcomes</td><td><a href="/doc/builtin/procedures/StatsTableProcedure.md.html">[doc]</a></td></tr>
+<tr><td><code>summary.statistics</code></td><td>Creates a dataset with summary statistics for each columns of an input dataset</td><td><a href="/doc/builtin/procedures/SummaryStatisticsProcedure.md.html">[doc]</a></td></tr>
+<tr><td><code>svd.train</code></td><td>Train a SVD to convert rows or columns to embedding coordinates</td><td><a href="/doc/builtin/procedures/Svd.md.html">[doc]</a></td></tr>
+<tr><td><code>tfidf.train</code></td><td>Prepare data for a TF-IDF function</td><td><a href="/doc/builtin/procedures/TfidfProcedure.md.html">[doc]</a></td></tr>
+<tr><td><code>transform</code></td><td>Apply an SQL expression over a dataset to transform into another dataset</td><td><a href="/doc/builtin/procedures/TransformDataset.md.html">[doc]</a></td></tr>
+<tr><td><code>tsne.train</code></td><td>Project a high dimensional space into a low-dimensional space suitable for visualization</td><td><a href="/doc/builtin/procedures/TsneProcedure.md.html">[doc]</a></td></tr>
+</table></p>
+
+<h2>See also</h2>
+
+<ul>
+<li><a href="../datasets/Datasets.md.html">Datasets</a></li>
+<li><a href="../procedures/Procedures.md.html">Procedures</a></li>
+<li><a href="../functions/Functions.md.html">Functions</a></li>
+<li><a href="../plugins/Plugins.md.html">Plugins</a></li>
+</ul>
+</body>
+</html>

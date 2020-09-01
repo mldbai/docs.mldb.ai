@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset='utf-8' />
+<title>MLDB Documentation</title>
+<script src='/resources/js/mathjax_TeX-AMS-MML_HTMLorMML.js'></script>
+<link rel='stylesheet' href='/resources/css/prism.css'>
+<link rel='stylesheet' href='/resources/css/doc.css'>
+<script src='/resources/js/jquery-1.11.2.min.js'></script>
+<script src='/resources/js/prism.js'></script>
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  if(window.location.origin == 'http://mldb.ai')
+  { ga('create', 'UA-16909325-9', 'auto'); }
+  else
+  { ga('create', 'UA-16909325-10', {'cookieDomain': 'none'}); }
+  ga('send', 'pageview');
+</script>
+</head>
+<body style='margin-left: 50px; max-width: 1000px'>
+<h1>SQL Select Expressions</h1>
+
+<p>An SQL Select expression is used to transform a set of input rows into a
+set of output rows, by applying expressions across the set of columns in
+the rows.  The input and output columns are both named and there are
+separate parts of the expression to choose the column name and to choose
+the value of the column.</p>
+
+<p>Since MLDB is a sparse database designed for datasets with up to millions of
+columns, there is extra syntax which helps you to manipulate groups of
+columns together.</p>
+
+<h2>Basic Syntax</h2>
+
+<p>The following basic syntax (as supported in standard SQL) can be used as
+normal:</p>
+
+<ul>
+<li>A comma-delimited list of <code>&lt;value-expr&gt; AS &lt;name&gt;</code> clauses will select each expression, and create a matching column in the output with the corresponding name. 
+
+<ul>
+<li><code>value-expr</code> is a <a href="ValueExpression.md.html">Value Expression</a></li>
+<li><code>name</code> must be a valid column name: it must be in double-quotes (<code>&quot;</code>) if it clashes with a reserved word or doesn&#39;t start with a letter and contain only ASCII letters, numbers and underscore characters.</li>
+<li>the <code>AS &lt;name&gt;</code> portion can be omitted, in which case a name will be automatically generated</li>
+</ul></li>
+</ul>
+
+<p>In addition, non-SQL-standard <code>&lt;name&gt;: &lt;value-expr&gt;</code> are also accepted in Select Expressions.</p>
+
+<p>There are also extensions that make it easier to work with millions of
+columns. The following are accepted within the comma-delimited list of clauses in 
+a select expression:</p>
+
+<ul>
+<li><code>*</code> will select all columns and copy them into the output.</li>
+<li><code>* EXCLUDING (col1)</code> will select and copy all columns except for the
+one called <code>col1</code> to the output.</li>
+<li><code>* EXCLUDING (col1, col2)</code> will select and copy all but <code>col1</code> and
+<code>col2</code>.</li>
+<li><code>y*</code> will select all columns starting with a <code>y</code></li>
+<li><code>* EXCLUDING (col1, x*)</code> will select and copy all, apart from those
+called <code>col1</code> or those whose name starts with an <code>x</code></li>
+<li><code>y* AS z*</code> will select all columns starting with a <code>y</code>, and change
+the <code>y</code> to a <code>z</code> in the output column name.</li>
+<li><code>y* EXCLUDING (yellow) AS z*</code> will do the same thing, but will
+exclude the column <code>yellow</code> from the output.</li>
+</ul>
+
+<h2>Selecting columns programatically via a column expression</h2>
+
+<p>MLDB is different from traditional SQL databases in that it supports millions
+of columns, and columns may be very sparse as there is no enforced schema
+around the row.</p>
+
+<p>In some instances, it may be advantageous to select columns based upon an
+SQL expression rather than based on pattern matching on the name.  This is
+possible using a column expression, which effectively creates a table with
+all columns in it and allows a <code>SELECT</code> to run over that table to choose the
+ones required.</p>
+
+<p>The syntax looks like this:</p>
+
+<pre><code>COLUMN EXPR ( AS &lt;name&gt; WHERE &lt;value-expr&gt; ORDER BY &lt;order-by-expr&gt; OFFSET &lt;int&gt; LIMIT &lt;int&gt;)
+</code></pre>
+
+<p>The components of the expression are as follows:</p>
+
+<ul>
+<li>the <code>AS</code> clause is a string-valued expression that gives the name of the resulting column.  If not specified, it defaults to columnName().</li>
+<li>the <code>WHERE</code> clause is a boolean-coerced <a href="ValueExpression.md.html">Value Expression</a> that is used to decide if a column will be selected or not.  If not specified, it defaults to true.</li>
+<li>the <code>ORDER BY</code> clause is an <a href="OrderByExpression.md.html">Order-By Expression</a> (which only makes sense if <code>OFFSET</code> or <code>LIMIT</code> are used) ranks the columns in the given order, presumably to only take a subset of them.</li>
+<li>the <code>OFFSET n</code> clause will skip the top <code>n</code> columns that came through the <code>ORDER BY</code> clause.  By default, <code>n</code> is zero: no rows are skipped.</li>
+<li>the <code>LIMIT m</code> clause will select only the top <code>m</code> columns.  By default <code>m</code> is infinity: there is no limit.</li>
+</ul>
+
+<p>As an example, to select up to 1,000 columns with the most rows in them,
+but none that has less than 100, you would use</p>
+
+<pre><code>COLUMN EXPR (WHERE rowCount() &gt; 100 ORDER BY rowCount() DESC, columnName() LIMIT 1000)
+</code></pre>
+
+<p>Note that this syntax is not part of SQL, it is an MLDB extension.</p>
+
+<h3>Built-in functions available in column expressions</h3>
+
+<p>The following functions are available in the context of a column expression:</p>
+
+<ul>
+<li><code>columnName()</code> is the name of the column under consideration.  It is the same
+as the <code>columnPath()</code> elements concatenated with a <code>.</code> character. Note that
+using <code>columnName()</code> in an <code>ORDER BY</code> clause is only useful when combined
+with <code>LIMIT</code> and/or <code>OFFSET</code>. It does not order the columns of the output.</li>
+<li><code>columnPath()</code> is the structured path to the column under consideration.</li>
+<li><code>columnPathElement(n)</code> is the nth element of the column path of the column
+under consideration.  Negative indexing is supported, meaning that if n is less than 
+zero, it will be a distance from the end (for example, -1 is the last element, -2 
+is the second to last element). For a columnName of <code>x.y.2</code>, then <code>columnPathElement(0)</code> 
+will be <code>x</code>, <code>columnPathElement(1)</code> will be <code>y</code> and <code>columnPathElement(2)</code> is equivalent 
+to <code>columnPathElement(-1)</code> which will be <code>2</code>. If n is bigger than the number 
+of elements in the column path, NULL will be returned which results in an error since column
+names cannot be of type NULL.</li>
+<li><code>columnPathLength()</code> is the number of elements in the column path.</li>
+<li><code>value()</code> is the value of the column.</li>
+<li><code>rowCount()</code> is the number of rows that have a value for this column, including explicit NULLs.</li>
+</ul>
+
+<h3>Selecting structured columns</h3>
+
+<p>When you have structured data, by default COLUMN EXPR will process every atomic column in the flattened 
+representation. If you want to process only the top-most columns in the structured data, you can add the 
+<code>STRUCTURED</code> keyword to the column expression. For example:</p>
+
+<pre><code>SELECT [[2,3],[4,5]])
+</code></pre>
+
+<p>is a structured two-dimensional array. So the expression</p>
+
+<pre><code>COLUMN EXPR (SELECT 1) FROM (SELECT [[2,3],[4,5]])
+</code></pre>
+
+<p>will return 4 columns while the expression</p>
+
+<pre><code>COLUMN EXPR STRUCTURED (SELECT 1) FROM (SELECT [[2,3],[4,5]])
+</code></pre>
+
+<p>will return a single column. This is useful when you want to pass structured data
+to functions. For example:</p>
+
+<pre><code>SELECT COLUMN EXPR STRUCTURED (SELECT norm(value(), 2)) FROM (SELECT [2,3],[4,5])
+</code></pre>
+
+<p>will select the L2 norm of both vectors.</p>
+
+<h2>Filtering duplicated rows based on an expression</h2>
+
+<p>It is possible to filter out rows based on the value of an expression using the <code>DISTINCT ON</code> optional
+clause. The syntax is as follows: </p>
+
+<pre><code>SELECT DISTINCT ON (&lt;value-expr&gt;) &lt;value-expr&gt;, &lt;value-expr&gt;, [...] FROM &lt;from-expression&gt; ORDER BY &lt;order-by-expr&gt;
+</code></pre>
+
+<p>The value expression of the <code>DISTINCT ON</code> clause must match the left-most clause of the <code>ORDER BY</code> expression. This will
+filter out rows so that no two rows have the same value for the <code>DISTINCT ON</code> clause. For example:</p>
+
+<pre><code>SELECT DISTINCT ON (x) x,y FROM dataset ORDER BY x,y
+</code></pre>
+
+<p>will return the values <code>x</code> and <code>y</code> of each row in <code>dataset</code>, but will only return the first row for each unique value of 
+<code>x</code>.</p>
+
+<h2>See also</h2>
+
+<ul>
+<li><a href="/doc/nblink.html#_tutorials/Selecting%20Columns%20Programmatically%20Using%20Column%20Expressions%20Tutorial" target="_blank">Selecting Columns Programmatically Using Column Expressions Tutorial</a></li>
+</ul>
+</body>
+</html>

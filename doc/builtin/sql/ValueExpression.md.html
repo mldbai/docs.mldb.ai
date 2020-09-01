@@ -1,0 +1,1229 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset='utf-8' />
+<title>MLDB Documentation</title>
+<script src='/resources/js/mathjax_TeX-AMS-MML_HTMLorMML.js'></script>
+<link rel='stylesheet' href='/resources/css/prism.css'>
+<link rel='stylesheet' href='/resources/css/doc.css'>
+<script src='/resources/js/jquery-1.11.2.min.js'></script>
+<script src='/resources/js/prism.js'></script>
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  if(window.location.origin == 'http://mldb.ai')
+  { ga('create', 'UA-16909325-9', 'auto'); }
+  else
+  { ga('create', 'UA-16909325-10', {'cookieDomain': 'none'}); }
+  ga('send', 'pageview');
+</script>
+</head>
+<body style='margin-left: 50px; max-width: 1000px'>
+<h1>SQL Value Expressions</h1>
+
+<p>An SQL Value Expression is the basic building block of an SQL query: it is an expression that evaluates to a single value. A value expression is either a constant, a column reference, or the result of applying operators and/or functions to constants and/or column references.</p>
+
+<h2>Table of Contents</h2>
+
+<ul>
+<li><a href="#constants">Constants</a></li>
+<li><a href="#Columnreferences">Column references</a></li>
+<li><a href="#constants">Operators</a></li>
+<li><a href="#CallingFunctions">Calling Functions</a></li>
+<li><a href="#builtinfunctions">List of Built-in Functions</a></li>
+<li><a href="#aggregatefunctions">List of Built-in Aggregate Functions</a></li>
+</ul>
+
+<h2><a name="constants"></a>Constants</h2>
+
+<p>A Value expression can include <a href="TypeSystem.md.html">literal representations of constants</a> such as numbers and strings etc.</p>
+
+<h2><a name="Columnreferences"></a>Column references</h2>
+
+<p>To refer to a column, you use its name, which is the string representation of its path, as explained in the <a href="../datasets/Datasets.md.html">Intro to Datasets</a> and must be used in accordance with the <a href="Sql.md.html">quoting rules</a>.  So to read the value of the column <code>x</code> and add one, use <code>x + 1</code>.</p>
+
+<blockquote>
+<p><strong>Unlike in conventional SQL,</strong> references to non-existent columns are always evaluated as <code>NULL</code>. A common mistake is to use double-quotes to represent a string, which usually results in a reference to a non-existent column, and therefore <code>NULL</code>.</p>
+</blockquote>
+
+<h3>Referring to columns by dataset</h3>
+
+<p>When querying a single dataset, it is allowed but unnecessary to specify the name of that dataset when referring a column. However, in some cases, 
+the query will run on several datasets (See <a href="FromExpression.md.html">From Expression</a>). In those cases, you need to specify the name or alias of the dataset the desired column is from using a 
+<code>.</code> operator.
+For example, to refer the column <code>y</code> from a dataset whose name or alias is <code>x</code>, you must use <code>x.y</code> in the value expression. </p>
+
+<p>If the dataset has been aliased (e.g. <code>FROM dataset AS x</code>), you <strong>must</strong> use the alias <code>x</code> instead of the original name <code>dataset</code>.</p>
+
+<h2><a name="operators"></a>Operators</h2>
+
+<p>The following standard SQL operators are supported by MLDB.  An
+operator with lower precedence binds tighter than one with a
+higher predecence, so for example <code>x + y * z</code> is the same as
+<code>x + (y * z)</code>.  Expressions at the same precedence level are 
+always left associative, that is the expression
+<code>x / y % z</code> is evaluated as <code>(x / y) % z</code>.</p>
+
+<table>
+<thead>
+<tr>
+<th style="text-align: center">Operator</th>
+<th style="text-align: center">Type</th>
+<th style="text-align: center">Precedence</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td style="text-align: center"><code>.</code></td>
+<td style="text-align: center">indirection</td>
+<td style="text-align: center">0</td>
+</tr>
+<tr>
+<td style="text-align: center"><code>@</code></td>
+<td style="text-align: center">timestamp association</td>
+<td style="text-align: center">0</td>
+</tr>
+<tr>
+<td style="text-align: center"><code>~</code></td>
+<td style="text-align: center">unary arithmetic</td>
+<td style="text-align: center">1</td>
+</tr>
+<tr>
+<td style="text-align: center"><code>*</code> , <code>/</code> , <code>%</code></td>
+<td style="text-align: center">binary arithmetic</td>
+<td style="text-align: center">2</td>
+</tr>
+<tr>
+<td style="text-align: center"><code>+</code> , <code>-</code></td>
+<td style="text-align: center">unary arithmetic</td>
+<td style="text-align: center">3</td>
+</tr>
+<tr>
+<td style="text-align: center"><code>+</code> , <code>-</code></td>
+<td style="text-align: center">binary arithmetic</td>
+<td style="text-align: center">3</td>
+</tr>
+<tr>
+<td style="text-align: center"><code>&amp;</code> , <code>&#124;</code> , <code>^</code></td>
+<td style="text-align: center">binary bitwise</td>
+<td style="text-align: center">3</td>
+</tr>
+<tr>
+<td style="text-align: center"><code>=</code> , <code>!=</code>, <code>&gt;</code> , <code>&lt;</code> , <code>&gt;=</code> , <code>&lt;=</code></td>
+<td style="text-align: center">binary comparison</td>
+<td style="text-align: center">4</td>
+</tr>
+<tr>
+<td style="text-align: center"><code>NOT</code></td>
+<td style="text-align: center">unary boolean</td>
+<td style="text-align: center">5</td>
+</tr>
+<tr>
+<td style="text-align: center"><code>AND</code></td>
+<td style="text-align: center">binary boolean</td>
+<td style="text-align: center">6</td>
+</tr>
+<tr>
+<td style="text-align: center"><code>OR</code></td>
+<td style="text-align: center">binary boolean</td>
+<td style="text-align: center">7</td>
+</tr>
+</tbody>
+</table>
+
+<!--
+     ALL      unary unimp                 7  All true 
+     ANY      unary unimp                 7  Any true 
+     SOME     unary unimp                 7  Some true
+
+     BETWEEN  unary unimp                 7  Between operator 
+     IN       unary unimp                 7  In operator 
+     LIKE     unary unimp                 7  Like operator 
+
+-->
+
+<h3>Operators on time values</h3>
+
+<p>Timestamps and time intervals have specific rules when using binary operators. Here are the supported operators and 
+the types that will result from each operation:</p>
+
+<table>
+<thead>
+<tr>
+<th style="text-align: center">Operator</th>
+<th>Left hand Value</th>
+<th>Right Hand Value</th>
+<th>Resulting type</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td style="text-align: center"><code>+</code> , <code>-</code></td>
+<td>Timestamp</td>
+<td>Number*</td>
+<td>Timestamp</td>
+</tr>
+<tr>
+<td style="text-align: center"><code>+</code> , <code>-</code></td>
+<td>Timestamp</td>
+<td>Time Interval</td>
+<td>Timestamp</td>
+</tr>
+<tr>
+<td style="text-align: center"><code>+</code> , <code>-</code></td>
+<td>Time Interval</td>
+<td>Number*</td>
+<td>Time Interval</td>
+</tr>
+<tr>
+<td style="text-align: center"><code>+</code> , <code>-</code></td>
+<td>Time Interval</td>
+<td>Time Interval</td>
+<td>Time Interval</td>
+</tr>
+<tr>
+<td style="text-align: center"><code>*</code> , <code>/</code></td>
+<td>Time Interval</td>
+<td>Number</td>
+<td>Time Interval</td>
+</tr>
+</tbody>
+</table>
+
+<p>*When used in conjunction with Timestamps or Time Intervals, Numbers implicitly represent days.</p>
+
+<p>Note that the operators <code>+</code> and <code>*</code> are commutative in all cases.</p>
+
+<h3><code>BETWEEN</code> expressions</h3>
+
+<p>SQL <code>BETWEEN</code> expressions are a shorthand way of testing for an
+open interval.  The expression <code>x BETWEEN y AND z</code> is the same as <code>x &gt;= y AND x &lt;= z</code> except that the <code>x</code> expression will only be evaluated once.
+It has the same precedence as binary comparisons (<code>=</code> , <code>!=</code>, <code>&gt;</code> , <code>&lt;</code> , <code>&gt;=</code> , <code>&lt;=</code>).</p>
+
+<h3><code>CASE</code> expressions</h3>
+
+<p>SQL <code>CASE</code> expressions are used to return different expressions
+depending upon the value or truth of an expression.  There are two flavors:</p>
+
+<p>Simple case statements, which look like</p>
+
+<pre><code class="language-sql">CASE expr
+  WHEN val1 THEN result1
+  WHEN val2 THEN result2
+  ELSE result3
+END
+</code></pre>
+
+<p>for example,</p>
+
+<pre><code class="language-sql">CASE x % 2
+  WHEN 0 THEN &#39;even&#39;
+  ELSE &#39;odd&#39;
+END
+</code></pre>
+
+<p>Matched case statements, which look like</p>
+
+<pre><code class="language-sql">CASE
+  WHEN boolean1 THEN result1
+  WHEN boolean2 THEN result2
+  ELSE result3
+END
+</code></pre>
+
+<p>for example,</p>
+
+<pre><code class="language-sql">CASE
+  WHEN x % 15 = 0 THEN &#39;multiple of 5 and 3&#39;
+  WHEN x % 5 = 0 THEN &#39;multiple of 5&#39;
+  WHEN x % 3 = 0 THEN &#39;multiple of 3&#39;
+  ELSE &#39;very approximately prime&#39;
+END
+</code></pre>
+
+<p>In both cases, there are an arbitrary number of <code>WHEN</code> clauses and the <code>ELSE</code> clauses are
+optional. If no <code>ELSE</code> clause is present and no <code>WHEN</code> clause matches, the result is <code>null</code>.</p>
+
+<h3><code>CAST</code> expressions</h3>
+
+<p>SQL <code>CAST</code> expressions allow the type of an expression to be coerced
+into another type.  The main use is to convert between strings and
+numbers. See also <a href="TypeSystem.md.html">the MLDB Type System</a>.</p>
+
+<p>The syntax is</p>
+
+<pre><code class="language-sql">CAST (expression AS type)
+</code></pre>
+
+<p>where <code>expression</code> is any SQL value expression, and <code>type</code> is one of the
+following:</p>
+
+<ul>
+<li>string</li>
+<li>integer</li>
+<li>number</li>
+<li>boolean</li>
+<li>timestamp</li>
+<li>path</li>
+</ul>
+
+<p>The integer, number and boolean conversions will work with strings
+and other numbers.</p>
+
+<p>The timestamp conversions will work with strings, which MUST be
+<a href="http://en.wikipedia.org/wiki/ISO_8601" target="_blank">ISO 8601</a> strings,
+and numbers, which are assumed to represent seconds since the 1st of
+January, 1970, GMT.</p>
+
+<p>A <code>NULL</code> value will always cast to a <code>NULL</code> value.  In addition, if it
+is not possible to convert a value, then a <code>NULL</code> will be returned.</p>
+
+<h3>IS [NOT] expressions</h3>
+
+<p>These expressions are used to test the type or value of an expression.
+They bind tightly, that is to say that <code>x + 1 IS NOT NULL</code> would be
+interpreted as <code>x + (1 IS NOT NULL)</code>, which is probably not what was
+intended. See also <a href="TypeSystem.md.html">the MLDB Type System</a>.</p>
+
+<ul>
+<li><code>expr IS [NOT] NULL</code> tests if the given expression is of null type</li>
+<li><code>expr IS [NOT] TRUE</code> tests if the given expression evaluates to true</li>
+<li><code>expr IS [NOT] FALSE</code> tests if the given expression evaluates to false</li>
+<li><code>expr IS [NOT] STRING</code> tests if the given expression is a string</li>
+<li><code>expr IS [NOT] NUMBER</code> tests if the given expression is a number</li>
+<li><code>expr IS [NOT] INTEGER</code> tests if the given expression is an integer</li>
+<li><code>expr IS [NOT] TIMESTAMP</code> tests if the given expression is a timestamp</li>
+<li><code>expr IS [NOT] INTERVAL</code> tests if the given expression is a time interval</li>
+</ul>
+
+<h3>[NOT] IN expression</h3>
+
+<p>This expression tests if the value in the left hand side is (or is not) included
+in a set of values on the right hand side.  There are four ways to specify the set on the right hand side:</p>
+
+<ol>
+<li> As a sub-select (<code>x IN (SELECT ...)</code>)</li>
+<li> As an explicit tuple (<code>x IN (val1, val2, ...)</code>)</li>
+<li> As the keys of a row expression (<code>x IN (KEYS OF expr)</code>)</li>
+<li> As the values of a row expression (<code>x IN (VALUES OF expr)</code>)</li>
+</ol>
+
+<p>The first two are standard SQL; the second two are MLDB extensions and are
+made possible by MLDB&#39;s sparse data model. It has the same precedence as the unary not (<code>NOT</code>).</p>
+
+<h4>IN expression with sub-select</h4>
+
+<p>The right hand side can be the result of a sub <code>SELECT</code> statement.
+For example <code>expr IN (SELECT x FROM dataset)</code> will test if the value
+expressed by <code>expr</code> is equal to any of the values in the x column of
+the dataset. If the <code>SELECT</code> statement returns more than a single column,
+they will all be tested (this is different from standard SQL, which will
+ignore all but the first column, and due to MLDB&#39;s sparse column model).</p>
+
+<h4>IN expression with explicit tuple expression</h4>
+
+<p>For example: <code>expr IN (3,5,7,11)</code></p>
+
+<h4>IN (KEYS OF ...) expression</h4>
+
+<p>For example: <code>expr IN (KEYS OF tokenize(&#39;sentence&#39;))</code></p>
+
+<p>That will evaluate to true if expr is a word within the given sentence.</p>
+
+<h4>IN (VALUES OF ...) expression</h4>
+
+<p>For example: <code>expr IN (VALUES OF [3, 5, 7, 11])</code></p>
+
+<p>is equivalent to expr IN (3, 5, 7, 11), but allows a full row expression
+to be used to construct the set, rather than enumerating tuple elements.</p>
+
+<h3>[NOT] LIKE expression</h3>
+
+<p>This expression tests if a string on the left-hand side matches an SQL wildcard pattern on the right hand side.</p>
+
+<p>The <code>%</code> character will substitute for 0 or more characters. For example: <code>x LIKE &#39;abc%&#39;</code> will test if x is a string that starts with <code>abc</code>.</p>
+
+<p>The <code>_</code> character will substitute for a single character. For example: <code>x LIKE &#39;a_a&#39;</code> will test if x is a string that has 3 characters that starts and ends with <code>a</code>.</p>
+
+<p>For more intricate patterns, you can use the <code>regex_match</code> function.</p>
+
+<p>This expression has the same precedence as the unary not (<code>NOT</code>).</p>
+
+<h2><a name="CallingFunctions"></a>Calling Functions</h2></h2>
+
+<p>Built-in functions (see below for a list) can accept multiple arguments of any type and return a single value of any type and can be applied by name with parameters in parentheses, for example:</p>
+
+<pre><code class="language-sql">built_in_function(1, &#39;a&#39;)
+</code></pre>
+
+<p><a href="../functions/Functions.md.html">User-defined functions</a> are applied in the same way except that they always accept a single row-valued input value as an argument and return a single row-valued output, for example:</p>
+
+<pre><code class="language-sql">user_defined_function( {some_number: 1, some_string: &#39;a&#39;} )
+</code></pre>
+
+<p>It can also accept the row returned from another user-defined function, for example:</p>
+
+<pre><code class="language-sql">user_defined_function_a(user_defined_function_b( {some_number: 1, some_string: &#39;a&#39;} ))
+</code></pre>
+
+<p>Furthermore, since it is frequently necessary to access a subset of the columns from the output of a user-defined function, their application can be followed by an accessor in square brackets, for example:</p>
+
+<pre><code class="language-sql">user_defined_function( {some_number: 1, some_string: &#39;a&#39;} )[ &lt;accessor&gt; ]
+</code></pre>
+
+<ul>
+<li>If <code>accessor</code> is a column name, then the value of that column will be returned</li>
+<li>If <code>accessor</code> is a row, then a row will be returned.</li>
+</ul>
+
+<p>Let&#39;s look at a hypothetical user-defined function with name <code>example</code> whose type defined the following input and output values:</p>
+
+<ul>
+<li>Input
+
+<ul>
+<li><code>x</code>: integer</li>
+<li><code>y</code>: row of integers</li>
+</ul></li>
+<li>Output:
+
+<ul>
+<li><code>scaled_y</code>: embedding of integers, each of which is the corresponding value of <code>y</code> times <code>x</code></li>
+<li><code>sum_scaled_y</code>: integer, the sum of the values of <code>scaled_y</code> </li>
+<li><code>input_length</code>: number of columns in <code>y</code></li>
+</ul></li>
+</ul>
+
+<p>Accessing the <code>sum_scaled_y</code> output value would look like: </p>
+
+<pre><code class="language-sql">example( {x: 10, y: [1, 2, 3]} )[sum_scaled_y]
+</code></pre>
+
+<p>Accessing a row containing only the <code>sum_scaled_y</code> and <code>input_length</code> output values would look like: </p>
+
+<pre><code class="language-sql">example( {x: 10, y: [1, 2, 3]} )[ {sum_scaled_y, input_length} ]
+</code></pre>
+
+<p>Note that this syntax is not part of SQL, it is an MLDB extension.</p>
+
+<h2><a name="builtinfunctions"></a>List of Built-in Functions</h2>
+
+<h3>Dataset-provided functions</h3>
+
+<p>These functions are always available when processing rows from a dataset, and
+will change values on each row under consideration. See the <a href="../datasets/Datasets.md.html">Intro to Datasets</a> documentation for more information about names and paths.</p>
+
+<p><a name="rowHash"></a></p>
+
+<ul>
+<li><code>rowHash()</code>: returns the internal hash value of the current row, useful for random sampling and providing a stable <a href="OrderByExpression.md.html">order</a> in query results</li>
+<li><code>rowName()</code>: returns the name the current row </li>
+<li><code>rowPath()</code> is the structured path to the row under consideration.</li>
+<li><code>rowPathElement(n)</code> is the nth element of the <code>rowPath()</code> of the row
+under consideration.  Negative indexing is supported, meaning that if n is less than zero, 
+it will be a distance from the end (for example, -1 is the last element, -2 is the second to last). 
+For a rowName of <code>x.y.2</code>, then <code>rowPathElement(0)</code> will be <code>x</code>, <code>rowPathElement(1)</code> will be <code>y</code> 
+and <code>rowPathElement(2)</code> is equivalent to <code>rowPathElement(-1)</code> which will be <code>2</code>. If n is 
+bigger than the number of elements in the row path, NULL will be returned.</li>
+<li><code>columnCount()</code>: returns the number of columns with explicit values set in the current row</li>
+<li><code>leftRowName()</code> and <code>rightRowName()</code>: in the context of a join, returns the name of the row that was joined on the left or right side respectively.</li>
+</ul>
+
+<h3>Path manipulation functions</h3>
+
+<p>See the <a href="../datasets/Datasets.md.html">Intro to Datasets</a> documentation for more information about names and paths.</p>
+
+<ul>
+<li><code>stringify_path(path)</code> will return a string representation its argument, with the
+elements separated by periods and any elements with periods or quotes
+quoted (and internal quotes doubled).  This is what is used by the <code>rowName()</code>
+function to convert from the structured <code>rowPath()</code> representation.  For
+example, the path <code>[&#39;x&#39;, &#39;hello.world&#39;]</code> when passed through would
+return the string <code>&#39;x.&quot;hello.world&quot;&#39;</code>.  This is the inverse of <code>parse_path</code>
+(below).</li>
+<li><code>parse_path(string)</code> will return its argument as a structured path
+which may be used for example as the result of a <code>NAMED</code> clause.  This is the
+inverse of <code>stringify_path</code> (above).</li>
+<li><code>path_element(path, n)</code> will return element <code>n</code> of the given <code>path</code>.</li>
+<li><code>path_length(path)</code> will return the number of elements in the given <code>path</code>.</li>
+<li><code>flatten_path(path)</code> will return a path with a single element that encodes
+the entire <code>path</code> passed in, in the same manner as <code>stringify_path</code>.  This
+is useful where a series of nested values need to be turned into a flat set
+of columns for another function or a vector aggregator.  By using
+<code>COLUMN EXPR (AS flatten_path(columnPath()))</code> an entire object can be
+flattened in this manner.</li>
+<li><code>unflatten_path(path)</code> is the inverse of <code>flatten_path</code>.  It requires that
+the input path have a single element, and will turn it back into a variable
+sized path.  Using <code>COLUMN EXPR (AS unflatten_path(columnPath()))</code> an entire
+object can be unflattened in this manner.</li>
+</ul>
+
+<h3>Encoding and decoding functions</h3>
+
+<ul>
+<li><code>implicit_cast(x)</code>: attempts to convert <code>x</code> to a
+number according to the following recipe:
+
+<ul>
+<li>if <code>x</code> is the empty string, return <code>null</code></li>
+<li>if <code>x</code> is a string that can be converted to a number, return the number</li>
+<li>otherwise, return <code>x</code> unchanged</li>
+</ul></li>
+<li><code>hash(expr)</code> returns a hash of the value of            <code>expr</code>.  Hashing a <code>null</code>
+value will always return a <code>null</code>.  Internally, this uses
+the <a href="https://github.com/google/highwayhash" target="_blank">Highway Tree Hash</a> which is
+claimed to be likely secure whilst retaining good speed.  See also
+<a href="#rowHash"><code>rowHash()</code></a>.</li>
+<li><code>base64_encode(blob)</code> returns the base-64 encoded version of the blob
+(or string) argument as a string.</li>
+<li><code>base64_decode(string)</code> returns a blob containing the decoding of the
+base-64 data provided in its argument.</li>
+<li><code>extract_column(row)</code> extracts the given column from the row, keeping
+only its latest value by timestamp.</li>
+<li><code>print_json(expr)</code> returns string with the value of expr converted to JSON.  If
+there is ambiguity in the expression (for example, the same key with multiple
+values), then one of the values of the key will be chosen to represent the value
+of the key.</li>
+<li><p><a name="parse_json"></a><code>parse_json(string, {arrays: &#39;parse&#39;, ignoreErrors: false})</code> returns a row with the JSON decoding of the
+string in the argument. If the <code>arrays</code> option is set to <code>&#39;parse&#39;</code> (this is the default) then nested arrays and objects will be parsed recursively; no flattening is performed. If the <code>arrays</code> option is set to <code>&#39;encode&#39;</code>, then arrays containing only scalar values will be one-hot encoded and arrays containing only objects will contain the string representation of the objects. If the <code>ignoreErrors</code> option is set to <code>true</code>, the function will return NULL for strings that do not parse
+as valid JSON. It will throw an exception otherwise.</p>
+
+<p>Here are examples with the following JSON string:</p></li>
+</ul>
+
+<pre><code class="language-javascript">{
+  &quot;a&quot;: &quot;b&quot;, 
+  &quot;c&quot;: {&quot;d&quot;: &quot;e&quot;}, 
+  &quot;f&quot;: [&quot;g&quot;,&quot;h&quot;], 
+  &quot;i&quot;: [ {&quot;j&quot;:&quot;k&quot;}, {&quot;l&quot;:&quot;m&quot;} ] 
+}
+</code></pre>
+
+<p>With <code>{arrays: &#39;parse&#39;}</code> the output will be:</p>
+
+<table>
+<thead>
+<tr>
+<th style="text-align: center">a</th>
+<th style="text-align: center">c.d</th>
+<th style="text-align: center">f.0</th>
+<th style="text-align: center">f.1</th>
+<th style="text-align: center">i.0.j</th>
+<th style="text-align: center">i.0.j</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td style="text-align: center">&#39;b&#39;</td>
+<td style="text-align: center">&#39;e&#39;</td>
+<td style="text-align: center">&#39;g&#39;</td>
+<td style="text-align: center">&#39;h&#39;</td>
+<td style="text-align: center">&#39;k&#39;</td>
+<td style="text-align: center">&#39;m&#39;</td>
+</tr>
+</tbody>
+</table>
+
+<p>With <code>{arrays: &#39;encode&#39;}</code> the output will be:</p>
+
+<table>
+<thead>
+<tr>
+<th style="text-align: center">a</th>
+<th style="text-align: center">c.d</th>
+<th style="text-align: center">f.g</th>
+<th style="text-align: center">f.h</th>
+<th style="text-align: center">i.0</th>
+<th style="text-align: center">i.1</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td style="text-align: center">&#39;b&#39;</td>
+<td style="text-align: center">&#39;e&#39;</td>
+<td style="text-align: center">1</td>
+<td style="text-align: center">1</td>
+<td style="text-align: center">&#39;{&quot;j&quot;:&quot;k&quot;}&#39;</td>
+<td style="text-align: center">&#39;{&quot;l&quot;:&quot;m&quot;}&#39;</td>
+</tr>
+</tbody>
+</table>
+
+<p>The full set of options to the <code>parse_json</code> function are as follows:</p>
+
+<p><table class="params table" width='100%'><tr><th align='right'>Field, Type, Default</th><th>Description</th></tr>
+<tr><td align='right'><p><strong>ignoreErrors</strong> <br/> <nobr>bool</nobr> <br/> <code>false</code></p></td><td><p>If true, errors in the JSON are ignored and the element with an error will be silently ignored.  If false (the default), a JSON format error will lead to the function failing with an exception.</p>
+</td></tr>
+<tr><td align='right'><p><strong>arrays</strong> <br/> <nobr>JsonArrayHandling</nobr> <br/> <code>"parse"</code></p></td><td><p>Describes how arrays are encoded in the JSON output.  For &#39;&#39;parse&#39; (default), the arrays become structured values. For &#39;encode&#39;, arrays containing atoms are sparsified with the values representing one-hot keys and boolean true values</p>
+</td></tr>
+</table></p>
+
+<p>and the possible values for the <code>arrays</code> field are:</p>
+
+<p><h4>Enumeration <code>JsonArrayHandling</code></h4><table class="params table"><tr><th>Value</th><th>Description</th></tr>
+<tr><td><code>parse</code></td><td><p>Arrays will be parsed into nested values</td></tr>
+<tr><td><code>encode</code></td><td><p>Arrays will be encoded as one-hot values</td></tr>
+</table></p>
+
+<h3>Numeric functions</h3>
+
+<ul>
+<li><code>pow(x, y)</code>: returns <code>x</code> to the power of <code>y</code>.</li>
+<li><code>exp(x)</code>: returns <em>e</em> (the Euler number) raised to the power <code>x</code>.</li>
+<li><code>ln(x)</code>: returns the natural logarithm of <code>x</code>.</li>
+<li><code>log(x)</code>: returns the base-10 logarithm of <code>x</code>.</li>
+<li><code>log(b, x)</code>: returns the base-<code>b</code> logarithm of <code>x</code>.</li>
+<li><code>ceil(x)</code>: returns the smaller integer not less than <code>x</code>.</li>
+<li><code>floor(x)</code>: returns the largest integer not greater than <code>x</code>.</li>
+<li><code>mod(x, y)</code>: returns <code>x</code> modulo <code>y</code>.  The value of <code>x</code> and <code>y</code> must be an integer. Another way to get the modulo is <code>x % y</code>.</li>
+<li><code>abs(x)</code>: returns the absolute value of <code>x</code>.</li>
+<li><code>sqrt(x)</code>: returns the square root of <code>x</code>.</li>
+<li><code>sign(x)</code>: returns the sign of <code>x</code> (-1, 0, +1).</li>
+<li><code>isnan(x)</code>: returns true if <code>x</code> is <code>NaN</code> in the floating point representation.</li>
+<li><code>isinf(x)</code>: return true if <code>x</code> is +/- infinity in the floating point representation.</li>
+<li><code>isfinite(x)</code>: returns true if <code>x</code> is neither infinite nor <code>NaN</code>.</li>
+<li><code>sin(x)</code>, <code>cos(x)</code> and <code>tan(x)</code> are the normal trigonometric functions;</li>
+<li><code>asin(x)</code>, <code>acos(x)</code> and <code>atan(x)</code> are the normal inverse trigonometric functions;</li>
+<li><code>atan2(x, y)</code> returns the two-argument arctangent of <code>x</code> and <code>y</code>, in other
+words the angle (in radians) of the point through <code>x</code> and <code>y</code> from the origin
+with respect to the positive <code>x</code> axis;</li>
+<li><code>sinh(x)</code>, <code>cosh(x)</code> and <code>tanh(x)</code> are the normal hyperbolic functions;</li>
+<li><code>asinh(x)</code>, <code>acosh(x)</code> and <code>atanh(x)</code> are the normal inverse hyperbolic functions.</li>
+<li><code>quantize(x, y)</code>: returns <code>x</code> rounded to the precision of <code>y</code>.  Here are some examples:</li>
+</ul>
+
+<table>
+<thead>
+<tr>
+<th>expression</th>
+<th>result</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td><code>quantize(2.17, 0.001)</code></td>
+<td>2.17</td>
+</tr>
+<tr>
+<td><code>quantize(2.17, 0.01)</code></td>
+<td>2.17</td>
+</tr>
+<tr>
+<td><code>quantize(2.17, 0.1)</code></td>
+<td>2.2</td>
+</tr>
+<tr>
+<td><code>quantize(2.17, 1)</code></td>
+<td>2</td>
+</tr>
+<tr>
+<td><code>quantize(2.17, 10)</code></td>
+<td>0</td>
+</tr>
+<tr>
+<td><code>quantize(-0.1, 1)</code></td>
+<td>0</td>
+</tr>
+<tr>
+<td><code>quantize(0, 10000)</code></td>
+<td>0</td>
+</tr>
+<tr>
+<td><code>quantize(217, 0.1)</code></td>
+<td>217</td>
+</tr>
+<tr>
+<td><code>quantize(217, 1)</code></td>
+<td>217</td>
+</tr>
+<tr>
+<td><code>quantize(217, 10)</code></td>
+<td>220</td>
+</tr>
+<tr>
+<td><code>quantize(217, 100)</code></td>
+<td>200</td>
+</tr>
+<tr>
+<td><code>quantize(-217, 100)</code></td>
+<td>-200</td>
+</tr>
+</tbody>
+</table>
+
+<ul>
+<li><code>replace_nan(x, y)</code>: replace all <code>NaN</code>s and <code>-NaN</code>s in <code>x</code> by <code>y</code>.  Works on scalars or rows.</li>
+<li><code>replace_inf(x, y)</code>: replace all <code>Inf</code>s and <code>-Inf</code>s in <code>x</code> by <code>y</code>.  Works on scalars or rows.</li>
+<li><code>replace_not_finite(x, y)</code>: replace all <code>Inf</code>s, <code>-Inf</code>s and <code>NaN</code>s in <code>x</code> by <code>y</code>.  Works on scalars or rows.</li>
+<li><code>replace_null(x, y)</code>: replace all <code>null</code>s in <code>x</code> by <code>y</code>.  Works on scalars or rows.</li>
+<li><code>clamp(x,lower,upper)</code> will clamp the value <code>x</code> between the <code>lower</code> and <code>upper</code> bounds.</li>
+<li><code>binomial_lb_80(trials, successes)</code> returns the 80% lower bound using the Wilson score.</li>
+<li><code>binomial_ub_80(trials, successes)</code> returns the 80% upper bound using the Wilson score.</li>
+</ul>
+
+<p>More details on the <a href="https://en.wikipedia.org/wiki/Binomial_proportion_confidence_interval" target="_blank">Binomial proportion confidence interval Wikipedia page</a>.</p>
+
+<h3>Constant functions</h3>
+
+<p>The following functions return numerical constants:</p>
+
+<ul>
+<li><code>pi()</code> returns the value of <em>pi</em>, the ratio of a circle&#39;s circumference to its
+diameter, as a double precision floating point number.</li>
+<li><code>e()</code> returns the value of <em>e</em>, the base of natural logarithms, as a double
+precision floating point number.</li>
+</ul>
+
+<h3>String functions</h3>
+
+<ul>
+<li><code>lower(string)</code> returns the lowercase version of the string, according to the
+system locale.</li>
+<li><code>upper(string)</code> returns the uppercase version of the string, according to the
+system locale.</li>
+<li><code>length(string)</code> returns the length of the string.</li>
+<li><code>remove_prefix(string, prefix)</code> returns the string with the specified prefix removed if present.</li>
+<li><code>remove_suffix(string, suffix)</code> returns the string with the specified suffix removed if present.</li>
+<li><code>regex_replace(string, regex, replacement)</code> will return the given string with
+matches of the <code>regex</code> replaced by the <code>replacement</code>.  Perl-style regular
+expressions are supported.  It is normally preferable that the <code>regex</code> be a
+constant string; performance will be very poor if not as the regular expression
+will need to be recompiled on every application.</li>
+<li><code>regex_match(string, regex)</code> will return true if the <em>entire</em> string matches
+the regex, and false otherwise.  If <code>string</code> is null, then null will be returned.
+It is normally preferable that the <code>regex</code> be a
+constant string; performance will be very poor if not as the regular expression
+will need to be recompiled on every application.</li>
+<li><code>regex_search(string, regex)</code> will return true if *any portion of * <code>string</code> matches
+the regex, and false otherwise.  If <code>string</code> is null, then null will be returned.
+It is normally preferable that the <code>regex</code> be a
+constant string; performance will be very poor if not as the regular expression
+will need to be recompiled on every application.</li>
+<li><code>levenshtein_distance(string, string)</code> will return the <a href="https://en.wikipedia.org/wiki/Levenshtein_distance" target="_blank">Levenshtein distance</a>, 
+or the <em>edit distance</em>, between the two strings.</li>
+</ul>
+
+<h3>Timestamp functions</h3>
+
+<ul>
+<li><code>earliest_timestamp(x)</code> returns the earliest timestamp associated with the scalar
+or object <code>x</code>.</li>
+<li><code>latest_timestamp(x)</code> returns the maximum timestamp associated with the scalar
+or object <code>x</code>.</li>
+<li><code>distinct_timestamps(x)</code> returns an embedding of the distinct timestamps of a scalar
+or object <code>x</code>.</li>
+<li><code>x @ d</code> or <code>at(x, d)</code> returns the value of the expression <code>x</code>, but with the timestamp
+modified to be at timestamp <code>d</code>.</li>
+<li><code>now()</code> returns the timestamp at the current moment, according to system
+time.</li>
+<li><code>date_part(unit, x)</code> returns the subfield <code>unit</code> of timestamp <code>x</code>. The following are the supported units:
+
+<ul>
+<li><code>microsecond</code> as the total number of microseconds after the rounded down second.</li>
+<li><code>millisecond</code> as the total number of millisecond after the rounded down second.</li>
+<li><code>second</code> as the number of seconds after the minute (0-59)</li>
+<li><code>minute</code> as the number of minutes after the hour (0-59)</li>
+<li><code>hour</code> as the hour of the day (0-23)</li>
+<li><code>day</code> as the day of the month (1-31)</li>
+<li><code>dow</code> as the day of the week, starting on sunday (0-6)</li>
+<li><code>doy</code> as the number of days elapsed since january 1st of the same year (0-364/365)</li>
+<li><code>isodow</code> as the ISO-8601 day of the week, starting on monday (1-7)</li>
+<li><code>isodoy</code> as the number of the day starting from monday on the 1st ISO-8601 week of the year (1-371)</li>
+<li><code>week</code> as the number of full weeks elapsed since January 1st of the year (0-51)</li>
+<li><code>isoweek</code> as the ISO-8601 week number (1-53)</li>
+<li><code>month</code> as the number of the date&#39;s month (1-12)</li>
+<li><code>quarter</code> as the number of the date&#39;s quarter (1-4)</li>
+<li><code>year</code> as the gregorian calendar year of the date</li>
+<li><code>isoyear</code> as the ISO-8601 calendar year of the date</li>
+</ul></li>
+<li><code>date_trunc(unit, x)</code> will truncate the timestamp <code>x</code> to the specified <code>unit</code>.
+
+<ul>
+<li>For example, <code>date_trunc(&#39;month&#39;, &#39;1969-07-24&#39;)</code> will return <code>&#39;1969-07-01&#39;</code></li>
+<li><code>day</code>, <code>dow</code>, <code>doy</code>, <code>isodow</code>, <code>isodoy</code> will all truncate to the day</li>
+</ul></li>
+</ul>
+
+<h3>Set operation functions</h3>
+
+<ul>
+<li><code>jaccard_index(expr, expr)</code> will return the <a href="https://en.wikipedia.org/wiki/Jaccard_index" target="_blank">Jaccard index</a>, also
+known as the <em>Jaccard similarity coefficient</em>, on two sets. The sets are specified using two row expressions.
+The column names will be used as values, meaning this function can be used
+on the output of the <a href="#importfunctions"><code>tokenize</code></a> function. The function will return 1 if the sets are equal, and 0 if they are 
+completely different.</li>
+</ul>
+
+<h3>Vector space functions</h3>
+
+<ul>
+<li><code>norm(vec, p)</code> will return the L-<code>p</code> norm of <code>vec</code>. The L-0 norm is the count of non-zero
+elements.</li>
+<li><code>normalize(vec, p)</code> will return a version of the <code>vec</code> normalized in the
+L-<code>p</code> norm such that <code>normalize(vec, p) = vec / norm(vec, p)</code>.</li>
+<li><code>vector_diff(vec1, vec2)</code> will efficiently return an elementwise difference <code>vec1 - vec2</code>,
+where both are assumed to be embeddings.  The lengths of the two must be the same.</li>
+<li><code>vector_sum(vec1, vec2)</code> will efficiently return an elementwise sum <code>vec1 + vec2</code>, where
+both are assumed to be embeddings.  The lengths of the two must be the same.</li>
+<li><code>vector_product(vec1, vec2)</code> will efficiently return an elementwise product <code>vec1 * vec2</code>, where
+both are assumed to be embeddings.  The lengths of the two must be the same.</li>
+<li><code>vector_quotient(vec1, vec2)</code> will efficiently return an elementwise quotient <code>vec1 / vec2</code>, where
+both are assumed to be embeddings.  The lengths of the two must be the same.
+Divisions by zero will result in NaN values.</li>
+<li><code>flatten(val)</code> will take a n-dimensional embedding and flatten it down
+into a one-dimensional embedding containing all of the elements.  The
+elements will be taken from end end dimensions first, ie
+<code>flatten([ [ 1, 2], [3, 4] ])</code> will be <code>[1, 2, 3, 4]</code>.</li>
+<li><code>reshape(val, shape)</code> will take a n-dimensional embedding and reinterpret it
+as a N-dimensional embedding of the provided shape containing all of the
+elements, allowing for example a 1-dimensional vector to be re-interpreted
+as a 2-dimensional array. The shape argument is an embedding containing the
+size of each dimension.  This will fail if the number of elements in <code>shape</code>
+is not the same as the number of elements in <code>val</code>.</li>
+<li><code>reshape(val, shape, newel)</code> is similar to the two argument version of
+<code>reshape</code>, but allows for the number of elements to be different.  If the
+number of elements increases, new elements will be filled in with the
+<code>newel</code> parameter.</li>
+<li><code>shape(val)</code> will take a n-dimensional embedding and return the size of each dimension as as array.</li>
+<li><code>concat(x, ...)</code> will take several embeddings with identical sizes in all
+but their last dimension and join them together on the last dimension.
+For single dimension embeddings, this is normal concatenation.  For two
+dimension embeddings, this will join them vertically.  And so forth.</li>
+<li><code>slice(val, index)</code> will take an n-dimensional embedding and select only
+the <code>index</code>th element of the last index.  For example, with a <code>m x n</code> embedding
+<code>x</code> a single row can be selected with <code>x[index]</code> (returning a <code>n</code> element
+embedding).  Whereas <code>slice(x, index)</code> will return the <code>index</code>th <em>column</em>
+as an <code>m</code> element embedding. </li>
+</ul>
+
+<h3><a name="geofunctions"></a>Geographical functions</h3>
+
+<p>The following functions operate on latitudes and longtitudes and can be used to
+calculate things to do with locations on Earth:</p>
+
+<ul>
+<li><code>geo_distance(lat1, lon1, lat2, lon2)</code> calculates the great circle distance from
+the point at <code>(lat1, lon1)</code> to the point at (lat2, lon2)` in meters assuming that
+the Earth is a perfect sphere with a radius of 6371008.8 meters.  It will be
+accurate to within 0.3% anywhere on earth, apart from near the North or South
+Poles.</li>
+</ul>
+
+<h3><a name="signalprocfunctions"></a>Signal processing functions</h3>
+
+<p>The following functions provide digital signal processing capabilities:</p>
+
+<ul>
+<li><code>fft(data [,direction=&#39;forward&#39; [,type=&#39;real&#39;]])</code> performs a fast fourier
+transform on the given data.  <code>direction</code> can be <code>&#39;forward&#39;</code> or <code>&#39;backward&#39;</code>
+and controls the direction of the transform (the default is <code>&#39;forward&#39;</code>).
+<code>type</code> controls whether the data in the time domain is <code>&#39;real&#39;</code> or <code>&#39;complex&#39;</code>
+valued (default is real).  <code>data</code> must be an embedding of <code>n</code> reals (for the
+real case) or an <code>n</code> by 2 embedding (for the complex case), and <code>n</code> must be
+divisible by 32 (you can zero-pad the data otherwise).
+<p>The output of the forward FFT function is always complex valued, with
+the real and imaginary components in a <code>n</code> by 2 embedding on the output.
+Note that for real-valued FFTs, the imaginary part of the first (DC) component
+contains the half-frequency real component, unlike most FFT implementations.
+This needs to be maintained for the <code>reverse</code> direction to work, but will
+need to be handled in any analysis that is performed in the frequency
+domain.</li>
+<li><code>phase(data)</code> takes a <code>n</code> by 2 embedding, with real and complex
+parts, and returns an <code>n</code> element embedding with the phase angle.</li>
+<li><code>amplitude(data)</code> takes a <code>n</code> by 2 embedding, with real and complex
+parts, and returns an <code>n</code> element embedding with the amplitude.</li>
+<li><code>real(data)</code> takes an <code>n</code> by 2 embedding, and returns the a <code>n</code> element
+embedding with the real parts.</li>
+<li><code>imag(data)</code> takes an <code>n</code> by 2 embedding, and returns the a <code>n</code> element
+embedding with the real parts.</li>
+<li><code>impulse(n)</code> returns an <code>n</code> element real embedding with the impulse function,
+with the first element 1 and the rest zero.</li>
+<li><code>shifted_impulse(n, e)</code> returns an impulse function of length <code>n</code>
+time-shifted by <code>e</code> steps, ie zeros everywhere apart from the <code>e</code>th element
+which is one.</li>
+</ul>
+
+<h3><a name="imagefunctions"></a>Image processing functions</h3>
+
+<p>The following functions provide image processing capabilities:</p>
+
+<ul>
+<li><code>parse_exif(blob)</code> takes a JPEG image blob and parses basic EXIF information from it. It should be used in combination with the <code>fetcher()</code> function. The returned values are:</li>
+</ul>
+
+<p><table class="params table" width='100%'><tr><th align='right'>Field, Type, Default</th><th>Description</th></tr>
+<tr><td align='right'><p><strong>cameraMake</strong> <br/> <nobr>ExpressionValue</nobr> <br/> <code>[null,"-Inf"]</code></p></td><td><p>Camera Make</p>
+</td></tr>
+<tr><td align='right'><p><strong>cameraModel</strong> <br/> <nobr>ExpressionValue</nobr> <br/> <code>[null,"-Inf"]</code></p></td><td><p>Camera Model</p>
+</td></tr>
+<tr><td align='right'><p><strong>software</strong> <br/> <nobr>ExpressionValue</nobr> <br/> <code>[null,"-Inf"]</code></p></td><td><p>Software</p>
+</td></tr>
+<tr><td align='right'><p><strong>bitsPerSample</strong> <br/> <nobr>ExpressionValue</nobr> <br/> <code>[null,"-Inf"]</code></p></td><td><p>Bits Per Sample</p>
+</td></tr>
+<tr><td align='right'><p><strong>imageWidth</strong> <br/> <nobr>ExpressionValue</nobr> <br/> <code>[null,"-Inf"]</code></p></td><td><p>Image Width</p>
+</td></tr>
+<tr><td align='right'><p><strong>imageHeight</strong> <br/> <nobr>ExpressionValue</nobr> <br/> <code>[null,"-Inf"]</code></p></td><td><p>Image Height</p>
+</td></tr>
+<tr><td align='right'><p><strong>imageDescription</strong> <br/> <nobr>ExpressionValue</nobr> <br/> <code>[null,"-Inf"]</code></p></td><td><p>Image Description</p>
+</td></tr>
+<tr><td align='right'><p><strong>imageOrientation</strong> <br/> <nobr>ExpressionValue</nobr> <br/> <code>[null,"-Inf"]</code></p></td><td><p>Image Orientation</p>
+</td></tr>
+<tr><td align='right'><p><strong>imageCopyright</strong> <br/> <nobr>ExpressionValue</nobr> <br/> <code>[null,"-Inf"]</code></p></td><td><p>Image Copyright</p>
+</td></tr>
+<tr><td align='right'><p><strong>imageDateTime</strong> <br/> <nobr>ExpressionValue</nobr> <br/> <code>[null,"-Inf"]</code></p></td><td><p>Image date/time</p>
+</td></tr>
+<tr><td align='right'><p><strong>originalDateTime</strong> <br/> <nobr>ExpressionValue</nobr> <br/> <code>[null,"-Inf"]</code></p></td><td><p>Image original date/time</p>
+</td></tr>
+<tr><td align='right'><p><strong>digitizedDateTime</strong> <br/> <nobr>ExpressionValue</nobr> <br/> <code>[null,"-Inf"]</code></p></td><td><p>Image digitized date/time</p>
+</td></tr>
+<tr><td align='right'><p><strong>subsecondTime</strong> <br/> <nobr>ExpressionValue</nobr> <br/> <code>[null,"-Inf"]</code></p></td><td><p>Subsecond time</p>
+</td></tr>
+<tr><td align='right'><p><strong>exposureTime</strong> <br/> <nobr>ExpressionValue</nobr> <br/> <code>[null,"-Inf"]</code></p></td><td><p>Exposure time t: 1/t s</p>
+</td></tr>
+<tr><td align='right'><p><strong>fStop</strong> <br/> <nobr>ExpressionValue</nobr> <br/> <code>[null,"-Inf"]</code></p></td><td><p>F-stop x: f/x</p>
+</td></tr>
+<tr><td align='right'><p><strong>isoSpeed</strong> <br/> <nobr>ExpressionValue</nobr> <br/> <code>[null,"-Inf"]</code></p></td><td><p>ISO Speed</p>
+</td></tr>
+<tr><td align='right'><p><strong>subjectDistance</strong> <br/> <nobr>ExpressionValue</nobr> <br/> <code>[null,"-Inf"]</code></p></td><td><p>Subject Distance in meters</p>
+</td></tr>
+<tr><td align='right'><p><strong>exposureBias</strong> <br/> <nobr>ExpressionValue</nobr> <br/> <code>[null,"-Inf"]</code></p></td><td><p>Exposure bias in EV</p>
+</td></tr>
+<tr><td align='right'><p><strong>flashUsed</strong> <br/> <nobr>ExpressionValue</nobr> <br/> <code>[null,"-Inf"]</code></p></td><td><p>Flash used</p>
+</td></tr>
+<tr><td align='right'><p><strong>meteringMode</strong> <br/> <nobr>ExpressionValue</nobr> <br/> <code>[null,"-Inf"]</code></p></td><td><p>Metering mode</p>
+</td></tr>
+<tr><td align='right'><p><strong>lensFocalLength</strong> <br/> <nobr>ExpressionValue</nobr> <br/> <code>[null,"-Inf"]</code></p></td><td><p>Lens focal length</p>
+</td></tr>
+<tr><td align='right'><p><strong>focalLength35mm</strong> <br/> <nobr>ExpressionValue</nobr> <br/> <code>[null,"-Inf"]</code></p></td><td><p>35mm focal length</p>
+</td></tr>
+<tr><td align='right'><p><strong>gpsLat</strong> <br/> <nobr>ExpressionValue</nobr> <br/> <code>[null,"-Inf"]</code></p></td><td><p>GPS latitude</p>
+</td></tr>
+<tr><td align='right'><p><strong>gpsLon</strong> <br/> <nobr>ExpressionValue</nobr> <br/> <code>[null,"-Inf"]</code></p></td><td><p>GPS longitude</p>
+</td></tr>
+<tr><td align='right'><p><strong>gpsAltitude</strong> <br/> <nobr>ExpressionValue</nobr> <br/> <code>[null,"-Inf"]</code></p></td><td><p>GPS altitude in meters</p>
+</td></tr>
+<tr><td align='right'><p><strong>gpsPrecision</strong> <br/> <nobr>ExpressionValue</nobr> <br/> <code>[null,"-Inf"]</code></p></td><td><p>GPS Precision (DOP)</p>
+</td></tr>
+<tr><td align='right'><p><strong>lensMinFocalLength</strong> <br/> <nobr>ExpressionValue</nobr> <br/> <code>[null,"-Inf"]</code></p></td><td><p>Lens min focal length in mm</p>
+</td></tr>
+<tr><td align='right'><p><strong>lensMaxFocalLength</strong> <br/> <nobr>ExpressionValue</nobr> <br/> <code>[null,"-Inf"]</code></p></td><td><p>Lens max focal length in mm</p>
+</td></tr>
+<tr><td align='right'><p><strong>lensFstopMin</strong> <br/> <nobr>ExpressionValue</nobr> <br/> <code>[null,"-Inf"]</code></p></td><td><p>Lens f-stop min x: f/x</p>
+</td></tr>
+<tr><td align='right'><p><strong>lensFstopMax</strong> <br/> <nobr>ExpressionValue</nobr> <br/> <code>[null,"-Inf"]</code></p></td><td><p>Lens f-stop max x: f/x</p>
+</td></tr>
+<tr><td align='right'><p><strong>lensMake</strong> <br/> <nobr>ExpressionValue</nobr> <br/> <code>[null,"-Inf"]</code></p></td><td><p>Lens make</p>
+</td></tr>
+<tr><td align='right'><p><strong>lensModel</strong> <br/> <nobr>ExpressionValue</nobr> <br/> <code>[null,"-Inf"]</code></p></td><td><p>Lens model</p>
+</td></tr>
+<tr><td align='right'><p><strong>focalPlaneXres</strong> <br/> <nobr>ExpressionValue</nobr> <br/> <code>[null,"-Inf"]</code></p></td><td><p>Focal plane XRes</p>
+</td></tr>
+<tr><td align='right'><p><strong>focalPlaneYres</strong> <br/> <nobr>ExpressionValue</nobr> <br/> <code>[null,"-Inf"]</code></p></td><td><p>Focal plane YRes</p>
+</td></tr>
+</table></p>
+
+<h3><a name="blobfunctions"></a>Blob functions</h3>
+
+<p>The following functions are specific to blob data:</p>
+
+<ul>
+<li><code>blob_length(x)</code> returns the length (in bytes) of the blob <code>x</code></li>
+<li><code>mime_type(x)</code> returns the mime type of the blob <code>x</code></li>
+</ul>
+
+<h3><a name="httpfunctions"></a>Web data functions</h3>
+
+<p>The following functions are used to extract and process web data.</p>
+
+<h4><code>fetcher(str)</code></h4>
+
+<p>Fetches resources from a given file or URL. It acts as the
+default version of <a href="../functions/Fetcher.md.html">function fetcher</a>. It returns
+two output columns:</p>
+
+<ul>
+<li><code>content</code>, a binary BLOB field containing the (binary) content that was loaded from the URL. If there was an error, it will be null.</li>
+<li><code>error</code>, a string containing the error message. If the fetch succeeded, it will be null.</li>
+</ul>
+
+<p><strong>Example</strong></p>
+
+<p>The following query will use fetcher to return the country code from an IP
+address from an external web service.</p>
+
+<pre><code class="language-sql">SELECT CAST (fetcher(&#39;http://www.geoplugin.net/json.gp?ip=158.245.13.123&#39;)[content] AS STRING)
+</code></pre>
+
+<p><strong>Limitations</strong></p>
+
+<ul>
+<li>The fetcher function will only attempt one fetch of the given URL; for
+transient errors a manual retry will be required</li>
+<li>There is currently no timeout parameter.  Hung requests will timeout
+eventually, but there is no guarantee as to when.</li>
+<li>There is currently no rate limiting built in.</li>
+<li>There is currently no facility to limit the maximum size of data that
+will be fetched.</li>
+<li>There is currently no means to authenticate when fetching a URL,
+apart from using the credentials daemon built in to MLDB.</li>
+<li>There is currently no caching mechanism.</li>
+<li>There is currently no means to fetch a resource only if it has not
+changed since the last time it was fetched.</li>
+</ul>
+
+<h4><code>extract_domain(str, {removeSubdomain: false})</code></h4>
+
+<p>Extracts the domain name from a URL. Setting the option <code>removeSubdomain</code> to <code>true</code> will return only the domain without the subdomain. Note that the string passed in must be a complete and valid URL. If a scheme (<code>http://</code>, etc) is not present, an error will be thrown.</p>
+
+<p>The full set of options to the <code>extract_domain</code> function are as follows:</p>
+
+<p><table class="params table" width='100%'><tr><th align='right'>Field, Type, Default</th><th>Description</th></tr>
+<tr><td align='right'><p><strong>removeSubdomain</strong> <br/> <nobr>bool</nobr> <br/> <code>false</code></p></td><td><p>Flag to specify whether or not the subdomain is kept.</p>
+</td></tr>
+</table></p>
+
+<p>See also the <a href="/doc/builtin/functions/ParseUserAgent.md.html"><code>http.useragent</code> function type</a> that can be used to parse a user agent string.</p>
+
+<h3><a name="importfunctions"></a>Data import functions</h3>
+
+<ul>
+<li><code>tokenize(str, {splitChars: &#39;,&#39;, quoteChar: &#39;&#39;, offset: 0, limit: null, value: null, minTokenLength: 1, ngramRange:[1, 1]})</code>
+can be used to create bag-of-tokens representations of strings, by returning a row whose
+columns are formed by tokenizing <code>str</code> by splitting along <code>splitChars</code> and whose values by default are the
+number of occurrences of those tokens within <code>str</code>. For example <code>tokenize(&#39;a b b c c c&#39;, {splitChars:&#39; &#39;})</code> will return the row <code>{&#39;a&#39;: 1, &#39;b&#39;: 2, &#39;c&#39;: 3}</code>.</li>
+<li><code>token_extract(str, n, {splitChars: &#39;,&#39;, quoteChar: &#39;&#39;, offset: 0, limit: null, minTokenLength: 1})</code> will return the <code>n</code>th token from <code>str</code> using the same tokenizing rules as <code>tokenize()</code> above. Only the tokens respecting the <code>minTokenLength</code> will be considered, and ngram options are ignored.</li>
+<li><code>split_part(str, splitChars)</code> will return an embedding of all tokens as separated by the provided <code>splitChars</code>.</li>
+</ul>
+
+<p>Parameters to <code>tokenize</code> and <code>token_extract</code> are as follows:</p>
+
+<p><table class="params table" width='100%'><tr><th align='right'>Field, Type, Default</th><th>Description</th></tr>
+<tr><td align='right'><p><strong>splitChars</strong> <br/> <nobr>string</nobr> <br/> <code>","</code></p></td><td><p>Characters to split on in the tokenization.</p>
+</td></tr>
+<tr><td align='right'><p><strong>quoteChar</strong> <br/> <nobr>string</nobr> <br/> <code></code></p></td><td><p>a single character to delimit tokens which may contain the <code>splitchars</code>, so by default <code>tokenize(&#39;a,&quot;b,c&quot;&#39;, {quoteChar:&#39;&quot;&#39;})</code> will return the row <code>{&#39;a&#39;:1,&#39;b,c&#39;:1}</code>.  By default no quoting character is used.</p>
+</td></tr>
+<tr><td align='right'><p><strong>offset</strong> <br/> <nobr>int</nobr> <br/> <code>0</code></p></td><td><p>Skip the first <code>offset</code> tokens of the output (default 0).</p>
+</td></tr>
+<tr><td align='right'><p><strong>limit</strong> <br/> <nobr>int</nobr> <br/> <code>-1</code></p></td><td><p>Only generate <code>limit</code> tokens in the output (default is -1, which means generate all.</p>
+</td></tr>
+<tr><td align='right'><p><strong>value</strong> <br/> <nobr>CellValue</nobr> <br/> <code></code></p></td><td><p><code>value</code> (if not set to <code>null</code>) will be used instead of token counts for the values of the columns in the output row.</p>
+</td></tr>
+<tr><td align='right'><p><strong>minTokenLength</strong> <br/> <nobr>int</nobr> <br/> <code>1</code></p></td><td><p>Minimum number of characters in a token for it to be output or included as part of an ngram</p>
+</td></tr>
+<tr><td align='right'><p><strong>ngramRange</strong> <br/> <nobr>TUPLE [ int, int ]</nobr> <br/> <code>[1,1]</code></p></td><td><p>Specifies the complexity of n-grams to return, with the first element corresponding to minimum length and the second to maximum length.  <code>[1, 1]</code> will return only unigrams, while <code>[2, 3]</code> will return bigrams and trigrams, where tokens are joined by underscores. For example, <code>tokenize(&#39;Good day world&#39;, {splitChars:&#39; &#39;, ngramRange:[2,3]})</code>will return the row <code>{&#39;Good_day&#39;: 1, &#39;Good_day_world&#39;: 1, &#39;day_world&#39;: 1}</code></p>
+</td></tr>
+</table></p>
+
+<h2><a name="aggregatefunctions"></a>Aggregate Functions</h2>
+
+<p>The following standard SQL aggregation functions are supported. They may only be used in SELECT and HAVING clauses. If an aggregation function appears in the SELECT clause and no GROUP BY clause is used, an empty GROUP BY clause will be inferred.</p>
+
+<ul>
+<li><code>avg</code> returns the average of all values in the group.  It works in
+double precision floating point only.</li>
+<li><code>sum</code> returns the sum of all values in the group.  It works in
+double precision floating point only.</li>
+<li><code>min</code> returns the minimum of all values in the group.</li>
+<li><code>max</code> returns the maximum of all values in the group.</li>
+<li><code>count</code> returns the number of non-null values in the group.
+
+<ul>
+<li><code>count(*)</code> is a special function which will count the number of rows in the group with non-null values in any column</li>
+</ul></li>
+<li><code>count_distinct</code> returns the number of unique, distinct non-null values in the group.</li>
+</ul>
+
+<p>The following useful non-standard aggregation functions are also supported:</p>
+
+<ul>
+<li><code>latest</code>, <code>earliest</code> will return the values with the latest or earliest timestamp in the group</li>
+<li><code>pivot(columnName, value)</code> will accumulate a single row per group, with the
+column name and value given.  This can be used with a group by clause to
+transform a dense dataset of (actor,action,value) records into a sparse
+dataset with one sparse row per actor, for example to create one-hot feature vectors or term-document or cooccurrence matrices.</li>
+<li><code>string_agg(expr, separator [, sortField])</code> will coerce the value of <code>expr</code>
+and that of <code>separator</code> to a string, create a list of all values sorted 
+by the <code>sortField</code>
+(which is null if not specified) breaking ties by sorting by <code>expr</code> as a
+string, and produce a single string with the concatenation of <code>expr</code>
+separated by <code>separator</code> at internal boundaries on the list.  For example,
+if <code>expr</code> is <code>&quot;one&quot;</code>, <code>&quot;two&quot;</code> and <code>&quot;three&quot;</code> in the group, and <code>separator</code> is
+<code>&#39;, &#39;</code> the output will be <code>&quot;one, two, three&quot;</code>.  The <code>sortField</code> can be used
+to ensure that the values over multiple <code>string_agg</code> calls are in the,
+same order, for example are in order of time or in row order of the
+underlying dataset.  Note that the <code>rowPath()</code> can be used in the
+<code>sortField</code> to achieve that result.</li>
+</ul>
+
+<h3>Aggregates of rows</h3>
+
+<p>Every aggregate function can operate on single columns, just like in standard SQL, but they can also operate on multiple columns via complex types like rows and scalars.  This
+has the effect of calculating a separate aggregate for each column in the input, and
+returns a row-valued result.  For example, to calculate the total count of each
+ column in a dataset, the following would suffice:</p>
+
+<pre><code class="language-sql">SELECT count({*})
+</code></pre>
+
+<p>which would return a row with one count for each column in the dataset.  This
+functionality is useful to write generic queries that operate without prior
+knowledge of the column names, and to make queries on datasets with thousands
+or millions of column feasible.</p>
+
+<h2>Vertical, Horizontal and Temporal Aggregation</h2>
+
+<p>The standard SQL aggregation functions operate &#39;vertically&#39; down columns. MLDB datasets are transposable matrices, so MLDB also supports &#39;horizontal&#39; aggregation. In addition, MLDB supports a third, temporal dimension, so &#39;temporal&#39; aggregation is also supported:</p>
+
+<ul>
+<li>Vertical aggregation functions
+
+<ul>
+<li><code>vertical_count(&lt;row&gt;)</code> alias of <code>count()</code>, operates on columns.</li>
+<li><code>vertical_sum(&lt;row&gt;)</code> alias of <code>sum()</code>, operates on columns.</li>
+<li><code>vertical_avg(&lt;row&gt;)</code> alias of <code>avg()</code>, operates on columns.</li>
+<li><code>vertical_stddev(&lt;row&gt;)</code> alias of <code>stddev()</code>, operates on columns.</li>
+<li><code>vertical_variance(&lt;row&gt;)</code> alias of <code>variance()</code>, operates on columns.</li>
+<li><code>vertical_min(&lt;row&gt;)</code> alias of <code>min()</code>, operates on columns.</li>
+<li><code>vertical_max(&lt;row&gt;)</code> alias of <code>max()</code>, operates on columns.</li>
+<li><code>vertical_latest(&lt;row&gt;)</code> alias of <code>latest()</code>, operates on columns.</li>
+<li><code>vertical_earliest(&lt;row&gt;)</code> alias of <code>earliest()</code>, operates on columns.</li>
+</ul></li>
+<li>Horizontal aggregation functions
+
+<ul>
+<li><code>horizontal_count(&lt;row&gt;)</code> returns the number of non-null values in the row.</li>
+<li><code>horizontal_sum(&lt;row&gt;)</code> returns the sum of the non-null values in the row.</li>
+<li><code>horizontal_string_agg(&lt;row&gt;, &lt;separator&gt;)</code> returns the string aggregator of the value of row, coerced to strings, separated by separator.</li>
+<li><code>horizontal_avg(&lt;row&gt;)</code> returns the average of the non-null values in the row.</li>
+<li><code>horizontal_min(&lt;row&gt;)</code> returns the minimum of the non-null values in the row.</li>
+<li><code>horizontal_max(&lt;row&gt;)</code> returns the maximum of the non-null value in the row.</li>
+<li><code>horizontal_latest(&lt;row&gt;)</code> returns the non-null value in the row with the latest timestamp.</li>
+<li><code>horizontal_earliest(&lt;row&gt;)</code> returns the non-null value in the row with the earliest timestamp.</li>
+</ul></li>
+<li>Temporal aggregation functions
+
+<ul>
+<li><code>temporal_count(&lt;row&gt;)</code> returns the number of non-null values per cell.</li>
+<li><code>temporal_sum(&lt;row&gt;)</code> returns the sum of the non-null values per cell.</li>
+<li><code>temporal_avg(&lt;row&gt;)</code> returns the average of the non-null values per cell.</li>
+<li><code>temporal_min(&lt;row&gt;)</code> returns the minimum of the non-null values per cell.</li>
+<li><code>temporal_max(&lt;row&gt;)</code> returns the maximum of the non-null value per cell.</li>
+<li><code>temporal_latest(&lt;row&gt;)</code> returns the non-null value with the latest timestamp per cell.</li>
+<li><code>temporal_earliest(&lt;row&gt;)</code> returns the non-null value with the earliest timestamp per cell.</li>
+</ul></li>
+</ul>
+
+<h2><a name="jseval"></a>Evaluating a JavaScript function from SQL</h2>
+
+<p>The SQL function <code>jseval</code> allows for the inline definition of functions using Javascript. This function takes the following arguments:</p>
+
+<ol>
+<li> A text string containing the text of the function to be evaluated.  This
+must be a valid Javascript function, which will return with the <code>return</code>
+function.  For example, <code>return x + y</code>.  This must be a constant string,
+it cannot be an expression that is evaluated at run time.</li>
+<li> A text string containing the names of all of the parameters that will be
+passed to the function, as they are referred to within the function.  For
+example, <code>x,y</code>.  This must be a constant string, it cannot be an expression
+that is evaluated at run time.</li>
+<li> As many argument as are listed in part 2, in the same order.  These can be
+any SQL expressions and will be bound to the parameters passed in to the
+function.</li>
+</ol>
+
+<p>The result of the function will be the result of calling the function on the
+supplied arguments.  This will be converted into a result as follows:</p>
+
+<ul>
+<li>A <code>null</code> will remain a <code>null</code></li>
+<li>A Javascript number, string or <code>Date</code> will be converted to the equivalent
+MLDB number, string or timestamp;</li>
+<li>An object (dictionary) will be converted to a row</li>
+</ul>
+
+<p>In all cases, the timestamp on the output will be equal to the latest of the
+timestamps on the arguments passed in to the function.</p>
+
+<p>As an example, to calculate the Fibonnaci numbers from SQL (somewhat
+inefficiently), one could write</p>
+
+<pre><code class="language-sql">SELECT jseval(&#39;
+function fib(x) {
+    if (x == 1) return 1;
+    if (x == 2) return 1;
+    return fib(x - 1) + fib(x - 2);
+}
+return fib(i);
+&#39;, &#39;i&#39;, i)
+</code></pre>
+
+<p>or to parse a comma separated list of &#39;key=value&#39; attributes into a row, one could write</p>
+
+<pre><code class="language-sql">SELECT jseval(&#39;
+var fields = csv.split(&quot;,&quot;);
+var result = {};
+for (var i = 0;  i &lt; fields.length;  ++i) {
+    var field = fields[i];
+    var kv = field.split(&quot;=&quot;);
+    result[kv[0]] = kv[1];
+}
+return result;
+&#39;, &#39;csv&#39;, expression_to_generate_csv)
+</code></pre>
+
+<p>The <code>mldb</code> Javascript object is available from the function; this can notably used to
+log to the console to aid debugging. Documentation for this object can be found with the
+<a href="/doc/builtin/lang/Javascript.md.html"><code>javascript</code> plugin type</a> documentation.</p>
+
+<p>You can also take a look at the <a href="/doc/nblink.html#_tutorials/Executing%20JavaScript%20Code%20Directly%20in%20SQL%20Queries%20Using%20the%20jseval%20Function%20Tutorial" target="_blank">Executing JavaScript Code Directly in SQL Queries Using the jseval Function Tutorial</a> for examples of how to use the <code>jseval</code> function.</p>
+
+<h2><a name="try"></a>Handling errors line by line</h2>
+
+<p>When processing a query and an error occurs, the whole query fails and no 
+result is returned, even if only a single line caused the error. The <code>try</code> function is 
+meant to handle this type of situation. The first argument is the expression to 
+<em>try</em> to apply. The optional second argument is what will be returned if an error 
+is encountered. It can be any value expression, including other functions and 
+other <code>try</code> functions. If no second argument is given, the error is returned as a string.
+The <code>try</code> function is analogous to a try/catch block in other programming languages.</p>
+
+<h3>Example usage</h3>
+
+<pre><code class="language-sql">SELECT try(parse_json(&#39;foo&#39;), &#39;err&#39;)
+</code></pre>
+
+<p>Here, <code>parse_json(&#39;foo&#39;)</code> will fail. Since the second argument is provided, the
+value &quot;err&quot; will be returned.</p>
+
+<pre><code class="language-sql">SELECT try(parse_json(&#39;foo&#39;))
+</code></pre>
+
+<p>Again, <code>parse_json(&#39;foo&#39;)</code> will fail. Since the second argument was left blank,
+the error message generated by MLDB will be returned.</p>
+
+<p>If the result of the <code>try</code> function is expected to be a row expression, then 
+both arguments supplied must return row expressions, like in the following
+example:</p>
+
+<pre><code class="language-sql">SELECT try(parse_json(&#39;foo&#39;), {}) AS *
+</code></pre>
+
+<p>As a counter example, the following two calls will both fail 
+when an error is encoutered because the function will
+return a string, and strings cannot be used with <code>AS *</code>.</p>
+
+<pre><code class="language-sql">SELECT try(parse_json(&#39;foo&#39;)) AS *
+SELECT try(parse_json(&#39;foo&#39;), &#39;err&#39;) AS *
+</code></pre>
+
+<p>Note that the <code>try</code> function only applies to runtime exceptions, not to syntax
+errors or bind-time failures.</p>
+</body>
+</html>

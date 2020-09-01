@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset='utf-8' />
+<title>MLDB Documentation</title>
+<script src='/resources/js/mathjax_TeX-AMS-MML_HTMLorMML.js'></script>
+<link rel='stylesheet' href='/resources/css/prism.css'>
+<link rel='stylesheet' href='/resources/css/doc.css'>
+<script src='/resources/js/jquery-1.11.2.min.js'></script>
+<script src='/resources/js/prism.js'></script>
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  if(window.location.origin == 'http://mldb.ai')
+  { ga('create', 'UA-16909325-9', 'auto'); }
+  else
+  { ga('create', 'UA-16909325-10', {'cookieDomain': 'none'}); }
+  ga('send', 'pageview');
+</script>
+</head>
+<body style='margin-left: 50px; max-width: 1000px'>
+<h1>Tabular Dataset</h1>
+
+<p>The Tabular Dataset is used to represent dense datasets with more rows than
+columns. It is ideal for storing text files such as Comma-Separated Values
+(CSV) files.</p>
+
+<p>The dataset will learn the available columns from the first data that is
+recorded into it, and will be optimized to record many rows with the same
+columns.  (By setting <code>unknownColumns</code> to <code>add</code>, it&#39;s not limited to
+storing just the columns from the first data, but these will be the ones
+for which fast storage is pre-allocated).</p>
+
+<p>On a fast machine, it is capable of recording several million rows per second
+from a 10 column CSV file.</p>
+
+<h2>Configuration</h2>
+
+<p><p>A new dataset of type <code>tabular</code> named <code>&lt;id&gt;</code> can be created as follows:</p><pre><code class="language-python">mldb.put(&quot;/v1/datasets/&quot;+&lt;id&gt;, {
+    &quot;type&quot;: &quot;tabular&quot;,
+    &quot;params&quot;: {
+        "unknownColumns": &lt;UnknownColumnAction&gt;
+    }
+})</code></pre><p>with the following key-value definitions for <code>params</code>:</p><table class="params table" width='100%'><tr><th align='right'>Field, Type, Default</th><th>Description</th></tr>
+<tr><td align='right'><p><strong>unknownColumns</strong> <br/> <nobr>UnknownColumnAction</nobr> <br/> <code>"error"</code></p></td><td><p>Action to take on unknown columns.  Values are &#39;ignore&#39;, &#39;error&#39; (default), or &#39;add&#39; which will allow an unlimited number of sparse columns to be added.</p>
+</td></tr>
+</table></p>
+
+<h2>Storing non-uniform data</h2>
+
+<p>The tabular dataset has support for storing non-uniform data, such as that
+which comes from a JSON file with varying fields.  This can be accessed
+by setting the <code>unknownColumns</code> field to <code>add</code>.  The other possible values
+are listed below:</p>
+
+<p><h4>Enumeration <code>UnknownColumnAction</code></h4><table class="params table"><tr><th>Value</th><th>Description</th></tr>
+<tr><td><code>ignore</code></td><td><p>Unknown columns will be ignored</td></tr>
+<tr><td><code>error</code></td><td><p>Unknown columns will result in an error</td></tr>
+<tr><td><code>add</code></td><td><p>Unknown columns will be added as a sparse column</td></tr>
+</table></p>
+
+<h2>Limitations</h2>
+
+<p>The tabular dataset has the following limitations:</p>
+
+<ul>
+<li>Each row has a single timestamp; it is not possible for different values
+in the row to have separate timestamps.</li>
+<li>Each column can only have a single value within a single row.</li>
+<li>The dataset will work well up to tens of thousands of columns, but for
+extremely sparse data it will not be efficient due to a per-column
+overhead.  It&#39;s better to use a sparse dataset for these situations.</li>
+<li>It may only be committed once, and will not be queryable until it is
+committed the first time.  As a result, this dataset type is mostly
+useful for analytic, not operational data.</li>
+<li>It is not possible to save data from the Tabular dataset, apart from
+by writing it to a CSV file (see the <a href="/v1/types/procedures/csv.export/doc"><code>csv.export</code> procedure type</a>.</li>
+</ul>
+</body>
+</html>

@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset='utf-8' />
+<title>MLDB Documentation</title>
+<script src='/resources/js/mathjax_TeX-AMS-MML_HTMLorMML.js'></script>
+<link rel='stylesheet' href='/resources/css/prism.css'>
+<link rel='stylesheet' href='/resources/css/doc.css'>
+<script src='/resources/js/jquery-1.11.2.min.js'></script>
+<script src='/resources/js/prism.js'></script>
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  if(window.location.origin == 'http://mldb.ai')
+  { ga('create', 'UA-16909325-9', 'auto'); }
+  else
+  { ga('create', 'UA-16909325-10', {'cookieDomain': 'none'}); }
+  ga('send', 'pageview');
+</script>
+</head>
+<body style='margin-left: 50px; max-width: 1000px'>
+<h1>K-Means Function</h1>
+
+<p>The k-means function type takes the output dataset of the k-means procedure and applies
+it to new data in order to assign it to clusters.</p>
+
+<h2>Configuration</h2>
+
+<p><p>A new function of type <code>kmeans</code> named <code>&lt;id&gt;</code> can be created as follows:</p><pre><code class="language-python">mldb.put(&quot;/v1/functions/&quot;+&lt;id&gt;, {
+    &quot;type&quot;: &quot;kmeans&quot;,
+    &quot;params&quot;: {
+        "modelFileUrl": &lt;<a href="/doc/builtin/Url.md.html">Url</a>&gt;
+    }
+})</code></pre><p>with the following key-value definitions for <code>params</code>:</p><table class="params table" width='100%'><tr><th align='right'>Field, Type, Default</th><th>Description</th></tr>
+<tr><td align='right'><p><strong>modelFileUrl</strong> <br/> <nobr><a href="/doc/builtin/Url.md.html">Url</a></nobr> <br/> <code></code></p></td><td><p>URL of the model file (with extension &#39;.kms&#39;) to load. This file is created by the <a href="/doc/builtin/procedures/KmeansProcedure.md.html"><code>kmeans.train</code> procedure type</a>.</p>
+</td></tr>
+</table></p>
+
+<p>Functions of this type load their internal state from a dataset, which is identified
+with the <code>centroids</code> parameter, which lists one cluster per row, with the columns 
+providing the coordinates of the centroid of the cluster and the row name being 
+the name of the cluster (this is the output format of the <a href="/doc/builtin/procedures/KmeansProcedure.md.html"><code>kmeans.train</code> procedure type</a>).  </p>
+
+<p>The <code>select</code> parameter
+tells the system how to extract an embedding from the row, and the <code>where</code>
+parameter allows only a subset of the clusters to be loaded by the K-Means
+function. See the example below for more details.</p>
+
+<p>In the application of the function, the same features as in the <code>centroids</code>
+dataset are extracted from the inputs of the function to create a coordinate
+vector for the input.  The distance from that input to each of the centroids
+is then calculated using the metric specified in the configuration, and the 
+function outputs the value <code>cluster</code> containing the name of cluster that is
+the closest to the given centroid.</p>
+
+<h2>Input and Output Values</h2>
+
+<p>Functions of this type have a single input called <code>embedding</code> which is a row. The columns that
+are expected in this row are the same as the columns in the <code>centroids</code> dataset with
+which this function is configured.</p>
+
+<p>These functions have a single output value called <code>cluster</code>, which is the name of the row
+in the <code>centroids</code> dataset whose columns describe the point which is closest to the 
+input according to the <code>metric</code> specified.</p>
+
+<h2>Example</h2>
+
+<p>As a concrete example, a K-Means function with three clusters, <code>good</code>, <code>evil</code> and <code>undecided</code>
+and two input dimensions, <code>happiness</code> and <code>malice</code>, could be represented
+as follows:</p>
+
+<table>
+<thead>
+<tr>
+<th>Cluster</th>
+<th>Happiness</th>
+<th>Malice</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Good</td>
+<td>1</td>
+<td>0</td>
+</tr>
+<tr>
+<td>Evil</td>
+<td>0</td>
+<td>1</td>
+</tr>
+<tr>
+<td>Undecided</td>
+<td>0.5</td>
+<td>0.5</td>
+</tr>
+</tbody>
+</table>
+
+<p>Which represents the following situation:</p>
+
+<p><img src="../img/KMeansFunction.svg" alt="Sliced Dataset"/></p>
+
+<p>In that case, <code>select</code> would be set to <code>*</code> (the default) and <code>where</code> to <code>true</code>
+(the default) in order to enable all clusters.  Alternatively, if we wanted to
+ignore the <code>undecided</code> class, we could load the K-Means function with <code>where</code> as
+<code>rowName() != &#39;undecided&#39;</code> to get only the <code>good</code> and <code>evil</code> clusters.  And to
+ignore the <code>Happiness</code> dimension, the K-Means function could be configured with
+<code>select</code> as <code>* EXCLUDING (Happiness)</code>.</p>
+
+<h1>See also</h1>
+
+<ul>
+<li><a href="http://en.wikipedia.org/wiki/K-means_clustering" target="_blank">Wikipedia k-means Article</a></li>
+<li><a href="/doc/builtin/procedures/KmeansProcedure.md.html"><code>kmeans.train</code> procedure type</a> trains a k-means function.</li>
+</ul>
+</body>
+</html>

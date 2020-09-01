@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset='utf-8' />
+<title>MLDB Documentation</title>
+<script src='/resources/js/mathjax_TeX-AMS-MML_HTMLorMML.js'></script>
+<link rel='stylesheet' href='/resources/css/prism.css'>
+<link rel='stylesheet' href='/resources/css/doc.css'>
+<script src='/resources/js/jquery-1.11.2.min.js'></script>
+<script src='/resources/js/prism.js'></script>
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  if(window.location.origin == 'http://mldb.ai')
+  { ga('create', 'UA-16909325-9', 'auto'); }
+  else
+  { ga('create', 'UA-16909325-10', {'cookieDomain': 'none'}); }
+  ga('send', 'pageview');
+</script>
+</head>
+<body style='margin-left: 50px; max-width: 1000px'>
+<h1>MongoDB Query function</h1>
+
+<p>The MondoDB Query Function allows the creation of a function to perform an
+MLDB <a href="/doc/builtin/sql/Sql.md.html">SQL query</a> against a MongoDB collection. It is
+similar to the
+<a href="/doc/builtin/functions/SqlQueryFunction.md.html">SQL Query function</a>.</p>
+
+<h2>Caveat</h2>
+
+<ul>
+<li>mongodb.dataset will not work on collections having key &quot;_id&quot; that are not
+ObjectIDs. See <a href="https://docs.mongodb.com/manual/reference/method/ObjectId/" target="_blank">MongoDB ObjectID</a></li>
+<li>Some less popular BSON types are not supported.
+See <a href="https://docs.mongodb.com/master/reference/bson-types/" target="_blank">BSON Types</a>
+-- Regular Expression
+-- DBPointer
+-- JavaScript
+-- JavaScript (with scope)
+-- Min key
+-- Max key</li>
+</ul>
+
+<h2>Configuration</h2>
+
+<p><p>A new function of type <code>mongodb.query</code> named <code>&lt;id&gt;</code> can be created as follows:</p><pre><code class="language-python">mldb.put(&quot;/v1/functions/&quot;+&lt;id&gt;, {
+    &quot;type&quot;: &quot;mongodb.query&quot;,
+    &quot;params&quot;: {
+        "uriConnectionScheme": &lt;string&gt;,
+        "collection": &lt;string&gt;,
+        "output": &lt;SqlQueryOutput&gt;
+    }
+})</code></pre><p>with the following key-value definitions for <code>params</code>:</p><table class="params table" width='100%'><tr><th align='right'>Field, Type, Default</th><th>Description</th></tr>
+<tr><td align='right'><p><strong>uriConnectionScheme</strong> <br/> <nobr>string</nobr> <br/> <code></code></p></td><td><p>MongoDB connection scheme. mongodb://[username:password@]host1[:port1][,host2[:port2],...[,hostN[:portN]]][/[database]]</p>
+</td></tr>
+<tr><td align='right'><p><strong>collection</strong> <br/> <nobr>string</nobr> <br/> <code></code></p></td><td><p>The collection to query.</p>
+</td></tr>
+<tr><td align='right'><p><strong>output</strong> <br/> <nobr>SqlQueryOutput</nobr> <br/> <code>"FIRST_ROW"</code></p></td><td><p>Controls how the query output is converted into a row. <code>FIRST_ROW</code> (the default) will return only the first row produced by the query.  <code>NAMED_COLUMNS</code> will construct a row from the whole returned table, which must have a &#39;value&#39; column containing the value.  If there is a &#39;column&#39; column, it will be used as a column name, otherwise the row name will be used.</p>
+</td></tr>
+</table></p>
+
+<h2>Example</h2>
+
+<p>For this example, we will use a MongoDB database populated with data provided by
+the book MongoDB In Action. The zipped json file is available at
+<a href="http://mng.bz/dOpd" target="_blank">http://mng.bz/dOpd</a>.</p>
+
+<p>Here we create the query function on the MongoDB zips database zips collection.</p>
+
+<pre><code class="language-python">mldb.put(&quot;/v1/functions/mongo_query&quot;, {
+    &quot;type&quot;: &quot;mongodb.query&quot;,
+    &quot;params&quot;: {
+        &quot;connectionScheme&quot;: &#39;mongodb://somehost.mldb.ai:11712/zips&#39;,
+        &quot;collection&quot;: &#39;zips&#39;
+    }
+})
+</code></pre>
+
+<p>A direct call to the function looks like</p>
+
+<pre><code class="language-python">import json
+mldb.get(&#39;/v1/functions/mongo_query/application&#39;,
+    input={&#39;query&#39; : json.dumps({&#39;zip&#39; : {&#39;$eq&#39; : &#39;60623&#39;}})}
+).json()
+</code></pre>
+
+<p>With the output</p>
+
+<pre><code class="language-json">{
+    &#39;output&#39;: {
+        &#39;_id&#39;: u&#39;57d2f5eb21af5ee9c4e22302&#39;,
+        &#39;city&#39;: &#39;CHICAGO&#39;,
+        &#39;loc&#39;: [[&#39;x&#39;, [87.7157, &#39;2016-09-09T17:48:27Z&#39;]],
+                [&#39;y&#39;, [41.849015, &#39;2016-09-09T17:48:27Z&#39;]]],
+        &#39;pop&#39;: 112047,
+        &#39;state&#39;: &#39;IL&#39;,
+        &#39;zip&#39;: &#39;60623&#39;
+    }
+}
+</code></pre>
+
+<p>Here is an example of the function beign used within a query.</p>
+
+<pre><code class="language-python">mldb.query(&quot;&quot;&quot;
+    SELECT mongo_query({query: &#39;{&quot;loc.x&quot; : {&quot;$eq&quot; : 73.968312}}&#39;}) AS *
+&quot;&quot;&quot;)
+</code></pre>
+
+<table>
+<thead>
+<tr>
+<th>_id</th>
+<th>city</th>
+<th>loc.x</th>
+<th>loc.y</th>
+<th>pop</th>
+<th>state</th>
+<th>zip</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>_rowName</td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>result</td>
+<td>57d2f5eb21af5ee9c4e24e4f</td>
+<td>NEWORK</td>
+<td>73.968312</td>
+<td>40.797466</td>
+<td>100027</td>
+<td>NY</td>
+</tr>
+</tbody>
+</table>
+</body>
+</html>

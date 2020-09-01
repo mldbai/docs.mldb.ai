@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset='utf-8' />
+<title>MLDB Documentation</title>
+<script src='/resources/js/mathjax_TeX-AMS-MML_HTMLorMML.js'></script>
+<link rel='stylesheet' href='/resources/css/prism.css'>
+<link rel='stylesheet' href='/resources/css/doc.css'>
+<script src='/resources/js/jquery-1.11.2.min.js'></script>
+<script src='/resources/js/prism.js'></script>
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  if(window.location.origin == 'http://mldb.ai')
+  { ga('create', 'UA-16909325-9', 'auto'); }
+  else
+  { ga('create', 'UA-16909325-10', {'cookieDomain': 'none'}); }
+  ga('send', 'pageview');
+</script>
+</head>
+<body style='margin-left: 50px; max-width: 1000px'>
+<h1>License information</h1>
+
+<p>The <strong>MLDB Community Edition</strong> is a distribution of MLDB that can be built entirely from open-source software. The license is the <a href="https://github.com/mldbai/mldb/blob/master/LICENSE" target="_blank">Apache License v2.0</a> and the source and build information can be found at <a href="https://github.com/mldbai/mldb" target="_blank">https://github.com/mldbai/mldb</a>.</p>
+
+<p>The <strong>MLDB Enterprise Edition</strong> is a pre-built binary distribution of MLDB which includes the same software as the Community Edition plus the closed-source <a href="ProPlugin.md.html">MLDB Pro Plugin</a>. It is  available under two license options:</p>
+
+<ol>
+<li>the free <a href="/resources/MLDB_License.pdf">MLDB End User License Agreement, Non-Commercial Software License version 1.0</a>. </li>
+<li>a license permitting commercial use, which can be purchased from MLDB.ai by <a href="mailto:mldb@mldb.ai" target="_blank">contacting mldb@mldb.ai</a>.</li>
+</ol>
+
+<p>When you run the MLDB Enterprise Edition for the first time, you will be prompted for a license key to activate the software. You can create your Free Trial license key instantly by signing up to <a href="https://mldb.ai/#license_management" target="_blank">MLDB.ai</a> and filling out the request form.</p>
+
+<h2>Included open source software</h2>
+
+<p>To ease integration with the MLDB codebase and for easier distribution,
+libraries have been included in the MLDB source code repository.</p>
+
+<p>The following is a list of such libraries, along with links to their respective licenses and/or copyright notices.</p>
+
+<ul>
+<li><a href="https://github.com/mldbai/mldb/blob/master/utils/move.h" target="_blank">Boost move</a></li>
+<li><a href="https://github.com/mldbai/mldb/blob/master/plugins/lang/python/python_loader.cc#L55" target="_blank">Boost pyExec</a></li>
+<li><a href="https://github.com/mldbai/mldb/blob/master/ext/cityhash/COPYING" target="_blank">CityHash</a></li>
+<li><a href="https://github.com/mldbai/mldb/blob/master/ext/gmsl/gmsl" target="_blank">GNU Make Standard Library</a></li>
+<li><a href="https://github.com/mldbai/mldb/blob/master/ext/googleurl/LICENSE.txt" target="_blank">Google URL</a></li>
+<li><a href="https://github.com/mldbai/highwayhash/blob/master/LICENSE" target="_blank">Highway Hash</a></li>
+<li><a href="https://github.com/mldbai/mldb/blob/master/ext/hoedown/LICENSE" target="_blank">Hoedown</a></li>
+<li><a href="https://github.com/mldbai/JPeg9A/blob/master/README" target="_blank">JPeg9A</a></li>
+<li><a href="https://github.com/mldbai/mldb/blob/master/ext/jsoncpp/value.h" target="_blank">JsonCpp</a></li>
+<li><a href="https://github.com/mldbai/mldb/blob/master/ext/judy/Judy.h" target="_blank">Judy</a></li>
+<li><a href="https://github.com/mldbai/mnmlstc/blob/master/License.rst" target="_blank">MNMLSTC Core</a></li>
+<li><a href="https://github.com/mldbai/pffft/blob/master/fftpack.h" target="_blank">PFFFT</a></li>
+<li><a href="https://github.com/mldbai/re2/blob/master/LICENSE" target="_blank">RE2</a></li>
+<li><a href="https://github.com/mldbai/mldb/blob/master/arch/sse2_exp.h" target="_blank">SIMD (SSE1+MMX or SSE2) implementation of exp</a></li>
+<li><a href="https://github.com/mldbai/mldb/blob/master/ext/libstemmer/LICENSE" target="_blank">Snowball libstemmer</a></li>
+<li><a href="https://github.com/mldbai/mldb/blob/master/types/dtoa.c" target="_blank">dtoa</a></li>
+<li><a href="https://github.com/mldbai/easyexif/blob/master/LICENSE" target="_blank">easyexif</a></li>
+<li><a href="https://github.com/mldbai/edlib/blob/master/LICENSE" target="_blank">edlib</a></li>
+<li><a href="https://github.com/mldbai/eigen/blob/master/COPYING.README" target="_blank">eigen</a></li>
+<li><a href="https://github.com/mldbai/farmhash/blob/master/COPYING" target="_blank">farmhash</a></li>
+<li><a href="https://github.com/mldbai/giflib/blob/master/COPYING" target="_blank">giflib</a></li>
+<li><a href="https://github.com/mldbai/gmock-1.7.0/blob/master/LICENSE" target="_blank">gmock</a></li>
+<li><a href="https://github.com/mldbai/libgit2/blob/master/COPYING" target="_blank">libgit2</a></li>
+<li><a href="https://github.com/mldbai/libbson/blob/master/COPYING" target="_blank">libjson</a></li>
+<li><a href="https://github.com/mldbai/mldb/blob/master/rest/testing/rest_collection_stress_test.cc#L30" target="_blank">lockless</a></li>
+<li><a href="https://github.com/mldbai/mldb/blob/master/ext/lz4/lz4.h" target="_blank">lz4</a></li>
+<li><a href="https://github.com/mldbai/mldb/blob/master/ext/lzma/lzma.h" target="_blank">lzma</a></li>
+<li><a href="https://github.com/mldbai/mongo-c-driver/blob/master/COPYING" target="_blank">mongo-c-driver</a></li>
+<li><a href="https://github.com/mldbai/mongo-cxx-driver/blob/master/LICENSE" target="_blank">mongo-cxx-driver</a></li>
+<li><a href="https://github.com/mldbai/protobuf/blob/master/LICENSE" target="_blank">protobuf</a></li>
+<li><a href="https://github.com/mldbai/s2-geometry-library/blob/master/COPYING" target="_blank">s2-geometry-library</a></li>
+<li><a href="https://github.com/mldbai/mldb/blob/master/ext/spdlog/LICENSE" target="_blank">spdlog</a></li>
+<li><a href="https://github.com/mldbai/mldb/blob/master/ext/sqlite/sqlite3.h" target="_blank">sqlite</a></li>
+<li><a href="https://github.com/mldbai/mldb/blob/master/ext/svdlibc/doc/svdlibc/license.html" target="_blank">svdlibc</a></li>
+<li><a href="https://github.com/mldbai/mldb/blob/master/ext/svm/COPYRIGHT" target="_blank">svm</a></li>
+<li><a href="https://github.com/mldbai/tensorflow/blob/master/LICENSE" target="_blank">tensorflow</a></li>
+<li><a href="https://github.com/mldbai/mldb/blob/master/ext/tinyxml2/readme.txt" target="_blank">tinyxml2</a></li>
+<li><a href="https://github.com/mldbai/uap-core/blob/master/LICENSE" target="_blank">uap-core</a></li>
+<li><a href="https://github.com/mldbai/uap-cpp/blob/master/LICENSE" target="_blank">uap-cpp</a></li>
+<li><a href="https://github.com/mldbai/mldb/blob/master/ext/utf8cpp/source/utf8.h" target="_blank">utf8cpp</a></li>
+<li><a href="https://github.com/mldbai/v8-cross-build-output/blob/master/include/v8.h" target="_blank">v8</a></li>
+<li><a href="https://github.com/mldbai/mldb/blob/master/ext/xxhash/xxhash.h" target="_blank">xxhash</a></li>
+<li><a href="https://github.com/mldbai/zstd/blob/master/LICENSE" target="_blank">zstd</a></li>
+</ul>
+
+<h3>Javascript libraries</h3>
+
+<p>The following javascript libraries are also included in the source tree:</p>
+
+<ul>
+<li><a href="https://raw.githubusercontent.com/mldbai/mldb/master/container_files/public_html/resources/queries/bundle.js" target="_blank">React generated code</a></li>
+<li><a href="https://github.com/mldbai/mldb/blob/master/container_files/public_html/resources/js/jquery-1.11.2.min.js" target="_blank">jQuery</a></li>
+<li><a href="https://github.com/mldbai/mldb/blob/master/container_files/public_html/resources/js/bootstrap.min.js" target="_blank">Bootstrap</a></li>
+<li><a href="https://github.com/mldbai/mldb/blob/master/container_files/public_html/resources/js/ace.js" target="_blank">ACE - Ajax.org Cloud9 Editor</a></li>
+<li><a href="https://github.com/mldbai/mldb/blob/master/container_files/public_html/resources/js/coffee-script.js" target="_blank">CoffeScript Compiler</a></li>
+<li><a href="https://github.com/mldbai/mldb/blob/master/container_files/public_html/resources/js/prism.js" target="_blank">PrismJS</a></li>
+</ul>
+
+<h3>Python packages</h3>
+
+<p>Multiple python packages are included in the Docker distribution of MLDB.</p>
+
+<p>The complete list of those unmodified packages can be found in the following files:</p>
+
+<ul>
+<li><a href="https://github.com/mldbai/mldb/blob/master/python_requirements.txt" target="_blank">python_requirements.txt</a></li>
+<li><a href="https://github.com/mldbai/mldb/blob/master/python_requirements_mldb_base.txt" target="_blank">python<em>requirements</em>mldb_base.txt</a></li>
+<li><a href="https://github.com/mldbai/mldb/blob/master/python_constraints.txt" target="_blank">python_constraints.txt</a></li>
+</ul>
+</body>
+</html>

@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset='utf-8' />
+<title>MLDB Documentation</title>
+<script src='/resources/js/mathjax_TeX-AMS-MML_HTMLorMML.js'></script>
+<link rel='stylesheet' href='/resources/css/prism.css'>
+<link rel='stylesheet' href='/resources/css/doc.css'>
+<script src='/resources/js/jquery-1.11.2.min.js'></script>
+<script src='/resources/js/prism.js'></script>
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  if(window.location.origin == 'http://mldb.ai')
+  { ga('create', 'UA-16909325-9', 'auto'); }
+  else
+  { ga('create', 'UA-16909325-10', {'cookieDomain': 'none'}); }
+  ga('send', 'pageview');
+</script>
+</head>
+<body style='margin-left: 50px; max-width: 1000px'>
+<h1>Documentation Serving</h1>
+
+<p>MLDB contains support for serving up documentation that is delivered
+along with a entity type. When a plugin defines a new entity type (only possible at build-time for the moment), it can register the documentation for that type with the Documentation Browser.</p>
+
+<p>In addition, a plugin can register its own documentation, which is served under <code>/v1/plugins/&lt;id&gt;/doc</code>, and will be rendered with Markdown support as explained below.</p>
+
+<h2><a name="linking"></a>The Documentation Browser and Linking to Documentation</h2>
+
+<p>If you see a sidebar on the left, this document is being served within the Documentation Browser under <code>/doc</code>.</p>
+
+<p>If you want to link to a specific piece of documentation through the Documentation Browser, you can deep-link all the way to an anchor inside a document like this: <code>/doc/builtin/DocumentationServing.md.html#linking</code>. You can create an anchor anywhere with <code>&lt;a name=&quot;anchor&quot;&gt;&lt;/a&gt;</code>. </p>
+
+<p>For example: 
+<a href="#linking">this is a local link to this section</a> and 
+<a href="DocumentationServing.md.html#linking">this is a remote link to this section</a></p>
+
+<pre><code>[this is a local link to this section](#linking)
+[this is a remote link to this section](DocumentationServing.md.html#linking)
+</code></pre>
+
+<p>If you want to deep-link to a specific REST route within the Interactive Documentation, you can use something like <code>/doc#/doc/rest.html#GET:/v1/query</code>.</p>
+
+<h3>Documentation in Notebooks</h3>
+
+<p>Sometimes it&#39;s more convenient to show how to do something in a Notebook. You can link to a specific notebook that ships with MLDB like this <code>![](%%nblink _demos/Predicting Titanic Survival)</code> which gives this: <a href="/doc/nblink.html#_demos/Predicting%20Titanic%20Survival" target="_blank">Predicting Titanic Survival</a>.</p>
+
+<h2>Writing Documentation</h2>
+
+<p>Documentation is delivered as HTML and Markdown files, with support for
+arbitrary other assets in the documentation (png files, css files, js files,
+etc).</p>
+
+<p>The Markdown format is documented <a href="Markdown.md.html">here</a>.</p>
+
+<h3>Markdown Support</h3>
+
+<p>Markdown files (files whose name ends in <code>.md</code>) will be transformed into html files with a built-in Markdown processor at serve-time if you append <code>.html</code> to their name when requesting them over HTTP.</p>
+
+<h3>Fenced code functions</h3>
+
+<p>You can put your code in functions delimited with three backticks:</p>
+
+<pre><code>   ```
+   var code = &quot;Code goes here&quot;
+   ```
+</code></pre>
+
+<p>which produces the following output:</p>
+
+<pre><code>var code = &quot;Code goes here&quot;
+</code></pre>
+
+<h3>Syntax highlighting</h3>
+
+<p>Syntax highlighting should work with any code in code functions.  It&#39;s implemented
+using <a href="https://highlightjs.org/" target="_blank">highlight.js</a>.</p>
+
+<h4>Markdown Math</h4>
+
+<p>Math is supported as $LaTeX$ expressions within <code>\\( ... \\)</code> characters (inline),
+or within broken-out <code>$$</code> character pairs out of line.  For example,</p>
+
+<pre><code>$$
+e^{i\pi}-1=0
+$$
+</code></pre>
+
+<p>renders as</p>
+
+<p>\[
+e^{i\pi}-1=0
+\]</p>
+
+<h4>Markdown Macros</h4>
+
+<p>It also accepts macros registered with the following syntax</p>
+
+<pre><code>![](%%macroname param1 param2 ...)
+</code></pre>
+
+<p>These macros allow access to extensions to the Markdown syntax.</p>
+
+<p>The extensions currently supported are:</p>
+
+<ul>
+<li><code>config &lt;kind&gt; &lt;type&gt;</code></li>
+<li><code>codeexample &lt;file&gt; &lt;lang&gt;</code></li>
+<li><code>availabletypes &lt;entity&gt; &lt;format&gt;</code></li>
+<li><code>jmlclassifier &lt;cls&gt;</code></li>
+<li><code>type &lt;type&gt;</code></li>
+<li><code>doclink &lt;type&gt; &lt;kind&gt;</code></li>
+<li><code>nblink &lt;notebook name&gt;</code></li>
+</ul>
+</body>
+</html>

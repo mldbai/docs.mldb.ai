@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset='utf-8' />
+<title>MLDB Documentation</title>
+<script src='/resources/js/mathjax_TeX-AMS-MML_HTMLorMML.js'></script>
+<link rel='stylesheet' href='/resources/css/prism.css'>
+<link rel='stylesheet' href='/resources/css/doc.css'>
+<script src='/resources/js/jquery-1.11.2.min.js'></script>
+<script src='/resources/js/prism.js'></script>
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  if(window.location.origin == 'http://mldb.ai')
+  { ga('create', 'UA-16909325-9', 'auto'); }
+  else
+  { ga('create', 'UA-16909325-10', {'cookieDomain': 'none'}); }
+  ga('send', 'pageview');
+</script>
+</head>
+<body style='margin-left: 50px; max-width: 1000px'>
+<h1>Singular Value Decomposition Training Procedure</h1>
+
+<p>This procedure allows for a truncated, abbreviated singular value decomposition
+to be trained over a dataset.This procedure
+trains an SVD model and stores the model file to disk and/or applies the model to 
+the input data to produce an embedded output dataset for columns and/or rows.</p>
+
+<h2>Algorithm description</h2>
+
+<p>A singular value decomposition is a way of more compactly representing a dataset,
+by taking advantage of the known relationships and redundancy between the different
+columns in the dataset.  It is most often used to create an unsupervised embedding
+of a dataset.  Mathematically, it looks like this:</p>
+
+<p>\[
+A \approx U \Delta V^T
+\]</p>
+
+<p>Where A is the input matrix (dataset), U is an orthonormal matrix known as the
+left-singular vectors, V is an orthonormal matrix known as the right-singular
+vectors, and \(\Delta\) is a diagonal matrix with the entries on its diagonal
+known as the Singular Values.</p>
+
+<p>Intuitively, \(U\) tells us about how to represent a row as a coordinate in a
+vector space, and \(V\) tells us how to represent a column as a coordinate in
+the same vector space.  \( \Delta \) tells us how important each of those coordinates
+is in the reconstruction.</p>
+
+<p>As input, it takes a single dataset \(A\).  The algorithm is designed for
+the case where the input is tall and narrow, in other words where the
+number of rows is higher or much higher than the number of columns.  It can
+work reasonably well up to hundreds of millions of rows and a few million
+columns.</p>
+
+<h3>Preprocessing</h3>
+
+<p>The SVD algorithm is designed to be robust against real-world datasets, and so
+preprocessing is done on the columns before the algorithm is applied.  Each
+input column is converted into one or more virtual columns as follows:</p>
+
+<ul>
+<li>Real valued, dense columns are used as-is.  Note that infinite values are not
+currently accepted.  Not a Number (&quot;NaN&quot;) values are assumed to be missing.</li>
+<li>String valued columns are converted into multiple columns, with one column
+per string value.  These sparse columns have the value <code>1</code> where the string has
+the given value, and are missing else where.</li>
+<li>Mixed-value columns are currently not accepted.</li>
+</ul>
+
+<p>Columns that have multiple values for the same row have undefined results:
+they may use an average, or take an arbitrary one of the values, etc.</p>
+
+<p>The following preprocessing is not performed, and should be done manually if
+needed:</p>
+
+<ol>
+<li> Strings values are not converted to bag-of-words representations or anything
+like that.  That preprocessing needs to be performed manually.</li>
+<li> In the case of categorical columns encoded as integers, the algorithm will
+treat it as a real value.  For categorical columns, it&#39;s best to use strings,
+even if the string just encodes the number (<code>&#39;1&#39;</code> versus <code>1</code>).</li>
+</ol>
+
+<h3>Truncation</h3>
+
+<p>The SVD computed is a <em>truncated</em> SVD.  This means that it calculates a limited set
+of singular vectors and singular vectors that represent the input matrix as closely
+as possible.  Typically between a few tens and a thousand or so singular values will
+be used.</p>
+
+<h3>Abbreviation</h3>
+
+<p>The SVD is computed on an abbreviated subspace of a representitive sample of
+columns from the initial column space.  Currently, the <code>numDenseBasisVectors</code> least
+sparse columns are included in the subspace.  This parameter can be used to
+control the runtime of the algorithm when there are lots of sparse columns.</p>
+
+<p>The embeddings of all columns are calculated, even if they are not one of the
+dense basis vectors.</p>
+
+<h2>Format of the output</h2>
+
+<p>The SVD algorithm produces three outputs:</p>
+
+<ul>
+<li>A SVD model file, which can be loaded by the <a href="/doc/builtin/functions/SvdEmbedRow.md.html"><code>svd.embedRow</code> function type</a>.
+This is a JSON formatted file, and so can be inspected or imported into another
+system.  It contains a <code>columnIndex</code> map showing how to map sparse column
+values onto expanded columns, a <code>columns</code> array with the singular vector
+and scaling information for each column, and a <code>singularValues</code> array giving
+the singular values of each columns.</li>
+<li>A dataset (if the <code>rowOutputDataset</code> section is filled in) containing the singular
+vectors for each row in the input dataset.  This will be a dense matrix
+with the same number of
+rows as the input dataset, and columns with names prefixed with the
+<code>outputColumn</code> and a 4 digit number for each of the singular values.</li>
+<li><p>A dataset (if the <code>columnOutputDataset</code> section is filled in) containing the singular
+vectors for each column in the input dataset.  This will be a dense matrix
+with a row for each of the virtual columns created as part of the preprocessing,
+and the same columns as the <code>rowOutputDataset</code> dataset.  Note that this dataset is
+transposed with respect to the input dataset.</p>
+
+<p>The names of the columns in the output depend upon the type of the virtual
+columns:</p>
+
+<ul>
+<li>A virtual column for the numeric value of a column has a row name the
+same as the column name with the suffix <code>.numericValue</code>;</li>
+<li>A virtual column for a string column has a row name that is the column
+name with the suffix <code>.equalString.</code> followed by the string value.</li>
+</ul></li>
+</ul>
+
+<h2>Configuration</h2>
+
+<p><p>A new procedure of type <code>svd.train</code> named <code>&lt;id&gt;</code> can be created as follows:</p><pre><code class="language-python">mldb.put(&quot;/v1/procedures/&quot;+&lt;id&gt;, {
+    &quot;type&quot;: &quot;svd.train&quot;,
+    &quot;params&quot;: {
+        "trainingData": &lt;<a href="/doc/builtin/procedures/InputQuery.md.html">InputQuery</a>&gt;,
+        "columnOutputDataset": &lt;<a href="/doc/builtin/procedures/OutputDatasetSpec.md.html">OutputDatasetSpec</a> (Optional)&gt;,
+        "rowOutputDataset": &lt;<a href="/doc/builtin/procedures/OutputDatasetSpec.md.html">OutputDatasetSpec</a> (Optional)&gt;,
+        "numSingularValues": &lt;int&gt;,
+        "numDenseBasisVectors": &lt;int&gt;,
+        "outputColumn": &lt;PathElement&gt;,
+        "modelFileUrl": &lt;<a href="/doc/builtin/Url.md.html">Url</a>&gt;,
+        "functionName": &lt;string&gt;,
+        "runOnCreation": &lt;bool&gt;
+    }
+})</code></pre><p>with the following key-value definitions for <code>params</code>:</p><table class="params table" width='100%'><tr><th align='right'>Field, Type, Default</th><th>Description</th></tr>
+<tr><td align='right'><p><strong>trainingData</strong> <br/> <nobr><a href="/doc/builtin/procedures/InputQuery.md.html">InputQuery</a></nobr> <br/> <code></code></p></td><td><p>Specification of the data for input to the SVD Procedure.  This should be organized as an embedding, with each selected row containing the same set of columns with numeric values to be used as coordinates.  The select statement does not support groupby and having clauses.</p>
+</td></tr>
+<tr><td align='right'><p><strong>columnOutputDataset</strong> <br/> <nobr><a href="/doc/builtin/procedures/OutputDatasetSpec.md.html">OutputDatasetSpec</a> (Optional)</nobr> <br/> <code>{"type":"embedding"}</code></p></td><td><p>Output dataset for embedding (column singular vectors go here)</p>
+</td></tr>
+<tr><td align='right'><p><strong>rowOutputDataset</strong> <br/> <nobr><a href="/doc/builtin/procedures/OutputDatasetSpec.md.html">OutputDatasetSpec</a> (Optional)</nobr> <br/> <code>{"type":"embedding"}</code></p></td><td><p>Output dataset for embedding (row singular vectors go here)</p>
+</td></tr>
+<tr><td align='right'><p><strong>numSingularValues</strong> <br/> <nobr>int</nobr> <br/> <code>100</code></p></td><td><p>Maximum number of singular values to work with.  If there are not enough degrees of freedom in the dataset (it is rank-deficient), then less than this number may be used</p>
+</td></tr>
+<tr><td align='right'><p><strong>numDenseBasisVectors</strong> <br/> <nobr>int</nobr> <br/> <code>2000</code></p></td><td><p>Maximum number of dense basis vectors to use for the SVD.  This parameter gives the number of dimensions into which the projection is made.  Higher values may allow the SVD to model slightly more diverse behaviour.  The runtime goes up with the square of this parameter, in other words 10 times as many is 100 times as long to run.</p>
+</td></tr>
+<tr><td align='right'><p><strong>outputColumn</strong> <br/> <nobr>PathElement</nobr> <br/> <code>"embedding"</code></p></td><td><p>Base name of the column that will be written by the SVD.  It will be an embedding with numSingularValues elements.</p>
+</td></tr>
+<tr><td align='right'><p><strong>modelFileUrl</strong> <br/> <nobr><a href="/doc/builtin/Url.md.html">Url</a></nobr> <br/> <code></code></p></td><td><p>URL where the model file (with extension &#39;.svd&#39;) should be saved. This file can be loaded by the <a href="/doc/builtin/functions/SvdEmbedRow.md.html"><code>svd.embedRow</code> function type</a>. This parameter is optional unless the <code>functionName</code> parameter is used.</p>
+</td></tr>
+<tr><td align='right'><p><strong>functionName</strong> <br/> <nobr>string</nobr> <br/> <code></code></p></td><td><p>If specified, an instance of the <a href="/doc/builtin/functions/SvdEmbedRow.md.html"><code>svd.embedRow</code> function type</a> of this name will be created using the trained model. Note that to use this parameter, the <code>modelFileUrl</code> must also be provided.</p>
+</td></tr>
+<tr><td align='right'><p><strong>runOnCreation</strong> <br/> <nobr>bool</nobr> <br/> <code>true</code></p></td><td><p>If true, the procedure will be run immediately. The response will contain an extra field called <code>firstRun</code> pointing to the URL of the run.</p>
+</td></tr>
+</table></p>
+
+<h2>Restrictions</h2>
+
+<ul>
+<li>The SVD algorithm as implemented is designed for the embedding of high dimensional
+datasets into a lower dimensional space.  In the case of rank-constrained input
+datasets (ie, very simple datasets with only a few variables and clear relationships
+between them), it will not necessarily give good results.  For those, it may be
+better to skip the embedding step altogether.</li>
+<li>Columns with a mixture of strings and numbers are currently not accepted.  This
+will be rectified in a future release.</li>
+<li>Columns that contain infinite values are currently not accepted.  This will be
+rectified in a future release.</li>
+</ul>
+
+<h2>Troubleshooting</h2>
+
+<p>If the SVD produces all-zero vectors for rows or columns, it may be one of the following:</p>
+
+<ul>
+<li>A column which is present in only a single row with no other columns will have a zero embedding vector</li>
+<li>A row which is present only in a single column with no other rows will have a zero embedding vector</li>
+<li>If all of the values in the columns for a given row are zero, the row will have a zero embedding vector</li>
+<li>If all of the values in the rows for a given column are zero, the column will have a zero embedding vector</li>
+<li>An empty row or empty column will have a zero embedding vector</li>
+</ul>
+
+<p>(For an SVD to produce meaningful results, it needs to be able to determine how a given
+column varies with other columns, which means it needs to be present in two or more
+rows, each of which contain columns present in two or more rows.  Same holds in the
+other direction).</p>
+
+<h2>Examples</h2>
+
+<ul>
+<li>The <a href="/doc/nblink.html#_demos/Recommending%20Movies" target="_blank">Recommending Movies</a> demo notebook</li>
+<li>The <a href="/doc/nblink.html#_demos/Mapping%20Reddit" target="_blank">Mapping Reddit</a> demo notebook</li>
+<li>The <a href="/doc/nblink.html#_demos/Visualizing%20StackOverflow%20Tags" target="_blank">Visualizing StackOverflow Tags</a> demo notebook</li>
+</ul>
+
+<h2>See also</h2>
+
+<ul>
+<li><a href="http://en.wikipedia.org/wiki/Singular_value_decomposition" target="_blank">Wikipedia SVD Article</a></li>
+<li><a href="/doc/builtin/functions/SvdEmbedRow.md.html"><code>svd.embedRow</code> function type</a></li>
+<li><a href="../rest/Types.md.html">REST API</a></li>
+</ul>
+</body>
+</html>

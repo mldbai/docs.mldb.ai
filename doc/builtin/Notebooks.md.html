@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset='utf-8' />
+<title>MLDB Documentation</title>
+<script src='/resources/js/mathjax_TeX-AMS-MML_HTMLorMML.js'></script>
+<link rel='stylesheet' href='/resources/css/prism.css'>
+<link rel='stylesheet' href='/resources/css/doc.css'>
+<script src='/resources/js/jquery-1.11.2.min.js'></script>
+<script src='/resources/js/prism.js'></script>
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  if(window.location.origin == 'http://mldb.ai')
+  { ga('create', 'UA-16909325-9', 'auto'); }
+  else
+  { ga('create', 'UA-16909325-10', {'cookieDomain': 'none'}); }
+  ga('send', 'pageview');
+</script>
+</head>
+<body style='margin-left: 50px; max-width: 1000px'>
+<h1>Notebooks and <code>pymldb</code></h1>
+
+<h2>Notebooks</h2>
+
+<p align="center">
+<iframe width="530" height="300" style="border: 1px solid grey; margin: 10px;" src="https://www.youtube.com/embed/YR9tfxA0kH8" frameborder="0" allowfullscreen></iframe>
+</p>
+
+<p>The built-in Notebook interface is a standard <a href="http://jupyter.org" target="_blank">Jupyter</a> installation, with a number of useful packages preinstalled such as numpy, pandas, matplotlib etc. In addition, the <code>pymldb</code> library (see below) comes pre-installed, which makes <a href="WorkingWithRest.md.html">working with the REST API</a> easier. Everything that can be done in the MLDB-hosted Notebook interface can be done by installing Jupyter and all the relevant modules (including <code>pymldb</code> via <code>pip install pymldb</code>) somewhere else, like on a workstation or another server.</p>
+
+<h2>The <code>pymldb</code> library</h2>
+
+<p>The <a href="http://github.com/datacratic/pymldb" target="_blank"><code>pymldb</code> library</a>  is an open-source pure-Python module, installable via <code>pip install pymldb</code>, which provides a wrapper library that makes it easy to work with MLDB from Python. Check out the <a href="/doc/nblink.html#_tutorials/Using%20pymldb%20Tutorial" target="_blank">Using pymldb Tutorial</a> notebook for more info.</p>
+</body>
+</html>

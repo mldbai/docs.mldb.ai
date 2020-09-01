@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset='utf-8' />
+<title>MLDB Documentation</title>
+<script src='/resources/js/mathjax_TeX-AMS-MML_HTMLorMML.js'></script>
+<link rel='stylesheet' href='/resources/css/prism.css'>
+<link rel='stylesheet' href='/resources/css/doc.css'>
+<script src='/resources/js/jquery-1.11.2.min.js'></script>
+<script src='/resources/js/prism.js'></script>
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  if(window.location.origin == 'http://mldb.ai')
+  { ga('create', 'UA-16909325-9', 'auto'); }
+  else
+  { ga('create', 'UA-16909325-10', {'cookieDomain': 'none'}); }
+  ga('send', 'pageview');
+</script>
+</head>
+<body style='margin-left: 50px; max-width: 1000px'>
+<h1>Mutable Binary Behaviour Dataset</h1>
+
+<p><strong>This feature is part of the <a href="../../../../doc/builtin/ProPlugin.md.html">MLDB Pro Plugin</a> and so can only be used in compliance with the <a href="../../../../doc/builtin/licenses.md.html">trial license</a> unless a commercial license has been purchased</strong></p>
+
+<p>The Mutable Behaviour Dataset is used to store pure binary behavioural data.  It can
+only store the value <code>1</code>, but is extremely efficient for working with lots
+of rows and columns.  It records timestamps with a resolution of one second.</p>
+
+<p>It is designed for the following situations:</p>
+
+<ul>
+<li>Datasets with up to hundreds of millions of rows.</li>
+<li>Datasets with up to millions of columns.</li>
+<li>For datasets where there are a lot more rows than columns.  For example, when
+rows represent users and columns represent things that they have done.</li>
+<li>Very sparse data, with a density factor of less than one percent.</li>
+<li>To store discrete values, not continuous values.  For example if you need to
+record purchase price, put it in a price bucket rather than recording the
+actual price.</li>
+</ul>
+
+<p>It stores its data in memory, and allows full random access to both the matrix
+and its inverse.  It is quite efficient in memory usage.  It can be simultaneously
+read from and updated.</p>
+
+<p>This dataset type is read-write.  It cannot be committed; it will always
+keep its contents in memory; calling commit() on the dataset will simply make
+it immutable, which speeds up access but makes any further modifications fail.
+It can, however, be saved (see below).</p>
+
+<h2>Configuration</h2>
+
+<p><p>A new dataset of type <code>beh.binary.mutable</code> named <code>&lt;id&gt;</code> can be created as follows:</p><pre><code class="language-python">mldb.put(&quot;/v1/datasets/&quot;+&lt;id&gt;, {
+    &quot;type&quot;: &quot;beh.binary.mutable&quot;,
+    &quot;params&quot;: {
+        "dataFileUrl": &lt;<a href="/doc/builtin/Url.md.html">Url</a>&gt;,
+        "timeQuantumSeconds": &lt;float&gt;
+    }
+})</code></pre><p>with the following key-value definitions for <code>params</code>:</p><table class="params table" width='100%'><tr><th align='right'>Field, Type, Default</th><th>Description</th></tr>
+<tr><td align='right'><p><strong>dataFileUrl</strong> <br/> <nobr><a href="/doc/builtin/Url.md.html">Url</a></nobr> <br/> <code></code></p></td><td><p>URL of the data file (with extension &#39;.beh&#39;) from which to load the dataset.</p>
+</td></tr>
+<tr><td align='right'><p><strong>timeQuantumSeconds</strong> <br/> <nobr>float</nobr> <br/> <code>1.0</code></p></td><td><p>a number that controls the resolution of timestamps stored in the dataset, in seconds. 1 means one second, 0.001 means one millisecond, 60 means one minute. Higher resolution requires more memory to store timestamps.</p>
+</td></tr>
+</table></p>
+
+<h2>Routes</h2>
+
+<p>This dataset inherits the <code>saves</code> route from the <a href="/v1/plugins/pro/doc/BinaryBehaviourDataset.md.html"><code>beh.binary</code> dataset type</a>
+which can be used to save the data to a <code>.beh</code> file.</p>
+
+<p>Note that currently, an (unfortunate) side effect of the saving process is to make
+the dataset immutable.</p>
+
+<h1>See also</h1>
+
+<ul>
+<li>The <a href="/v1/plugins/pro/doc/BinaryBehaviourDataset.md.html"><code>beh.binary</code> dataset type</a> is an immutable counterpart.</li>
+<li>The <a href="/v1/plugins/pro/doc/BehaviourDataset.md.html"><code>beh</code> dataset type</a> uses the same file format
+but allows values that aren&#39;t <code>1</code> to be stored.</li>
+</ul>
+</body>
+</html>

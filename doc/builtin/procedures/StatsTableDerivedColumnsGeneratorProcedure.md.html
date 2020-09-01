@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset='utf-8' />
+<title>MLDB Documentation</title>
+<script src='/resources/js/mathjax_TeX-AMS-MML_HTMLorMML.js'></script>
+<link rel='stylesheet' href='/resources/css/prism.css'>
+<link rel='stylesheet' href='/resources/css/doc.css'>
+<script src='/resources/js/jquery-1.11.2.min.js'></script>
+<script src='/resources/js/prism.js'></script>
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  if(window.location.origin == 'http://mldb.ai')
+  { ga('create', 'UA-16909325-9', 'auto'); }
+  else
+  { ga('create', 'UA-16909325-10', {'cookieDomain': 'none'}); }
+  ga('send', 'pageview');
+</script>
+</head>
+<body style='margin-left: 50px; max-width: 1000px'>
+<h1>Stats Table Derived Columns Function Generator Procedure (Experimental)</h1>
+
+<p>This procedure is used with stats tables and makes the process of 
+specifying the SQL expression
+representing the derived columns over the stats tables&#39; counts easier.
+This is acheived by allowing the specification of an expression template
+that will be expanded for all stats tables.</p>
+
+<h2>Configuration</h2>
+
+<p><p>A new procedure of type <code>experimental.statsTable.derivedColumnsGenerator</code> named <code>&lt;id&gt;</code> can be created as follows:</p><pre><code class="language-python">mldb.put(&quot;/v1/procedures/&quot;+&lt;id&gt;, {
+    &quot;type&quot;: &quot;experimental.statsTable.derivedColumnsGenerator&quot;,
+    &quot;params&quot;: {
+        "runOnCreation": &lt;bool&gt;,
+        "functionId": &lt;string&gt;,
+        "statsTableFileUrl": &lt;<a href="/doc/builtin/Url.md.html">Url</a>&gt;,
+        "expression": &lt;string&gt;
+    }
+})</code></pre><p>with the following key-value definitions for <code>params</code>:</p><table class="params table" width='100%'><tr><th align='right'>Field, Type, Default</th><th>Description</th></tr>
+<tr><td align='right'><p><strong>runOnCreation</strong> <br/> <nobr>bool</nobr> <br/> <code>true</code></p></td><td><p>If true, the procedure will be run immediately. The response will contain an extra field called <code>firstRun</code> pointing to the URL of the run.</p>
+</td></tr>
+<tr><td align='right'><p><strong>functionId</strong> <br/> <nobr>string</nobr> <br/> <code></code></p></td><td><p>ID to use for the instance of the <a href="/doc/builtin/functions/SqlExpressionFunction.md.html"><code>sql.expression</code> function type</a> that will be created</p>
+</td></tr>
+<tr><td align='right'><p><strong>statsTableFileUrl</strong> <br/> <nobr><a href="/doc/builtin/Url.md.html">Url</a></nobr> <br/> <code></code></p></td><td><p>URL of the model file (with extension &#39;.st&#39;) to load. This file is created by the <a href="/doc/builtin/procedures/StatsTableProcedure.md.html"><code>statsTable.train</code> procedure type</a>.</p>
+</td></tr>
+<tr><td align='right'><p><strong>expression</strong> <br/> <nobr>string</nobr> <br/> <code></code></p></td><td><p>Expression to be expanded</p>
+</td></tr>
+</table></p>
+
+<h2>Template rules</h2>
+
+<p>In the following, <code>TBL</code> represents the current stat table&#39;s name.</p>
+
+<ul>
+<li><code>trial</code> will be replaced by <code>trial-TBL</code></li>
+<li><code>outcome</code> will be replaced by <code>outcome-TLB</code>, where outcome represents one of the outcomes the stats table was trained with</li>
+<li><code>$tbl</code>, meaning <em>table</em>, will be replace by <code>TBL</code>. This is useful for specifying column aliases</li>
+</ul>
+
+<h2>Example</h2>
+
+<p>We will reuse the same example as in the <a href="/doc/builtin/procedures/StatsTableProcedure.md.html"><code>statsTable.train</code> procedure type</a>, which 
+is using an online ad campaign. Below are the stats table counts:</p>
+
+<table>
+<thead>
+<tr>
+<th>rowName</th>
+<th>trial-host</th>
+<th>click-host</th>
+<th>purchase-host</th>
+<th>trial-region</th>
+<th>click-region</th>
+<th>purchase-region</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>br_1</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+</tr>
+<tr>
+<td>br_2</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+</tr>
+<tr>
+<td>br_3</td>
+<td>1</td>
+<td>0</td>
+<td>1</td>
+<td>1</td>
+<td>1</td>
+<td>0</td>
+</tr>
+<tr>
+<td>br_4</td>
+<td>1</td>
+<td>0</td>
+<td>1</td>
+<td>2</td>
+<td>1</td>
+<td>1</td>
+</tr>
+</tbody>
+</table>
+
+<p>One derived column that is useful is the ratio of clicks to impressions, or click-through ratio (CTR).
+The SQL expression to represent this for the <code>host</code> stats table is <code>&quot;click-host&quot;/&quot;trial-host&quot;</code>. In real-life
+situations, we have many stats table to consider so we will provide a template for the procedure to expand.</p>
+
+<p>The following expression:</p>
+
+<pre><code>&quot;click&quot;/&quot;trial&quot; as &quot;ctr_$tbl&quot;, ln(&quot;purchase&quot;+1) as &quot;logPurchase_$tbl&quot;
+</code></pre>
+
+<p>will produce this expanded expression for the dataset above:</p>
+
+<pre><code>&quot;click-host&quot;/&quot;trial-host&quot; as &quot;ctr_host&quot;, 
+log(&quot;purchase-host&quot;+1) as &quot;logPurchase_host&quot;, 
+&quot;click-region&quot;/&quot;trial-region&quot; as &quot;ctr_region&quot;,
+log(&quot;purchase-host&quot;+1) as &quot;logPurchase_host&quot;
+</code></pre>
+
+<p>As a best practice, it is recommended to always put quotes around columns when specifying expressions.</p>
+
+<p>Applying the expanded expression to the <code>br_4</code> row will produce the following output:</p>
+
+<table>
+<thead>
+<tr>
+<th>rowName</th>
+<th>ctr_host</th>
+<th>logPurchase_host</th>
+<th>ctr_region</th>
+<th>logPurchase_region</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>br_4</td>
+<td>0</td>
+<td>0.3</td>
+<td>0.5</td>
+<td>0.3</td>
+</tr>
+</tbody>
+</table>
+
+<h2>See also</h2>
+
+<ul>
+<li>The <a href="/doc/builtin/procedures/StatsTableProcedure.md.html"><code>statsTable.train</code> procedure type</a> trains stats tables.</li>
+<li>The <a href="/doc/builtin/functions/StatsTableGetCounts.md.html"><code>statsTable.getCounts</code> function type</a> does a lookup in stats tables for a row of keys.</li>
+</ul>
+</body>
+</html>

@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset='utf-8' />
+<title>MLDB Documentation</title>
+<script src='/resources/js/mathjax_TeX-AMS-MML_HTMLorMML.js'></script>
+<link rel='stylesheet' href='/resources/css/prism.css'>
+<link rel='stylesheet' href='/resources/css/doc.css'>
+<script src='/resources/js/jquery-1.11.2.min.js'></script>
+<script src='/resources/js/prism.js'></script>
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  if(window.location.origin == 'http://mldb.ai')
+  { ga('create', 'UA-16909325-9', 'auto'); }
+  else
+  { ga('create', 'UA-16909325-10', {'cookieDomain': 'none'}); }
+  ga('send', 'pageview');
+</script>
+</head>
+<body style='margin-left: 50px; max-width: 1000px'>
+<h1>Working with the REST API</h1>
+
+<p>Interactions with MLDB occurs via a REST API (<a href="../rest.html">fully documented here</a>), where REST stands for <a href="http://en.wikipedia.org/wiki/Representational_state_transfer" target="_blank">Representational State Transfer</a>.</p>
+
+<h2>Structure</h2>
+
+<p>The structure of a REST API call is <code>&lt;verb&gt; &lt;resource&gt; &lt;arguments&gt;</code>, e.g. <code>PUT /v1/datasets {&quot;type&quot;: &quot;sparse.mutable&quot;}</code>.</p>
+
+<ul>
+<li><strong>verbs</strong>: There are only four possible verbs: <code>GET</code>, <code>POST</code>, <code>PUT</code> and <code>DELETE</code>. These four verbs correspond to those available in the <a href="http://en.wikipedia.org/wiki/Hypertext_Transfer_Protocol" target="_blank">Hypertext Transfer Protocol</a> (HTTP) but it is possible to work with the MLDB API in-process without making use of HTTP or the network (see below).</li>
+<li><strong>resources</strong>: MLDB exposes a number of resources (<a href="../rest.html">fully documented here</a>) which correspond to the basic MLDB entities (datasets, procedures, functions, plugins) and their components (rows and columns for datasets, runs for procedures etc).</li>
+<li><strong>arguments</strong>: MLDB API calls accept arguments in <a href="http://en.wikipedia.org/wiki/Query_string" target="_blank">query-string</a> and/or <a href="http://en.wikipedia.org/wiki/JSON" target="_blank">JSON</a> format.</li>
+</ul>
+
+<h2>Calling the API over HTTP</h2>
+
+<p>The quickest way to get started with making HTTP calls to the MLDB API is with your <strong>web browser</strong> using our <a href="../rest.html">REST API Interactive Documentation</a>.</p>
+
+<p>Beyond that, if MLDB is running on a server named <code>&lt;host&gt;</code> on port <code>&lt;port&gt;</code> then you can use any of a widely-available variety of tools to make HTTP calls to <code>http://&lt;host&gt;:&lt;port&gt;/&lt;resource&gt;</code>, for example:</p>
+
+<ul>
+<li><a href="http://curl.haxx.se/" target="_blank"><code>curl</code></a> is a generic <strong>command-line</strong> tool available for many platforms which will allow you to make HTTP calls</li>
+<li><a href="http://docs.python-requests.org/en/latest/" target="_blank"><code>requests</code></a> is an easy-to-use generic <strong>Python</strong> library for making HTTP requests</li>
+<li><a href="http://cran.r-project.org/web/packages/httr/index.html" target="_blank"><code>httr</code></a> is an easy-to-use generic <strong>R</strong> library for making HTTP requests</li>
+</ul>
+
+<h2>Calling the API over HTTP from Python with <code>pymldb</code></h2>
+
+<p>If you are using the built-in <a href="Notebooks.md.html">Notebook interface</a> or want to work with MLDB from Python, you can install <a href="Notebooks.md.html"><code>pymldb</code></a>, which gives you access to an MLDB-specific library to interact with the API over HTTP, while hiding the details of HTTP from you. The <a href="/doc/nblink.html#_tutorials/Using%20pymldb%20Tutorial" target="_blank">Using pymldb Tutorial</a> will show you how to use <code>pymldb</code>.</p>
+
+<h2>Exposing functions as a REST API</h2>
+
+<p>For most predictive applications, you will want to expose a function over
+REST that implements the specific functionality required.  There are two
+ways of doing this: by calling the <code>GET /v1/functions/&lt;function&gt;/application</code>
+route, or via a plugin exposing a custom route.</p>
+
+<h3>Making a function available via <code>GET /v1/functions/&lt;function&gt;/application</code></h3>
+
+<p>As soon as a function is created, that route is automatically available, and
+so this version requires no extra work.  However, as MLDB does not know the
+data types that the function will be called with, it is required to re-bind
+the function on every call, which can be very expensive.  This can reduce
+performance by an order of magnitude.</p>
+
+<p>In order to avoid this penalty, it is possible to pre-bind function calls
+using the <a href="/doc/builtin/functions/SqlExpressionFunction.md.html"><code>sql.expression</code> function type</a> as follows:</p>
+
+<pre><code class="language-JSON">PUT /v1/functions/wrapper {
+    &quot;type&quot;: &quot;sql.expression&quot;,
+    &quot;params&quot;: {
+        &quot;expression&quot;: &quot;original_function({args, arg2, ...})[output] AS *&quot;,
+        &quot;prepared&quot;: true
+    }
+}
+</code></pre>
+
+<p>This will create a new function, <code>/v1/functions/wrapper</code>, which has an
+<code>application</code> route that will forward <code>arg1</code> and <code>arg2</code> (these should be
+replaced with the real function arguments) to the <code>original_function</code>
+function, and return the <code>output</code> field to the caller.  The key element
+here is the <code>&quot;prepared&quot;: true</code>, which causes the call to <code>original_function</code>
+to be pre-bound and so the call is very fast; rates in the hundreds of
+thousands of calls per second can be expected on a modern server for a
+simple function.</p>
+
+<h3>Making multiple predictions per REST call (high-level solution)</h3>
+
+<p>The <code>/v1/functions/&lt;function&gt;/batch</code> REST route allows for multiple
+predictions to be made in one call.  This call will take a JSON object
+or array as input, apply the function to each element, and recreate
+the same structure with the result of the predictions.  For example,
+if we set up the following function:</p>
+
+<pre><code class="language-JSON">PUT /v1/functions/score_one {
+    &quot;type&quot;: &quot;sql.expression&quot;,
+    &quot;params&quot;: {
+        &quot;expression&quot;: &quot;horizontal_sum(input)&quot;,
+        &quot;prepared&quot;: true,
+        &quot;raw&quot;: true,
+        &quot;autoInput&quot;: true
+    }
+}
+</code></pre>
+
+<p>(which effectively makes the <code>horizontal_sum</code> builtin available as a
+REST function, and uses <code>autoInput</code> and <code>raw</code> parameters to automatically
+associate the <code>input</code> parameter with the passed input value and the output
+of the <code>horizontal_sum</code> function to the result), then we can call it like
+so:</p>
+
+<pre><code class="language-JSON">GET /v1/functions/score_one/batch { &quot;input&quot;: [[1,2,3],[4,5],[6],[]] }
+</code></pre>
+
+<p>which will return us</p>
+
+<pre><code>[6,9,6,0]
+</code></pre>
+
+<p>with one output per input entry.  Alternatively, we could call it with</p>
+
+<pre><code class="language-JSON">GET /v1/functions/score_one/batch {
+     &quot;input&quot;: {
+         &quot;one&quot;:   [1,2,3],
+         &quot;two&quot;:   [4,5],
+         &quot;three&quot;: [6],
+         &quot;four&quot;:  [] } }
+</code></pre>
+
+<p>which will return us</p>
+
+<pre><code>{ &quot;one&quot;: 6, &quot;two&quot;: 9, &quot;three&quot;: 6, &quot;four&quot;: 0 } 
+</code></pre>
+
+<p>with the function being applied to each member of the object.</p>
+
+<h3>Allowing multiple predictions per REST call (low-level solution)</h3>
+
+<p>In some cases, it may make sense to batch several predictions together
+into the same REST call (especially to reduce network overhead).  This
+can also be achieved using the <a href="/doc/builtin/functions/SqlQueryFunction.md.html"><code>sql.query</code> function type</a> and the
+<code>row_dataset()</code> table function:</p>
+
+<pre><code class="language-JSON">PUT /v1/functions/batcher {
+    &quot;type&quot;: &quot;sql.query&quot;,
+    &quot;params&quot;: {
+        &quot;query&quot;: &quot;SELECT original_function(value) as value, column FROM row_dataset($input)&quot;,
+        &quot;output&quot;: &quot;NAMED_COLUMNS&quot;
+    }
+}
+</code></pre>
+
+<p>The <code>batcher</code> function, when called, will take an argument <code>input</code> that should
+be either an array or an object.  It will apply <code>original_function</code> to each
+element of the array or object, and return the same but with the elements
+replaced with the value of their functions.  For example, if we use
+<code>horizontal_sum</code> for the original function, then applying the batched version
+to <code>[[1,2,3],[4],[5,6,7],[]]</code> will return [6,4,18,NULL].</p>
+
+<p>For maximum performance, it can be combined with the <code>wrapper</code> trick above.</p>
+
+<h3>Making a function available via a plugin route</h3>
+
+<p>By defining a custom plugin, it is also possible to define completely custom
+routes for MLDB to operate on.  The following example shows how to make a
+given function available via REST to respond to the <code>GET /routes/predict</code>
+request.</p>
+
+<p>First, we create a Javascript plugin that will set itself up to respond to
+the given route:</p>
+
+<pre><code class="language-javascript">var fnconfig = {
+    type: &quot;sql.expression&quot;,
+    params: {
+        expression: &quot;horizontal_sum({*})&quot;,
+        prepared: true
+   }
+};
+var predictfn = mldb.createFunction(fnconfig);
+
+function handleRequest(relpath, verb, resource, params, payload, contentType, contentLength,
+                       headers)
+{
+    if (verb == &quot;GET&quot; &amp;&amp; relpath == &quot;/predict&quot;) {
+        return predictfn.callJson(JSON.parse(params[0][1]));
+    }
+    throw &quot;Unknown route &quot; + verb + &quot; &quot; + relpath;
+}
+
+plugin.setRequestHandler(handleRequest);
+</code></pre>
+
+<p>Next, we <code>PUT</code> that function to create the API:</p>
+
+<pre><code class="language-JSON">PUT /v1/plugins/myapi {
+    &quot;type&quot;: &quot;javascript&quot;,
+    &quot;params&quot;: {
+        &quot;source&quot;: {
+            &quot;main&quot;: &quot;&lt;above javascript code&gt;&quot;
+        }
+    }
+}
+</code></pre>
+
+<p>Finally, we can <code>GET</code> the <code>predict</code> route in order to make a prediction:</p>
+
+<pre><code class="language-JSON">GET /v1/plugins/myapi/routes/predict { &quot;input&quot;: [ 1, 2, 3 ] }
+</code></pre>
+
+<p>which returns 6.</p>
+
+<h2>Working with APIs that are unable to send a body with a GET request</h2>
+
+<p>If you need to send a body with a <code>GET</code> request to MLDB and your interface
+doesn&#39;t support it, you can <code>POST</code> to the special route <code>/v1/redirect/get</code>,
+which was created exactly for that case. It basically acts as a proxy that
+redirects <code>POST</code> requests as <code>GET</code> to internal MLDB routes.</p>
+
+<p>Here is an example</p>
+
+<pre><code class="language-JSON">POST /v1/redirect/get {
+    &quot;target&quot;: &quot;/v1/query&quot;,
+    &quot;body&quot;: {
+        &quot;q&quot;: &quot;SELECT &#39;foo&#39; AS bar&quot;
+    }
+}
+</code></pre>
+
+<p>Which returns</p>
+
+<pre><code class="language-JSON">[{&quot;rowName&quot;:&quot;result&quot;,&quot;columns&quot;:[[&quot;bar&quot;,&quot;foo&quot;,&quot;-Inf&quot;]]}]
+</code></pre>
+</body>
+</html>

@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset='utf-8' />
+<title>MLDB Documentation</title>
+<script src='/resources/js/mathjax_TeX-AMS-MML_HTMLorMML.js'></script>
+<link rel='stylesheet' href='/resources/css/prism.css'>
+<link rel='stylesheet' href='/resources/css/doc.css'>
+<script src='/resources/js/jquery-1.11.2.min.js'></script>
+<script src='/resources/js/prism.js'></script>
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  if(window.location.origin == 'http://mldb.ai')
+  { ga('create', 'UA-16909325-9', 'auto'); }
+  else
+  { ga('create', 'UA-16909325-10', {'cookieDomain': 'none'}); }
+  ga('send', 'pageview');
+</script>
+</head>
+<body style='margin-left: 50px; max-width: 1000px'>
+<h1>Distribution Table Get Statistics Function</h1>
+
+<p>Functions of this type do a lookup in a statistical table trained using the
+<a href="/doc/builtin/procedures/DistTableProcedure.md.html"><code>experimental.distTable.train</code> procedure type</a> and return the statistics (count, avg, std, min, max)
+for each of the features provided as input.</p>
+
+<h2>Configuration</h2>
+
+<p><p>A new function of type <code>experimental.distTable.getStats</code> named <code>&lt;id&gt;</code> can be created as follows:</p><pre><code class="language-python">mldb.put(&quot;/v1/functions/&quot;+&lt;id&gt;, {
+    &quot;type&quot;: &quot;experimental.distTable.getStats&quot;,
+    &quot;params&quot;: {
+        "statistics": &lt;ARRAY [ string ]&gt;,
+        "distTableFileUrl": &lt;<a href="/doc/builtin/Url.md.html">Url</a>&gt;
+    }
+})</code></pre><p>with the following key-value definitions for <code>params</code>:</p><table class="params table" width='100%'><tr><th align='right'>Field, Type, Default</th><th>Description</th></tr>
+<tr><td align='right'><p><strong>statistics</strong> <br/> <nobr>ARRAY [ string ]</nobr> <br/> <code>["count","avg","std","min","max"]</code></p></td><td><p>List of statistics to track for each outcome.</p>
+</td></tr>
+<tr><td align='right'><p><strong>distTableFileUrl</strong> <br/> <nobr><a href="/doc/builtin/Url.md.html">Url</a></nobr> <br/> <code></code></p></td><td><p>URL of the model file (with extension &#39;.dt&#39;) to load. This file is created by the <a href="/doc/builtin/procedures/DistTableProcedure.md.html"><code>experimental.distTable.train</code> procedure type</a>.</p>
+</td></tr>
+</table></p>
+
+<h2>Input and Output Values</h2>
+
+<p>Functions of this type have a single input value named <code>features</code> which is a row.</p>
+
+<p>Functions of this type have a single output value named <code>stats</code> which is also a row. 
+The row will contain a column for each outcome/feature/statistic combination.</p>
+
+<p>For example, if we take the same example as in the <a href="/doc/builtin/procedures/DistTableProcedure.md.html"><code>experimental.distTable.train</code> procedure type</a>,
+the returned row, using for instance <code>host=&#39;patate.com&#39;</code> and <code>region=&#39;on&#39;</code> as features, would look like this:</p>
+
+<table>
+<thead>
+<tr>
+<th>rowName</th>
+<th>stats.price.host.count</th>
+<th>stats.price.host.avg</th>
+<th>stats.price.host.std</th>
+<th>...</th>
+<th>stats.price.region.std</th>
+<th>stats.price.region.min</th>
+<th>stats.price.region.max</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>result</td>
+<td>2</td>
+<td>2</td>
+<td>1.4142</td>
+<td>...</td>
+<td>1</td>
+<td>1</td>
+<td>3</td>
+</tr>
+</tbody>
+</table>
+
+<h2>See also</h2>
+
+<ul>
+<li>The <a href="/doc/builtin/procedures/DistTableProcedure.md.html"><code>experimental.distTable.train</code> procedure type</a> to train statistical tables.</li>
+</ul>
+</body>
+</html>

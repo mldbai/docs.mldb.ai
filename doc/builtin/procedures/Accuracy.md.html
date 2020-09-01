@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset='utf-8' />
+<title>MLDB Documentation</title>
+<script src='/resources/js/mathjax_TeX-AMS-MML_HTMLorMML.js'></script>
+<link rel='stylesheet' href='/resources/css/prism.css'>
+<link rel='stylesheet' href='/resources/css/doc.css'>
+<script src='/resources/js/jquery-1.11.2.min.js'></script>
+<script src='/resources/js/prism.js'></script>
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  if(window.location.origin == 'http://mldb.ai')
+  { ga('create', 'UA-16909325-9', 'auto'); }
+  else
+  { ga('create', 'UA-16909325-10', {'cookieDomain': 'none'}); }
+  ga('send', 'pageview');
+</script>
+</head>
+<body style='margin-left: 50px; max-width: 1000px'>
+<h1>Classifier Testing Procedure</h1>
+
+<p>The classifier testing procedure allows the accuracy of a binary classifier, multi-class classifier or regressor  to be tested against held-out data. The output of this procedure is a dataset which contains the scores and statistics resulting from the application of a classifier to some input data.</p>
+
+<h2>Configuration</h2>
+
+<p><p>A new procedure of type <code>classifier.test</code> named <code>&lt;id&gt;</code> can be created as follows:</p><pre><code class="language-python">mldb.put(&quot;/v1/procedures/&quot;+&lt;id&gt;, {
+    &quot;type&quot;: &quot;classifier.test&quot;,
+    &quot;params&quot;: {
+        "mode": &lt;ClassifierMode&gt;,
+        "testingData": &lt;<a href="/doc/builtin/procedures/InputQuery.md.html">InputQuery</a>&gt;,
+        "outputDataset": &lt;<a href="/doc/builtin/procedures/OutputDatasetSpec.md.html">OutputDatasetSpec</a> (Optional)&gt;,
+        "uniqueScoresOnly": &lt;bool&gt;,
+        "recallOverN": &lt;ARRAY [ int ]&gt;,
+        "runOnCreation": &lt;bool&gt;
+    }
+})</code></pre><p>with the following key-value definitions for <code>params</code>:</p><table class="params table" width='100%'><tr><th align='right'>Field, Type, Default</th><th>Description</th></tr>
+<tr><td align='right'><p><strong>mode</strong> <br/> <nobr>ClassifierMode</nobr> <br/> <code>"boolean"</code></p></td><td><p>Model mode: <code>boolean</code>, <code>regression</code> or <code>categorical</code>. Controls how the label is interpreted and what is the output of the classifier. This must match what was used during training.</p>
+</td></tr>
+<tr><td align='right'><p><strong>testingData</strong> <br/> <nobr><a href="/doc/builtin/procedures/InputQuery.md.html">InputQuery</a></nobr> <br/> <code></code></p></td><td><p>SQL query which specifies the scores, labels and optional weights for evaluation. The query is usually of the form: <code>select classifier_function({features: {f1, f2}})[score] as score, x as label from ds</code>.</p>
+
+<p>The select expression must contain these two columns: </p>
+
+<ul>
+<li><code>score</code>: one scalar expression which evaluates to the score a classifier has assigned to the given row, and </li>
+<li><code>label</code>: one scalar expression to identify the row&#39;s label, and whose type must match that of the classifier mode. Rows with null labels will be ignored. 
+
+<ul>
+<li><code>boolean</code> mode: a boolean (0 or 1)</li>
+<li><code>regression</code> mode: a real number</li>
+<li><code>categorical</code> mode: any combination of numbers and strings for</li>
+</ul></li>
+</ul>
+
+<p>The select expression can contain an optional <code>weight</code> column. The weight allows the relative importance of examples to be set. It must be a real number. If the <code>weight</code> is not specified each row will have a weight of 1. Rows with a null weight will cause a training error. </p>
+
+<p>The query must not contain <code>GROUP BY</code> or <code>HAVING</code> clauses. </p>
+</td></tr>
+<tr><td align='right'><p><strong>outputDataset</strong> <br/> <nobr><a href="/doc/builtin/procedures/OutputDatasetSpec.md.html">OutputDatasetSpec</a> (Optional)</nobr> <br/> <code>{"type":"tabular"}</code></p></td><td><p>Output dataset for scored examples. The score for the test example will be written to this dataset. Examples get grouped when they have the same score when <code>mode</code> is <code>boolean</code>. Specifying a dataset is optional.</p>
+</td></tr>
+<tr><td align='right'><p><strong>uniqueScoresOnly</strong> <br/> <nobr>bool</nobr> <br/> <code>false</code></p></td><td><p>If <code>outputDataset</code> is set and <code>mode</code> is set to <code>boolean</code>, setting this parameter to <code>true</code> will output a single row per unique score. This is useful if the test set is very large and aggregate statistics for each unique score is sufficient, for instance to generate a ROC curve. This has no effect for other values of <code>mode</code>.</p>
+</td></tr>
+<tr><td align='right'><p><strong>recallOverN</strong> <br/> <nobr>ARRAY [ int ]</nobr> <br/> <code></code></p></td><td><p>Calculate a recall score over the top scoring labels.Does not apply to boolean or regression modes.</p>
+</td></tr>
+<tr><td align='right'><p><strong>runOnCreation</strong> <br/> <nobr>bool</nobr> <br/> <code>true</code></p></td><td><p>If true, the procedure will be run immediately. The response will contain an extra field called <code>firstRun</code> pointing to the URL of the run.</p>
+</td></tr>
+</table></p>
+
+<h2>Output</h2>
+
+<p>After this procedure has been run, a summary of the accuracy can be obtained via </p>
+
+<pre><code class="language-python">mldb.get(&quot;/v1/procedures/&lt;id&gt;/runs/&lt;runid&gt;&quot;)
+</code></pre>
+
+<p>The <code>status</code> field will contain statistics relevant to the model&#39;s mode.</p>
+
+<ul>
+<li><a href="#boolean">Boolean mode</a></li>
+<li><a href="#categorical">Categorical mode</a></li>
+<li><a href="#regression">Regression mode</a></li>
+<li><a href="#multilabel">Multi-label mode</a></li>
+</ul>
+
+<h3><a name="boolean"></a>Boolean mode</h3>
+
+<p>The <code>status</code> field will contain the <a href="http://en.wikipedia.org/wiki/Receiver_operating_characteristic#Area_under_the_curve" target="_blank">Area
+Under the Curve</a> under the key <code>auc</code>, along with the performance statistics (e.g. <a href="http://en.wikipedia.org/wiki/Precision_and_recall" target="_blank">precision, recall</a>) for the classifier using
+the thresholds which give the best <a href="http://en.wikipedia.org/wiki/Matthews_correlation_coefficient" target="_blank">MCC</a> and the best <a href="http://en.wikipedia.org/wiki/F1_score" target="_blank">F-score</a>, under the keys <code>bestMcc</code> and
+<code>bestF1Score</code>, respectively.</p>
+
+<p>Here is a sample output:</p>
+
+<pre><code class="language-python">{
+  &quot;status&quot;: {
+    &quot;bestMcc&quot;: {
+      &quot;pr&quot;: {
+        &quot;recall&quot;: 0.6712328767123288, 
+        &quot;precision&quot;: 0.8448275862068966, 
+        &quot;f1Score&quot;: 0.7480916030534351,
+        &quot;accuracy&quot;: 0.8196721311
+      }, 
+      &quot;mcc&quot;: 0.6203113512927362, 
+      &quot;gain&quot;: 2.117855455833727, 
+      &quot;threshold&quot;: 0.6341791749000549, 
+      &quot;counts&quot;: {
+        &quot;falseNegatives&quot;: 24.0, 
+        &quot;truePositives&quot;: 49.0, 
+        &quot;trueNegatives&quot;: 101.0, 
+        &quot;falsePositives&quot;: 9.0
+      }, 
+      &quot;population&quot;: {
+        &quot;included&quot;: 58.0, 
+        &quot;excluded&quot;: 125.0
+      }
+    }, 
+    &quot;auc&quot;: 0.8176836861768365, 
+    &quot;bestF1Score&quot;: {
+      &quot;pr&quot;: {
+        &quot;recall&quot;: 0.6712328767123288, 
+        &quot;precision&quot;: 0.8448275862068966, 
+        &quot;f1Score&quot;: 0.7480916030534351,
+        &quot;accuracy&quot;: 0.8196721311
+      }, 
+      &quot;mcc&quot;: 0.6203113512927362, 
+      &quot;gain&quot;: 2.117855455833727, 
+      &quot;threshold&quot;: 0.6341791749000549, 
+      &quot;counts&quot;: {
+        &quot;falseNegatives&quot;: 24.0, 
+        &quot;truePositives&quot;: 49.0, 
+        &quot;trueNegatives&quot;: 101.0, 
+        &quot;falsePositives&quot;: 9.0
+      }, 
+      &quot;population&quot;: {
+        &quot;included&quot;: 58.0, 
+        &quot;excluded&quot;: 125.0
+      }
+    }
+  }, 
+  &quot;state&quot;: &quot;finished&quot;
+}
+
+</code></pre>
+
+<p>The <code>output</code> dataset created by this procedure in <code>boolean</code> mode 
+will contain one row per score by grouping together test set rows
+with the same score. The dataset will have the following columns:</p>
+
+<ul>
+<li><code>score</code>: the score the classifier assigned to this row</li>
+<li><code>label</code>: the row&#39;s actual label</li>
+<li><code>weight</code>: the row&#39;s assigned weight</li>
+<li>classifier attributes if this row&#39;s score was used as a binary threshold:
+
+<ul>
+<li><code>falseNegatives</code>, <code>trueNegatives</code>, <code>falsePositives</code>, <code>truePositives</code></li>
+<li><code>falsePositiveRate</code>, <code>truePositiveRate</code>, <code>precision</code>, <code>recall</code>, <code>accuracy</code></li>
+</ul></li>
+</ul>
+
+<p>Note that rows with the same score get grouped together.</p>
+
+<h3><a name="categorical"></a>Categorical mode</h3>
+
+<p>The <code>status</code> field will contain a sparse confusion matrix along with performance 
+statistics (e.g. <a href="http://en.wikipedia.org/wiki/Precision_and_recall" target="_blank">precision, recall</a>) 
+for the classifier, where the label with the maximum score will be chosen as the
+prediction for each example. </p>
+
+<p>The value of <code>support</code> is the number of occurrences 
+for that label. The <code>weighted_statistics</code> represents the average of the 
+per-label statistics, weighted by each label&#39;s support value. This excludes
+the support value itself, for which we do the sum.</p>
+
+<p>Here is a sample output:</p>
+
+<pre><code class="language-python">{
+    &quot;status&quot;: {
+        &quot;labelStatistics&quot;: {
+            &quot;0&quot;: {
+                &quot;f1Score&quot;: 0.8000000143051146,
+                &quot;recall&quot;: 1.0,
+                &quot;support&quot;: 2,
+                &quot;precision&quot;: 0.6666666865348816,
+                &quot;accuracy&quot;: 1.0
+            },
+            &quot;1&quot;: {
+                &quot;f1Score&quot;: 0.0,
+                &quot;recall&quot;: 0.0,
+                &quot;support&quot;: 1,
+                &quot;precision&quot;: 0.0,
+                &quot;accuracy&quot;: 0.0
+            },
+            &quot;2&quot;: {
+                &quot;f1Score&quot;: 1.0,
+                &quot;recall&quot;: 1.0,
+                &quot;support&quot;: 2,
+                &quot;precision&quot;: 1.0,
+                &quot;accuracy&quot;: 1.0
+            }
+        },
+        &quot;weightedStatistics&quot;: {
+            &quot;f1Score&quot;: 0.7200000057220459,
+            &quot;recall&quot;: 0.8,
+            &quot;support&quot;: 5,
+            &quot;precision&quot;: 0.6666666746139527,
+            &quot;accuracy&quot;: 0.8
+        },
+        &quot;confusionMatrix&quot;: [
+            {&quot;predicted&quot;: &quot;0&quot;, &quot;actual&quot;: &quot;1&quot;, &quot;count&quot;: 1},
+            {&quot;predicted&quot;: &quot;0&quot;, &quot;actual&quot;: &quot;0&quot;, &quot;count&quot;: 2},
+            {&quot;predicted&quot;: &quot;2&quot;, &quot;actual&quot;: &quot;2&quot;, &quot;count&quot;: 2}
+        ]
+    },
+    &quot;state&quot;: &quot;finished&quot;
+}
+</code></pre>
+
+<p>The <code>output</code> dataset created by this procedure in <code>categorical</code> mode 
+will contain one row per input row, 
+with the same row name as in the input, and the following columns:</p>
+
+<ul>
+<li><code>label</code>: the row&#39;s actual label</li>
+<li><code>weight</code>: the row&#39;s assigned weight</li>
+<li><code>score.x</code>: the score the classifier assigned to this row for label <code>x</code></li>
+<li><code>maxLabel</code>: the label with the maximum score</li>
+</ul>
+
+<h3><a name="regression"></a>Regression mode</h3>
+
+<p>The <code>status</code> field will contain the following performance statistics:</p>
+
+<ul>
+<li><a href="https://en.wikipedia.org/wiki/Mean_squared_error" target="_blank">mean squared error</a> (MSE)</li>
+<li><a href="https://en.wikipedia.org/wiki/Coefficient_of_determination" target="_blank">R squared score</a></li>
+<li>Quantiles of errors: More robust to outliers than MSE. Given \( y_i \) the true 
+value and \( \hat{y}_i \) the predicted value, we return the 25th, 50th, 75th, and 90th
+percentile of \( | y_i - \hat{y}_i | / y_i \forall i \). The 50th percentile is
+the median and represents the <em>median absolute percentage</em> (MAPE).</li>
+</ul>
+
+<p>Here is a sample output:</p>
+
+<pre><code class="language-python">{
+    &quot;status&quot;: {
+        &quot;quantileErrors&quot;: {
+            &quot;0.25&quot;: 0.0,
+            &quot;0.5&quot;: 0.1428571428571428,
+            &quot;0.75&quot;: 0.1666666666666667,
+            &quot;0.9&quot;: 0.1666666666666667
+        },
+        &quot;mse&quot;: 0.375,
+        &quot;r2&quot;: 0.9699681653424412
+    },
+    &quot;state&quot;: &quot;finished&quot;
+}
+</code></pre>
+
+<p>The <code>output</code> dataset created by this procedure in <code>regression</code> mode 
+will contain one row per input row, 
+with the same row name as in the input, and the following columns:</p>
+
+<ul>
+<li><code>label</code>: the row&#39;s actual value</li>
+<li><code>score</code>: predicted value</li>
+<li><code>weight</code>: the row&#39;s assigned weight</li>
+</ul>
+
+<h3><a name="multilabel"></a>Multi-label mode</h3>
+
+<p>The <code>status</code> field will contain the recall among top-N performance 
+statistic (e.g. <a href="http://en.wikipedia.org/wiki/Precision_and_recall" target="_blank">recall</a>) 
+for the classifier, where the labels with the highest score will be chosen as the
+predictions for each example. I.e, each example will register a positive for 
+each of its label(s) that is found among the set(s) of highest scoring labels returned by the classifier.
+The size of this set is determined by the <code>recallOverN</code> parameter. It follows that a <code>1.0</code> recall rate cannot
+be obtained if any example contains more unique labels than the value of the <code>recallOverN</code>
+parameter.</p>
+
+<p>The <code>weighted_statistics</code> represents the average of the 
+per-label statistics.</p>
+
+<p>Here is a sample output, with <code>recallOverN</code> set to <code>[3, 5]</code>, to calculate the recall over the top 3 and 5 best labels,
+respectively:</p>
+
+<pre><code class="language-python">{
+    &quot;status&quot;: {
+                &quot;weightedStatistics&quot;: {
+                    &quot;recallOverTopN&quot;: [0.6666666666666666, 1.0]
+                },
+                &quot;labelStatistics&quot;: {
+                    &quot;label0&quot;: {
+                        &quot;recallOverTopN&quot;: [0.3333333333333333, 1.0]
+                    },
+                    &quot;label1&quot;: {
+                        &quot;recallOverTopN&quot;: [0.6666666666666666, 1.0]
+                    },
+                    &quot;label2&quot;: {
+                        &quot;recallOverTopN&quot;: [1.0, 1.0]
+                    }
+                }
+            },
+    &quot;state&quot;: &quot;finished&quot;
+}
+</code></pre>
+
+<p>This indicates that in this example most true-positive labels are found with the top 3, and 
+all within the top 5. For <code>label2</code>, they are always found within the top 3.</p>
+
+<p>The <code>output</code> dataset created by this procedure in <code>multilabel</code> mode 
+will contain one row per input row, 
+with the same row name as in the input, and the following columns:</p>
+
+<ul>
+<li><code>label</code>: the row&#39;s actual label</li>
+<li><code>weight</code>: the row&#39;s assigned weight</li>
+<li><code>score.x</code>: the score the classifier assigned to this row for label <code>x</code></li>
+<li><code>maxLabel</code>: the label with the maximum score</li>
+</ul>
+
+<h2>Examples</h2>
+
+<ul>
+<li>Boolean mode: the <a href="/doc/nblink.html#_demos/Predicting%20Titanic%20Survival" target="_blank">Predicting Titanic Survival</a> demo notebook</li>
+<li>Categorical mode: the <a href="/doc/nblink.html#_tutorials/Procedures%20and%20Functions%20Tutorial" target="_blank">Procedures and Functions Tutorial</a> notebook</li>
+</ul>
+
+<h2>See also</h2>
+
+<ul>
+<li>The <a href="/doc/builtin/procedures/Classifier.md.html"><code>classifier.train</code> procedure type</a> trains a classifier.</li>
+<li>The <a href="/doc/builtin/procedures/Accuracy.md.html"><code>classifier.test</code> procedure type</a> allows the accuracy of a predictor to be tested against
+held-out data.</li>
+<li>The <a href="/doc/builtin/procedures/Probabilizer.md.html"><code>probabilizer.train</code> procedure type</a> trains a probabilizer.</li>
+<li>The <a href="/doc/builtin/functions/ClassifierApply.md.html"><code>classifier</code> function type</a> applies a classifier to a feature vector, producing a classification score.</li>
+<li>The <a href="/doc/builtin/functions/ClassifierExplain.md.html"><code>classifier.explain</code> function type</a> explains how a classifier produced its output.</li>
+<li>The <a href="/doc/builtin/functions/ApplyProbabilizer.md.html"><code>probabilizer</code> function type</a> works with classifier.apply to convert scores to probabilities.</li>
+</ul>
+</body>
+</html>

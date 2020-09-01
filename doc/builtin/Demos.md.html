@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset='utf-8' />
+<title>MLDB Documentation</title>
+<script src='/resources/js/mathjax_TeX-AMS-MML_HTMLorMML.js'></script>
+<link rel='stylesheet' href='/resources/css/prism.css'>
+<link rel='stylesheet' href='/resources/css/doc.css'>
+<script src='/resources/js/jquery-1.11.2.min.js'></script>
+<script src='/resources/js/prism.js'></script>
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  if(window.location.origin == 'http://mldb.ai')
+  { ga('create', 'UA-16909325-9', 'auto'); }
+  else
+  { ga('create', 'UA-16909325-10', {'cookieDomain': 'none'}); }
+  ga('send', 'pageview');
+</script>
+</head>
+<body style='margin-left: 50px; max-width: 1000px'>
+<h1>Demos &amp; Tutorials</h1>
+
+<p>MLDB ships with some demo and tutorial <a href="Notebooks.md.html">Notebooks</a>. </p>
+
+<h2>How-to Tutorials</h2>
+
+<h3>First steps with MLDB</h3>
+
+<ul>
+<li><a href="/doc/nblink.html#_tutorials/Using%20pymldb%20Tutorial" target="_blank">Using pymldb Tutorial</a></li>
+<li><a href="/doc/nblink.html#_tutorials/Loading%20Data%20Tutorial" target="_blank">Loading Data Tutorial</a> </li>
+<li><a href="/doc/nblink.html#_tutorials/Querying%20Data%20Tutorial" target="_blank">Querying Data Tutorial</a> </li>
+<li><a href="/doc/nblink.html#_tutorials/SELECT%20Tutorial" target="_blank">SELECT Tutorial</a> </li>
+<li><a href="/doc/nblink.html#_tutorials/Procedures%20and%20Functions%20Tutorial" target="_blank">Procedures and Functions Tutorial</a></li>
+<li><a href="/doc/nblink.html#_tutorials/Using%20pymldb%20Progress%20Bar%20and%20Cancel%20Button%20Tutorial" target="_blank">Using pymldb Progress Bar and Cancel Button Tutorial</a></li>
+</ul>
+
+<h3>Intermediate</h3>
+
+<ul>
+<li><a href="/doc/nblink.html#_tutorials/Loading%20Data%20From%20An%20HTTP%20Server%20Tutorial" target="_blank">Loading Data From An HTTP Server Tutorial</a></li>
+<li><a href="/doc/nblink.html#_tutorials/Virtual%20Manipulation%20of%20Datasets%20Tutorial" target="_blank">Virtual Manipulation of Datasets Tutorial</a> </li>
+<li><a href="/doc/nblink.html#_tutorials/Executing%20JavaScript%20Code%20Directly%20in%20SQL%20Queries%20Using%20the%20jseval%20Function%20Tutorial" target="_blank">Executing JavaScript Code Directly in SQL Queries Using the jseval Function Tutorial</a></li>
+<li><a href="/doc/nblink.html#_tutorials/Selecting%20Columns%20Programmatically%20Using%20Column%20Expressions%20Tutorial" target="_blank">Selecting Columns Programmatically Using Column Expressions Tutorial</a></li>
+<li><a href="/doc/nblink.html#_tutorials/Identifying%20Biased%20Features%20Tutorial" target="_blank">Identifying Biased Features Tutorial</a></li>
+<li><a href="/doc/nblink.html#_tutorials/Tensorflow%20Image%20Recognition%20Tutorial" target="_blank">Tensorflow Image Recognition Tutorial</a> </li>
+</ul>
+
+<h2>Benchmarks</h2>
+
+<p>The <a href="/doc/nblink.html#_demos/Benchmarking%20MLDB" target="_blank">Benchmarking MLDB</a> notebook shows how to run the <a href="https://github.com/szilard/benchm-ml/tree/master/z-other-tools" target="_blank">The Absolute Minimal Machine Learning Benchmark</a> with MLDB.</p>
+
+<h2>Transfer Learning with Tensorflow</h2>
+
+<p>The <a href="/doc/nblink.html#_demos/Transfer%20Learning%20with%20Tensorflow" target="_blank">Transfer Learning with Tensorflow</a> demo demonstrates how to do transfer learning to leverage the power of a deep convolutional neural network without having to train one yourself. Most people do not train those types of networks from scratch because of the large data and computational power requirements. What is more common is to train the network on a large dataset (unrelated to our task) and then leverage the representation it learned.</p>
+
+<h2>Image Processing and Image Recognition Basics</h2>
+
+<p>This topic is broken down in two demos. First, the <a href="/doc/nblink.html#_demos/Image%20Processing%20with%20Convolutions" target="_blank">Image Processing with Convolutions</a> demo explains convolutions and shows different ways to do them with MLDB. Second, the <a href="/doc/nblink.html#_demos/Real-Time%20Digits%20Recognizer" target="_blank">Real-Time Digits Recognizer</a> demo goes though the machine learning concepts necessary to build the <a href="https://github.com/mldbai/mlpaint" target="_blank">MLPaint plugin</a>.</p>
+
+<h2>Predicting Titanic Survival</h2>
+
+<p>The <a href="/doc/nblink.html#_demos/Predicting%20Titanic%20Survival" target="_blank">Predicting Titanic Survival</a> demo shows a classification workflow:</p>
+
+<ul>
+<li>importing data with the <a href="/doc/builtin/procedures/importtextprocedure.md.html"><code>import.text</code> procedure type</a></li>
+<li>to training and evaluating a classifier with the <a href="/doc/builtin/procedures/ExperimentProcedure.md.html"><code>classifier.experiment</code> procedure type</a> </li>
+<li>calling a classifier with the <a href="/doc/builtin/functions/ClassifierApply.md.html"><code>classifier</code> function type</a></li>
+<li>understanding it with the <a href="/doc/builtin/functions/ClassifierExplain.md.html"><code>classifier.explain</code> function type</a></li>
+</ul>
+
+<h2>Mapping Reddit and Visualizing StackOverflow tags</h2>
+
+<p>The <a href="/doc/nblink.html#_demos/Mapping%20Reddit" target="_blank">Mapping Reddit</a> and  <a href="/doc/nblink.html#_demos/Visualizing%20StackOverflow%20Tags" target="_blank">Visualizing StackOverflow Tags</a>  demos show how to use MLDB to visualize high-dimensional datasets:</p>
+
+<ul>
+<li>doing dimensionality reduction with the <a href="/doc/builtin/procedures/Svd.md.html"><code>svd.train</code> procedure type</a></li>
+<li>clustering with the <a href="/doc/builtin/procedures/KmeansProcedure.md.html"><code>kmeans.train</code> procedure type</a></li>
+<li>visualizting with the <a href="/doc/builtin/procedures/TsneProcedure.md.html"><code>tsne.train</code> procedure type</a>.</li>
+</ul>
+
+<h2>Recommending Movies</h2>
+
+<p>The <a href="/doc/nblink.html#_demos/Recommending%20Movies" target="_blank">Recommending Movies</a> demo shows how to use MLDB to do recommendation with the <a href="/doc/builtin/procedures/Svd.md.html"><code>svd.train</code> procedure type</a>.</p>
+
+<h2>Exploring Favourite Recipes</h2>
+
+<p>The <a href="/doc/nblink.html#_demos/Exploring%20Favourite%20Recipes" target="_blank">Exploring Favourite Recipes</a> demo shows how to use MLDB to do clustering/topic extraction among recipes with the <a href="/doc/builtin/procedures/KmeansProcedure.md.html"><code>kmeans.train</code> procedure type</a>.</p>
+
+<h2>Spam Filtering</h2>
+
+<p>The <a href="/doc/nblink.html#_demos/Enron%20Spam%20Filtering" target="_blank">Enron Spam Filtering</a> demo uses MLDB to show the perils of over-reliance on Area Under the Curve as a metric for evaluating classifiers.</p>
+
+<h2>Natural Language Processing with Word2Vec</h2>
+
+<p>The <a href="/doc/nblink.html#_demos/Mapping%20Election%20Press%20Releases" target="_blank">Mapping Election Press Releases</a> demo uses MLDB to visualize the relationships between texts with Word2Vec using the <a href="/doc/builtin/procedures/Word2VecImporter.md.html"><code>import.word2vec</code> procedure type</a>.</p>
+
+<h2>Using SQL to explore the Panama Papers</h2>
+
+<p>The <a href="/doc/nblink.html#_demos/Investigating%20the%20Panama%20Papers" target="_blank">Investigating the Panama Papers</a> demo shows off MLDB&#39;s SQL engine by exploring the raw data from the <em>Offshore Leaks Database</em>.</p>
+</body>
+</html>

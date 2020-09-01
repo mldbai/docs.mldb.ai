@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset='utf-8' />
+<title>MLDB Documentation</title>
+<script src='/resources/js/mathjax_TeX-AMS-MML_HTMLorMML.js'></script>
+<link rel='stylesheet' href='/resources/css/prism.css'>
+<link rel='stylesheet' href='/resources/css/doc.css'>
+<script src='/resources/js/jquery-1.11.2.min.js'></script>
+<script src='/resources/js/prism.js'></script>
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  if(window.location.origin == 'http://mldb.ai')
+  { ga('create', 'UA-16909325-9', 'auto'); }
+  else
+  { ga('create', 'UA-16909325-10', {'cookieDomain': 'none'}); }
+  ga('send', 'pageview');
+</script>
+</head>
+<body style='margin-left: 50px; max-width: 1000px'>
+<style>
+table {font-size: 18px; border: 2px solid white; border-collapse: collapse;}
+td, th {padding: 12px;}
+hr {margin: 40px;}
+#try {
+        color: #fff;
+    background-color: #337ab7;
+    border-color: #2e6da4;
+        display: inline-block;
+    padding: 6px 12px;
+    margin-bottom: 0;
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 1.42857143;
+    text-align: center;
+    white-space: nowrap;
+    text-decoration: none;
+    vertical-align: middle;
+    -ms-touch-action: manipulation;
+    touch-action: manipulation;
+    cursor: pointer;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    background-image: none;
+    border: 1px solid transparent;
+    border-radius: 4px;
+        padding: 10px 16px;
+    font-size: 18px;
+    line-height: 1.3333333;
+    border-radius: 6px;
+}
+</style>
+
+<h1>Running MLDB</h1>
+
+<p>The easiest way to get started with MLDB is to <a href="https://mldb.ai/#signup" target="_blank">sign up to MLDB.ai</a> and launch a free 90-minute hosted MLDB session. You&#39;ll be able to browse the live documentation and run and modify the demos yourself. You can even try running MLDB on some of your own data.</p>
+
+<p align="center"><a id="try" href="https://mldb.ai/#signup" target="_blank"> Try MLDB online right now! </a></p>
+
+<h2>Installing MLDB locally</h2>
+
+<p>If you want to run MLDB on your own hardware, either bare metal or in the cloud, you can choose between the open-source Community Edition and the closed-source Enterprise Edition. Building the Community Edition takes about an hour on powerful hardware but you can be up and running with the Enterprise Edition Free Trial in about 5 minutes.</p>
+
+<table>
+<thead>
+<tr>
+<th style="text-align: center">&nbsp;</th>
+<th style="text-align: center">Community Edition</th>
+<th style="text-align: center">Enterprise Edition <br/> Free Trial</th>
+<th style="text-align: center">Enterprise Edition</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td style="text-align: center"><strong>MLDB</strong></td>
+<td style="text-align: center">✓</td>
+<td style="text-align: center">✓</td>
+<td style="text-align: center">✓</td>
+</tr>
+<tr>
+<td style="text-align: center"><strong>MLDB Pro Plugin<a href="ProPlugin.md.html"><sup>?</sup></a></strong></td>
+<td style="text-align: center">&nbsp;</td>
+<td style="text-align: center">✓</td>
+<td style="text-align: center">✓</td>
+</tr>
+<tr>
+<td style="text-align: center"><strong>Licensing</strong></td>
+<td style="text-align: center"><a href="https://github.com/mldbai/mldb/blob/master/LICENSE" target="_blank">Apache License v2.0</a></td>
+<td style="text-align: center"><a href="licenses.md.html">Non-Commercial</a></td>
+<td style="text-align: center"><a href="licenses.md.html">Commercial</a></td>
+</tr>
+<tr>
+<td style="text-align: center"><strong>Pricing</strong></td>
+<td style="text-align: center">free!</td>
+<td style="text-align: center">free!</td>
+<td style="text-align: center"><a href="mailto:info@mldb.ai?Subject=MLDB%20pricing%20inquiry">contact sales</a></td>
+</tr>
+<tr>
+<td style="text-align: center"><strong>Support</strong></td>
+<td style="text-align: center"><a href="https://github.com/mldbai/mldb/issues/new" target="_blank">Github Issues</a></td>
+<td style="text-align: center"><a href="mailto:info@mldb.ai?Subject=MLDB%20support">MLDB Support</a></td>
+<td style="text-align: center"><a href="mailto:info@mldb.ai?Subject=MLDB%20support">MLDB Support</a></td>
+</tr>
+<tr>
+<td style="text-align: center"><strong>Getting Started</strong></td>
+<td style="text-align: center"><a href="https://github.com/mldbai/mldb/blob/master/Building.md" target="_blank">build from source</a><p>takes about 1 hr</td>
+<td style="text-align: center"><a href="#packages">download</a> <p>takes about 5 min</td>
+<td style="text-align: center"><a href="#packages">download</a> <p>takes about 5 min</td>
+</tr>
+</tbody>
+</table>
+
+<h3>Creating a Free Trial license key is easy</h3>
+
+<p>When you run the MLDB Enterprise Edition for the first time, you will be prompted for a license key to activate the software. You can create your Free Trial license key instantly by signing up to <a href="https://mldb.ai/#license_management" target="_blank">MLDB.ai</a> and filling out the request form.</p>
+
+<hr/>
+
+<p><a name="packages"></a></p>
+
+<h2>Downloading and Running the MLDB Enterprise Edition</h2>
+
+<p>The MLDB Enterprise Edition is available as a pre-built binary in the following formats:</p>
+
+<ol>
+<li>a Docker image, runnable wherever <a href="https://www.docker.com/" target="_blank">Docker</a> will run (recommended for <strong>Linux, Private Cloud</strong>)
+
+<ul>
+<li>see <a href="#docker">Getting Started with the Docker image</a></li>
+</ul></li>
+<li>a Virtual Appliance (OVA), runnable wherever <a href="https://www.virtualbox.org/" target="_blank">VirtualBox</a> will run (recommended for <strong>OSX, Windows</strong>)
+
+<ul>
+<li>see <a href="#virtualbox">Getting Started with the Virtual Appliance (OVA)</a></li>
+</ul></li>
+<li>an Amazon Machine Image (AMI), runnable on the <a href="http://aws.amazon.com/ec2" target="_blank">Amazon Elastic Compute Cloud</a> (recommended for <strong>AWS EC2</strong>)
+
+<ul>
+<li>see <a href="#aws">Getting Started with the Amazon Machine Image (AMI)</a></li>
+</ul></li>
+</ol>
+
+<hr/>
+
+<p><a name="docker"></a>
+<img src="img/logo_docker.png" alt="Docker"/></p>
+
+<h2>Getting Started with the Docker image</h2>
+
+<p>The Docker image is the basic MLDB distribution, and the other distribution mechanisms are just prepackaged virtual machines which run the Docker image as a container on boot.</p>
+
+<p>This is the recommended way to use MLDB on Linux or Private Clouds, as well as in production.</p>
+
+<p><strong>Step 0 - Install Docker</strong></p>
+
+<p>You can get MLDB as a Docker image and run it as a Docker container. If you&#39;ve never heard of or installed Docker, check out these <a href="https://docs.docker.com/installation/" target="_blank">Docker</a> installation instructions</a> for various platforms.</p>
+
+<p><em>Note: We recommend using the latest stable version of Docker. Docker versions below 1.0 are not supported.</em></p>
+
+<p><strong>Step 1 - Launch an MLBD container with a mapped directory</strong></p>
+
+<p><em>Note: the following procedure is meant to be run as a regular user, running the MLDB container as <code>root</code> is not recommended. See the official Docker <a href="https://docs.docker.com/engine/installation/linux/ubuntulinux/#/create-a-docker-group" target="_blank">documentation</a> for more information regarding running containers from regular user accounts.</em></p>
+
+<p>First, create an <em>empty</em> directory on the host machine by running the following command, where <code>&lt;/absolute/path/to/mldb_data&gt;</code> needs to be replaced by the absolute path on your local machine where you want your MLDB working directory to be:</p>
+
+<pre><code class="language-bash">mkdir &lt;/absolute/path/to/mldb_data&gt;
+</code></pre>
+
+<p>You can now execute the following command, where <code>&lt;mldbport&gt;</code> is a port of your choice to be used in the next section (e.g. <code>8080</code>).</p>
+
+<pre><code class="language-bash">docker run --rm=true \
+-v &lt;/absolute/path/to/mldb_data&gt;:/mldb_data \
+-e MLDB_IDS=&quot;`id`&quot; \
+-p 127.0.0.1:&lt;mldbport&gt;:80 \
+quay.io/mldb/mldb:latest
+</code></pre>
+
+<p>Once the container is booted, the path <code>/mldb_data</code> inside the container is mapped to <code>&lt;/absolute/path/to/mldb_data&gt;</code> on the host machine, so MLDB will be able to access files at <code>&lt;/absolute/path/to/mldb_data&gt;/file.ext</code> via the URL <code>file:///mldb_data/file.ext</code>. Read more about URLs <a href="Url.md.html">here</a>.</p>
+
+<p><strong>Step 2 - Establish a tunnel (for remote servers)</strong></p>
+
+<p>For security reasons, the instructions above will cause MLDB to only accept connections local to the host it was launched on. <em>If you are not running MLDB on your workstation</em>, you need to establish an SSH tunnel which forwards <code>&lt;localport&gt;</code> (e.g. <code>8080</code> again) from your workstation to <code>&lt;mldbport&gt;</code> on the remote host.</p>
+
+<p>This command will do this in a terminal on OSX and Linux, or on Windows using Git Bash, MinGW or Cygwin:</p>
+
+<pre><code class="language-bash">ssh -f -o ExitOnForwardFailure=yes &lt;user&gt;@&lt;remotehost&gt; -L &lt;localport&gt;:127.0.0.1:&lt;mldbport&gt; -N
+</code></pre>
+
+<p>You can read on how to do this with Putty on Windows here: <a href="http://the.earth.li/%7Esgtatham/putty/0.64/htmldoc/Chapter4.html#config-ssh-portfwd" target="_blank">Documentation</a>, <a href="http://alvinalexander.com/unix/edu/putty-ssh-tunnel-firefox-socks-proxy/2-configure-putty-ssh-tunnel-ssh-server.shtml" target="_blank">Tutorial</a>.</p>
+
+<p><strong>Step 3 - Activate MLDB</strong></p>
+
+<p>When the line &quot;MLDB Ready&quot; appears in the console output, you can now point your browser to <code>http://localhost:&lt;localport&gt;/</code>. You can then follow the instructions.</p>
+
+<h3>SSD cache</h3>
+
+<p>MLDB can use an SSD as a cache, to save downloads of remote files and allow memory
+mapping of some kinds of datasets.  Normally it is best that this cache be on an
+SSD.  In order to use the cache, you should mount it under <code>/ssd_cache</code> in the
+container by adding the following to the docker command line:</p>
+
+<pre><code>-v &lt;/absolute/path/to/ssd_cache&gt;:/ssd_cache
+</code></pre>
+
+<p>If MLDB is running in <a href="BatchMode.md.html">Batch Mode</a>, the option <code>--cache-dir /ssd_cache</code>
+should be added to the end of the command line.</p>
+
+<p>Note that MLDB does not currently clean up the cache directory; this needs to be
+done manually.</p>
+
+<h3>Stopping, Restarting and Upgrading</h3>
+
+<p>When you launch MLDB with the commands above, your container will be called <code>mldb</code>, and will keep running even if you close the terminal you used to launch it. To stop MLDB, use <code>docker kill mldb</code>, and to restart it you re-run the command you used to launch the container.</p>
+
+<p>To upgrade MLDB to the latest version hosted, just stop your container, run <code>docker pull quay.io/mldb/mldb:latest</code> and restart your container.</p>
+
+<h3>Batch mode</h3>
+
+<p>See <a href="BatchMode.md.html">Batch Mode</a>.</p>
+
+<hr/>
+
+<p><a name="virtualbox"></a>
+<img src="img/virtualbox_logo.png" alt="VirtualBox"/></p>
+
+<h2>Getting Started with the Virtual Appliance (OVA)</h2>
+
+<p>The Virtual Appliance is an Ubuntu Linux virtual machine, which on boot will download and run the Docker image documented above.</p>
+
+<p>This is the recommended way to get started with MLDB on OSX and Windows, given the difficulty of running Docker directly on these platforms.</p>
+
+<p><strong>Step 0 - Install VirtualBox</strong></p>
+
+<p>You can get VirtualBox from the <a href="https://www.virtualbox.org/wiki/Downloads" target="_blank">official download page</a></p>
+
+<p><strong>Step 1 - Download the MLDB Appliance (it&#39;s an OVA file)</strong></p>
+
+<p>Click here: <a href="http://public.mldb.ai/mldb.ova" target="_blank">http://public.mldb.ai/mldb.ova</a></p>
+
+<p><strong>Step 2 - Import the MLDB Appliance into VirtualBox</strong></p>
+
+<p>Either double-click on the OVA file or open VirtualBox and choose <em>Import Appliance</em> from the <em>File</em> menu and point it at the OVA file. The Appliance by default is assigned 2GB of RAM, but you can change this setting here if you want it to use more or less.</p>
+
+<p><strong>Step 3 - Run the MLDB Virtual Machine</strong></p>
+
+<p>Double-click on the MLDB Appliance in the main VirtualBox window, which will launch the VM. When it&#39;s booted, you will see a login prompt, but <strong>you do not need to log in</strong>, you can just proceed to the next step. If you do want to log in, the username is <code>ubuntu</code> and the password is <code>mldb</code>. You can also SSH into the VM on port 2222 on localhost:</p>
+
+<pre><code>ssh -p 2222 ubuntu@localhost
+</code></pre>
+
+<p><strong>Step 4 - Activate MLDB</strong></p>
+
+<p>Once it&#39;s running, you can point your browser to <a href="http://localhost:8080/" target="_blank"><code>http://localhost:8080/</code></a> and follow the instructions for activating MLDB. It may take few moments for the MLDB process to launch once the appliance is booted.</p>
+
+<h3>Local data persistence and access</h3>
+
+<p>In the virtual machine, the MLDB Docker container boots up with the host directory <code>/mldb_data</code> mapped to <code>/mldb_data</code>. This means that any files in the virtual machine at <code>/mldb_data/file.ext</code> is available to MLDB as <code>file:///mldb_data/file.ext</code>. You can upload a file on your workstation at <code>/path/to/file.ext</code> to the VM via SCP on port 2222. The username you should use is <code>ubuntu</code> and the password is <code>mldb</code>:</p>
+
+<pre><code>scp -P2222 /path/to/file.ext ubuntu@localhost:/mldb_data/file.ext
+</code></pre>
+
+<h3>Stopping, Restarting and Upgrading</h3>
+
+<p>Inside the virtual machine, MLDB runs as a Docker container (see above) controlled by an <code>upstart</code> service. This means that you can stop/restart the container by SSHing into the machine and running <code>sudo stop mldb</code> and/or <code>sudo start mldb</code>.</p>
+
+<p>To upgrade MLDB to the latest version, you will need to download a new OVA.</p>
+
+<hr/>
+
+<p><a name="aws"></a>
+<img src="img/AWS_LOGO_RGB_300px.jpg" alt="AWS"/></p>
+
+<h2>Getting Started with the Amazon Machine Image (AMI)</h2>
+
+<p>The AMI is an Ubuntu Linux virtual machine, which on boot will download and run the Docker image documented above. </p>
+
+<p>This is the recommended way to get started with MLDB on AWS.</p>
+
+<p><strong>Step 0 - Create an Amazon Web Services account</strong></p>
+
+<p>Browse to <a href="http://aws.amazon.com/" target="_blank">http://aws.amazon.com/</a> and create and log into an AWS account if you don&#39;t already have one.</p>
+
+<p><strong>Step 1 - Region</strong></p>
+
+<p>In the N. Virginia zone region, Launch the <a href="https://console.aws.amazon.com/ec2/v2/home?#LaunchInstanceWizard:" target="_blank">Create Instance Wizard</a> menu on your AWS Console.</p>
+
+<p><strong>Step 2 - Choose an Amazon Machine Image (AMI)</strong></p>
+
+<p>In the Community AMIs tab, search for &quot;Datacratic MLDB&quot; and launch the latest AMI (available in all regions)</p>
+
+<p><strong>Step 3 - Choose an Instance Type</strong></p>
+
+<p>For testing you can use the default (possibly free) t2.micro instance (more info on <a href="http://aws.amazon.com/ec2/pricing/" target="_blank">pricing</a>) but take care to choose an instance with
+enough RAM and CPU cores to load and process the data you&#39;ll be working with.</p>
+
+<p><strong>Step 4 - Configure Instance Details</strong></p>
+
+<p>For testing purposes these values can be left at their default value.</p>
+
+<p><strong>Step 5 - Add Storage</strong></p>
+
+<p>For testing purposes these values can be left at their default value.</p>
+
+<p><strong>Step 6 - Tag Instance</strong></p>
+
+<p>Name your machine.</p>
+
+<p><strong>Step 7 - Configure Security Group</strong></p>
+
+<p>Here you will need to allow traffic from your workstation&#39;s IP address/range to port 22 (SSH) of the machine.</p>
+
+<p><strong>Step 8 - Launch!</strong></p>
+
+<p>Launch your instance and wait until it becomes available. Before you can launch, the wizard will prompt you to set up a private key so you can log into the machine. You will need this key for the next step.</p>
+
+<p><strong>Step 9 - Establish a tunnel</strong></p>
+
+<p>For security reasons, MLDB on this AMI is set up to only accept connections from within the AWS host, so to connect from your workstation, you need to establish an SSH tunnel which forwards <code>&lt;localport&gt;</code> (e.g. <code>8080</code>) from your workstation to port 80 on the AWS host. The username you should use is <code>ubuntu</code> and you will need your private key from above.</p>
+
+<p>This command will do this in a terminal on OSX and Linux, or on Windows using Git Bash, MinGW or Cygwin:</p>
+
+<pre><code class="language-bash">ssh -f -o ExitOnForwardFailure=yes ubuntu@&lt;remotehost&gt; -L &lt;localport&gt;:127.0.0.1:80 -N
+</code></pre>
+
+<p>You can read on how to do this with Putty on Windows here: <a href="http://the.earth.li/%7Esgtatham/putty/0.64/htmldoc/Chapter4.html#config-ssh-portfwd" target="_blank">Documentation</a>, <a href="http://alvinalexander.com/unix/edu/putty-ssh-tunnel-firefox-socks-proxy/2-configure-putty-ssh-tunnel-ssh-server.shtml" target="_blank">Tutorial</a>.</p>
+
+<p><strong>Step 10 - Activate MLDB</strong></p>
+
+<p>You can then point your browser to <code>http://localhost:&lt;localport&gt;/</code> and follow the instructions for activating MLDB. The first time you do this, it <em>will take a few minutes</em> before you can connect, as the virtual machine will download the Docker Image, and the download is around 400MB.</p>
+
+<h3>Local data persistence and access</h3>
+
+<p>In the virtual machine, the MLDB Docker container boots up with the host directory <code>/mldb_data</code> mapped to <code>/mldb_data</code>. This means that any files in the virtual machine at <code>/mldb_data/file.ext</code> is available to MLDB as <code>file:///mldb_data/file.ext</code>. You can upload a file on your workstation at <code>/path/to/file.ext</code> to the VM via SCP. The username you should use is <code>ubuntu</code> and you will need your private key from above:</p>
+
+<pre><code>scp /path/to/file.ext ubuntu@&lt;remotehost&gt;:/mldb_data/file.ext
+</code></pre>
+
+<h3>Stopping, Restarting and Upgrading</h3>
+
+<p>Inside the virtual machine, MLDB runs as a Docker container (see above) controlled by an <code>upstart</code> service. This means that you can stop/restart the container by SSHing into the machine and running <code>sudo stop mldb</code> and/or <code>sudo start mldb</code>.</p>
+
+<p>To upgrade MLDB to the latest version, you will need to launch a new AMI.</p>
+</body>
+</html>

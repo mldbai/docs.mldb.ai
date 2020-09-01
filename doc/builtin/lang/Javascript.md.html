@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset='utf-8' />
+<title>MLDB Documentation</title>
+<script src='/resources/js/mathjax_TeX-AMS-MML_HTMLorMML.js'></script>
+<link rel='stylesheet' href='/resources/css/prism.css'>
+<link rel='stylesheet' href='/resources/css/doc.css'>
+<script src='/resources/js/jquery-1.11.2.min.js'></script>
+<script src='/resources/js/prism.js'></script>
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  if(window.location.origin == 'http://mldb.ai')
+  { ga('create', 'UA-16909325-9', 'auto'); }
+  else
+  { ga('create', 'UA-16909325-10', {'cookieDomain': 'none'}); }
+  ga('send', 'pageview');
+</script>
+</head>
+<body style='margin-left: 50px; max-width: 1000px'>
+<h1>Javascript Plugins</h1>
+
+<p>This plugin allows for a plugin that is implemented in Javascript to be loaded
+into MLDB to extend its functionality.</p>
+
+<h2>Configuration</h2>
+
+<p><p>A new plugin of type <code>javascript</code> named <code>&lt;id&gt;</code> can be created as follows:</p><pre><code class="language-python">mldb.put(&quot;/v1/plugins/&quot;+&lt;id&gt;, {
+    &quot;type&quot;: &quot;javascript&quot;,
+    &quot;params&quot;: {
+        "address": &lt;string&gt;,
+        "source": &lt;PackageElementSources&gt;,
+        "args": &lt;Any&gt;
+    }
+})</code></pre><p>with the following key-value definitions for <code>params</code>:</p><table class="params table" width='100%'><tr><th align='right'>Field, Type, Default</th><th>Description</th></tr>
+<tr><td align='right'><p><strong>address</strong> <br/> <nobr>string</nobr> <br/> <code></code></p></td><td><p>URI or location of script to run (use this parameter OR &#39;source&#39;)</p>
+</td></tr>
+<tr><td align='right'><p><strong>source</strong> <br/> <nobr>PackageElementSources</nobr> <br/> <code></code></p></td><td><p>source of script to run (use this parameter OR &#39;address&#39;)</p>
+</td></tr>
+<tr><td align='right'><p><strong>args</strong> <br/> <nobr>Any</nobr> <br/> <code></code></p></td><td><p>Arguments to pass to script</p>
+</td></tr>
+</table></p>
+
+<p>With <code>PackageElementSources</code> defined as:</p>
+
+<p><table class="params table" width='100%'><tr><th align='right'>Field, Type, Default</th><th>Description</th></tr>
+<tr><td align='right'><p><strong>main</strong> <br/> <nobr>string</nobr> <br/> <code></code></p></td><td><p>source for the main element of the plugin</p>
+</td></tr>
+<tr><td align='right'><p><strong>routes</strong> <br/> <nobr>string</nobr> <br/> <code></code></p></td><td><p>source for the routes element of the plugin</p>
+</td></tr>
+<tr><td align='right'><p><strong>status</strong> <br/> <nobr>string</nobr> <br/> <code></code></p></td><td><p>source for the status element of the plugin</p>
+</td></tr>
+</table></p>
+
+<h2>Returning a result</h2>
+
+<p>In order to return a result, the value of the last statement evaluated must
+evaluate to the result.  For example, if the last line of a script is <code>&quot;hello&quot;</code>,
+then the script will return a string &quot;hello&quot; as its result.</p>
+
+<h2>Results of script run</h2>
+
+<p>Running a Javsascript script directly as a plugin, procedure or function will
+return a ScriptOutput result, that looks like this:</p>
+
+<p><table class="params table" width='100%'><tr><th align='right'>Field, Type, Default</th><th>Description</th></tr>
+<tr><td align='right'><p><strong>result</strong> <br/> <nobr>JSON</nobr> <br/> <code></code></p></td><td><p>Result of running script</p>
+</td></tr>
+<tr><td align='right'><p><strong>logs</strong> <br/> <nobr>ARRAY [ ScriptLogEntry ]</nobr> <br/> <code></code></p></td><td><p>Log entries created by script</p>
+</td></tr>
+<tr><td align='right'><p><strong>exception</strong> <br/> <nobr>LINK std::shared_ptr<MLDB::ScriptException></nobr> <br/> <code></code></p></td><td><p>Exception thrown by script</p>
+</td></tr>
+<tr><td align='right'><p><strong>extra</strong> <br/> <nobr>Any</nobr> <br/> <code></code></p></td><td><p>Extra information from language</p>
+</td></tr>
+</table></p>
+
+<p>with log entries looking like</p>
+
+<p><table class="params table" width='100%'><tr><th align='right'>Field, Type, Default</th><th>Description</th></tr>
+<tr><td align='right'><p><strong>ts</strong> <br/> <nobr>Date</nobr> <br/> <code>"1970-01-01T00:00:00Z"</code></p></td><td><p>Timestamp at which message was received</p>
+</td></tr>
+<tr><td align='right'><p><strong>s</strong> <br/> <nobr>string</nobr> <br/> <code></code></p></td><td><p>Stream on which message was received</p>
+</td></tr>
+<tr><td align='right'><p><strong>c</strong> <br/> <nobr>ScriptLogContent</nobr> <br/> <code></code></p></td><td><p>Content of stream</p>
+</td></tr>
+<tr><td align='right'><p><strong>closed</strong> <br/> <nobr>bool</nobr> <br/> <code>false</code></p></td><td><p>Stream is closed</p>
+</td></tr>
+</table></p>
+
+<h3>Exceptions</h3>
+
+<p>Exceptions are represented as</p>
+
+<p><table class="params table" width='100%'><tr><th align='right'>Field, Type, Default</th><th>Description</th></tr>
+<tr><td align='right'><p><strong>message</strong> <br/> <nobr>string</nobr> <br/> <code></code></p></td><td><p>Exception description</p>
+</td></tr>
+<tr><td align='right'><p><strong>where</strong> <br/> <nobr>string</nobr> <br/> <code></code></p></td><td><p>Full description of where exception came from</p>
+</td></tr>
+<tr><td align='right'><p><strong>scriptUri</strong> <br/> <nobr>string</nobr> <br/> <code></code></p></td><td><p>URI of script that caused the exception</p>
+</td></tr>
+<tr><td align='right'><p><strong>lineNumber</strong> <br/> <nobr>int</nobr> <br/> <code>-1</code></p></td><td><p>Number of the line that caused the exception</p>
+</td></tr>
+<tr><td align='right'><p><strong>columnStart</strong> <br/> <nobr>int</nobr> <br/> <code>-1</code></p></td><td><p>Start column in the line</p>
+</td></tr>
+<tr><td align='right'><p><strong>columnEnd</strong> <br/> <nobr>int</nobr> <br/> <code>-1</code></p></td><td><p>End column in the line</p>
+</td></tr>
+<tr><td align='right'><p><strong>lineContents</strong> <br/> <nobr>string</nobr> <br/> <code></code></p></td><td><p>Contents of the line indicating where the exception was</p>
+</td></tr>
+<tr><td align='right'><p><strong>context</strong> <br/> <nobr>ARRAY [ string ]</nobr> <br/> <code></code></p></td><td><p>What we were doing when we threw the exception</p>
+</td></tr>
+<tr><td align='right'><p><strong>stack</strong> <br/> <nobr>ARRAY [ ScriptStackFrame ]</nobr> <br/> <code></code></p></td><td><p>Call stack for exception</p>
+</td></tr>
+<tr><td align='right'><p><strong>extra</strong> <br/> <nobr>Any</nobr> <br/> <code></code></p></td><td><p>Extra information from language about exception</p>
+</td></tr>
+</table></p>
+
+<p>with stack frames like</p>
+
+<p><table class="params table" width='100%'><tr><th align='right'>Field, Type, Default</th><th>Description</th></tr>
+<tr><td align='right'><p><strong>scriptUri</strong> <br/> <nobr>string</nobr> <br/> <code></code></p></td><td><p>URI of script in this frame</p>
+</td></tr>
+<tr><td align='right'><p><strong>functionName</strong> <br/> <nobr>string</nobr> <br/> <code></code></p></td><td><p>Name of function in this frame</p>
+</td></tr>
+<tr><td align='right'><p><strong>where</strong> <br/> <nobr>string</nobr> <br/> <code></code></p></td><td><p>Where is the frame, in natural format for language</p>
+</td></tr>
+<tr><td align='right'><p><strong>lineNumber</strong> <br/> <nobr>int</nobr> <br/> <code>-1</code></p></td><td><p>Line number</p>
+</td></tr>
+<tr><td align='right'><p><strong>columnStart</strong> <br/> <nobr>int</nobr> <br/> <code>-1</code></p></td><td><p>Column number of error</p>
+</td></tr>
+<tr><td align='right'><p><strong>columnEnd</strong> <br/> <nobr>int</nobr> <br/> <code>-1</code></p></td><td><p>End column number of error</p>
+</td></tr>
+<tr><td align='right'><p><strong>extra</strong> <br/> <nobr>Any</nobr> <br/> <code></code></p></td><td><p>Extra stack from information from language</p>
+</td></tr>
+</table></p>
+
+<h2><a name="API"></a> Server-side Javascript API</h2>
+
+<h3>Objects available</h3>
+
+<ul>
+<li>the <code>mldb</code> object, available in the global context, allows the MLDB server
+itself to be accessed from the plugin or script</li>
+<li>the <code>plugin</code> object, available in the global context, allows the plugin
+to set itself up and access its own context.</li>
+</ul>
+
+<h3>Accessing plugin creation parameters</h3>
+
+<p>The variable <code>plugin.args</code> gives the arguments that the plugin was
+instantiated with.  This can be used by the user of the plugin to
+provide configuration details of how the plugin should load.</p>
+
+<h3>Logging</h3>
+
+<ul>
+<li><code>plugin.log(...)</code> allows a message to be logged to the plugin&#39;s log stream.
+This will be available in the plugin output.</li>
+<li><code>mldb.log(...)</code> allows a message to be logged to MLDB&#39;s console.  This will
+be available only on the console output.</li>
+</ul>
+
+<p>These accept multiple arguments and will accept any combination of scalars
+(which are turned into strings then serialized) or objects (which are
+serialized as their JSON representation).</p>
+
+<h3>Calling out to MLDB</h3>
+
+<p>MLDB is a REST server, so all routes that are available on the REST interface
+are also available from a Javascript plugin or script.</p>
+
+<p>To call out, you can use <code>mldb.perform(method, route, queryParams, payload, httpHeaders)</code>.
+The parameters are:</p>
+
+<ul>
+<li><code>method</code> is a REST method, ie &quot;GET&quot;, &quot;POST&quot;, &quot;PUT&quot;, or &quot;DELETE&quot;</li>
+<li><code>route</code> is the route to call, ie &quot;/v1/datasets&quot;</li>
+<li><code>queryParams</code> is either an array of <code>[string,string]</code> or an object that
+represents the query parameters (which are not passed in the route). Examples: <code>[&#39;a&#39;,&#39;b&#39;]</code> and <code>{a: &#39;b&#39;}</code> will result in the query string <code>a=b</code>.</li>
+<li><code>payload</code> is either an object or a string representing the payload.  If it&#39;s
+an object, it will be converted to JSON and the <code>content-type</code> will be set
+to <code>application/json</code>.  If it&#39;s a string, it will be passed as-is and the
+content-type will be set to <code>text/plain</code>.
+
+<ul>
+<li><code>httpHeaders</code> is an array of pairs <code>[string, string]</code> or an object representing
+a header.  Currently, the header <code>async:true</code> is supported to perform
+asynchronous call when creating expensive resources.  You can specify this header
+as <code>{async:true}</code>.  When this header is specified, the call will return immediately
+and the object will be created in the background.  One can track the progress of
+the operation by performing a &quot;GET&quot; on the resource.  The <code>state</code> field part of the
+<code>response</code> field will be set to <code>initializing</code> while the object is being created.  Once
+the creation is completed the <code>state</code> field will be set to <code>ok</code>.</li>
+</ul></li>
+</ul>
+
+<p>The result comes back as an object with the following fields:</p>
+
+<ul>
+<li><code>responseCode</code> is an integer giving the HTTP response code;</li>
+<li><code>contentType</code> is the HTTP content type</li>
+<li><code>headers</code> is an array of <code>[string,string]</code> pairs giving the HTTP headers
+set on the response</li>
+<li><code>response</code> is a string giving the bytes in the response</li>
+<li><code>json</code> is set only if the resulting <code>content-type</code> is <code>application/json</code>.
+It is an object containing the JSON parsing of the response.</li>
+</ul>
+
+<p>There are also convenience methods defined as:</p>
+
+<ul>
+<li><code>get(resource, queryParams, httpHeaders)</code> which is the same as <code>perform(&quot;GET&quot;, resource, queryParams, &quot;&quot;, httpHeaders)</code></li>
+<li><code>post(resource, payload, httpHeaders)</code> which is the same as <code>perform(&quot;POST&quot;, resource, [], payload, httpHeaders)</code></li>
+<li><code>put(resource, payload, httpHeaders)</code> which is the same as <code>perform(&quot;PUT&quot;, resource, [], payload, httpHeaders)</code></li>
+<li><code>del(resource, httpHeaders)</code> which is the same as <code>perform(&quot;DELETE&quot;, resource, [], &quot;&quot;, httpHeaders)</code></li>
+</ul>
+
+<p>The following asynchronous methods are also defined.  They will not wait for
+the resource to be created, but will return a <code>201</code> immediately with the URI
+of the created resource, which can be polled until it is ready.</p>
+
+<ul>
+<li><code>postAsync(resource, queryParams, payload, httpHeaders)</code> which is the same as <code>post</code> with the <code>async:true</code> header set</li>
+<li><code>putAsync(resource, queryParams, payload, httpHeaders)</code> which is the same as <code>put</code> with the <code>async:true</code> header set</li>
+</ul>
+
+<h3>Serving Static Content</h3>
+
+<p><code>plugin.serveStaticFolder(route, dir)</code> will serve up static content under <code>dir</code>
+on the given plugin route <code>route</code>.</p>
+
+<p><code>plugin.serveDocumentationFolder(route, dir)</code> will serve up documentation under
+<code>dir</code> on the given plugin route <code>route</code>.  This will render markdown files
+under a <code>.md</code> extension when accessed under <code>.html</code>.  See the
+<a href="../DocumentationServing.md.html" title="Documentation Serving">Documentation Serving</a>
+page for more details.</p>
+
+<h3>Random Number Generator</h3>
+
+<p>By calling <code>var rng = mldb.createRandomNumberGenerator()</code>, you can obtain a random
+number generator that has access to more functionality than the built-in
+Javascript version.  The methods supported are:</p>
+
+<ul>
+<li>Call <code>rng.seed(int)</code> with an integer argument to seed the generator.  If
+the seed argument is missing or zero, it will be seeded based upon the
+system random number generator.</li>
+<li>Call <code>rng.normal(mean = 0.0, std = 1.0)</code> to obtain a normally distributed random
+number with the given mean and standard deviation.  If either argument is not
+supplied, the defaults shown will be used.</li>
+<li>Call <code>rng.uniform(min = 0.0, max = 1.0)</code> to obtain a uniform distriubuted
+random number between the given min and max.  The interval is closed; that
+is that it is possible that exactly min or exactly max will be returned.</li>
+</ul>
+
+<h3>JSON diff and patch</h3>
+
+<p>There are functions, useful for unit testing, to generate a JSON diff and to
+apply a JSON patch:</p>
+
+<ul>
+<li><code>diff = mldb.diff(obj1, obj2, strict=true)</code> will return a JSON object
+representing the differences between obj1 and obj2.  An empty return
+will indicate that the two are the same.</li>
+<li><code>[patched, diff] = mldb.patch(obj, diff)</code> will apply a given diff to an
+object.  The return value is an array; element 0 is the patched object,
+and element 1 is the set of diffs that couldn&#39;t be applied.</li>
+</ul>
+
+<h3>SQL</h3>
+
+<p>The following functions aid in working with SQL from within Javascript.</p>
+
+<ul>
+<li><code>mldb.query(&lt;sql statement&gt;)</code> will parse and run the given query (which is
+an SQL string), and return an object with the full set of rows
+returned.  It is important to limit the number of results when querying
+large datasets, as otherwise MLDB could run out of memory.  For example,
+<code>mldb.query(&#39;SELECT * FROM dataset1 LIMIT 5&#39;)</code> will return the first five
+rows of the given table.</li>
+<li><code>mldb.sqlEscape(&lt;string&gt;)</code> will turn the given string into an SQL string,
+including adding delimiters and escaping any SQL characters that need it.
+For example, <code>mldb.sqlEscape(&quot;It&#39;s hot&quot;)</code> will return &quot;`&#39;It&#39;&#39;s hot&#39;&quot;.  This
+can be used to help construct SQL queries containing strings that may
+include special characters.</li>
+</ul>
+
+<h3>Interacting with MLDB data types</h3>
+
+<p>MLDB&#39;s atomic types are represented in Javascript as follows:</p>
+
+<ul>
+<li>Nulls are represented by Javascript&#39;s <code>null</code> value;</li>
+<li>Strings and numbers are represented by the Javascript equivalent type.
+This implies that currently, there is no way to work with 64 bit
+integers at full precision from Javascript.</li>
+<li>Timestamps are represented by Javascript&#39;s <code>Date</code> class.</li>
+<li>Time intervals are created by using the <code>mldb.createInterval()</code>
+function.  This argument takes either 3 parameters with the number
+of months (integral), days (integral) and seconds (floating point) in
+the interval, or an object with the structure 
+<code>{ months: xxx, days: xxx, seconds: xxx.yy }</code>.</li>
+<li>To represent a path (for example as a row name in recordRow), there are two
+options.  These may also be wrapped into a Path value using the <code>createPath()</code>
+function:
+
+<ul>
+<li>An individual atom (string or number) will be used as a one-element path
+with the value as the stringification of the passed element;</li>
+<li>An array will be used as a compound path with the elements as specified.</li>
+</ul></li>
+</ul>
+
+<h3>Filesystem access</h3>
+
+<p>There are two functions that allow access to the virtual filesystem of
+MLDB:</p>
+
+<ul>
+<li><code>mldb.openStream(uri)</code> opens the given URI, and returns a Stream
+object that can be used to read it.</li>
+<li><p><code>mldb.ls(uri)</code> lists the directory-like uri (currently <code>file://</code> and
+<code>s3://</code> URIs support listing) and returns the content.  The returned
+object has two fields: <code>dirs</code> contains an array of subdirectories, as
+URIs, and <code>objects</code> contains an associative array map of the objects
+in the directory, with the URI as the key and the following structure
+as the value:</p>
+
+<p><table class="params table" width='100%'><tr><th align='right'>Field, Type, Default</th><th>Description</th></tr>
+<tr><td align='right'><p><strong>exists</strong> <br/> <nobr>bool</nobr> <br/> <code>false</code></p></td><td><p>Does the object exist?</p>
+</td></tr>
+<tr><td align='right'><p><strong>lastModified</strong> <br/> <nobr>Date</nobr> <br/> <code>"1970-01-01T00:00:00Z"</code></p></td><td><p>Date the object was last modified</p>
+</td></tr>
+<tr><td align='right'><p><strong>size</strong> <br/> <nobr>int</nobr> <br/> <code>0</code></p></td><td><p>Size in bytes of the object</p>
+</td></tr>
+<tr><td align='right'><p><strong>etag</strong> <br/> <nobr>string</nobr> <br/> <code></code></p></td><td><p>Entity tag (unique hash) for object</p>
+</td></tr>
+<tr><td align='right'><p><strong>storageClass</strong> <br/> <nobr>string</nobr> <br/> <code></code></p></td><td><p>Storage class of object if applicable</p>
+</td></tr>
+<tr><td align='right'><p><strong>ownerId</strong> <br/> <nobr>string</nobr> <br/> <code></code></p></td><td><p>ID of owner</p>
+</td></tr>
+<tr><td align='right'><p><strong>ownerName</strong> <br/> <nobr>string</nobr> <br/> <code></code></p></td><td><p>Name of owner</p>
+</td></tr>
+<tr><td align='right'><p><strong>objectMetadata</strong> <br/> <nobr>MAP { string : JSON }</nobr> <br/> <code></code></p></td><td><p>Metadata about the object</p>
+</td></tr>
+<tr><td align='right'><p><strong>userMetadata</strong> <br/> <nobr>MAP { string : JSON }</nobr> <br/> <code></code></p></td><td><p>Metadata placed there by the user</p>
+</td></tr>
+</table></p></li>
+</ul>
+
+<h4>Stream object</h4>
+
+<p>The Stream object has the following methods:</p>
+
+<ul>
+<li><code>readLine()</code> returns the next line</li>
+<li><code>readBytes(n)</code> returns the <code>n</code> next bytes and returns them as an array of unsigned
+8 bit integers</li>
+<li><code>readJson()</code> returns a JSON value (object, array, number, string, boolean or null) from the stream and returns it</li>
+<li><code>eof()</code> returns true if the stream is at the end of the file</li>
+<li><code>readU8()</code> reads the next byte and returns it as an unsigned integer</li>
+<li><code>readI8()</code> reads the next byte and returns it as a signed integer</li>
+<li><code>readU16LE()</code> reads and returns the next two bytes as an unsigned little endian integer</li>
+<li><code>readU16BE()</code> reads and returns the next two bytes as an unsigned big endian integer</li>
+<li><code>readI16LE()</code> reads and returns the next two bytes as an signed little endian integer</li>
+<li><code>readI16BE()</code> reads and returns the next two bytes as an signed big endian integer</li>
+<li><code>readU32LE()</code> reads and returns the next four bytes as an unsigned little endian integer</li>
+<li><code>readU32BE()</code> reads and returns the next four bytes as an unsigned big endian integer</li>
+<li><code>readI32LE()</code> reads and returns the next four bytes as an signed little endian integer</li>
+<li><code>readI32BE()</code> reads and returns the next four bytes as an signed big endian integer</li>
+<li><code>readBlob(numBytes=-1,allowShortReads=false)</code> reads and returns the given
+number of bytes (or all remaining bytes, if <code>numBytes</code> is -1) into a <code>BLOB</code>
+Atom.  If EOF is reached before the required <code>numBytes</code> has been read, and
+<code>numBytes</code> is not -1, and <code>allowShortReads</code> is <code>false</code>, then an exception will
+be thrown.</li>
+</ul>
+
+<h3>Dataset objects</h3>
+
+<p>A dataset object can be created using <code>mldb.createDataset(config)</code>.  The
+config is the same as would be <code>POST</code>ed to <code>/v1/datasets</code> to create
+the dataset.  If no <code>id</code> is passed in the <code>config</code> argument to
+<code>createDataset(config)</code>, then the argument will be modified with the
+<code>id</code> of the created dataset.  Similarly for the <code>params</code> object; if
+default parameters are not specified, they will be filled out with the
+actual parameters used.</p>
+
+<p>This object has the following methods defined:</p>
+
+<ul>
+<li><code>dataset.recordRow(rowName, tuples)</code> records a row.  Tuples is an array of
+three-element arrays with the format <code>[columnName, value, timestamp]</code>.
+The <code>columnName</code> is a non-empty string; the value is <code>null</code>, a
+string, or a number (integer or floating point, including infinity
+and NaN) and the timestamp is anything convertible to a Javascript
+<code>Date</code> object.</li>
+<li><code>dataset.recordRows(rows)</code> records multiple rows, which may be more efficient
+in some dataset implementations.  Each row is a two-element tuple
+with the arguments to <code>recordRow</code>.</li>
+<li><code>dataset.recordColumn(columnName, tuples)</code> is the same as recordRow, but
+instead of recording across a row it records down a column.  Not all
+datasets support recording of columns.</li>
+<li><code>recordColumns(cols)</code> records multiple columns, in the same
+manner as <code>recordRows</code>.  Not all datasets support recording of columns.</li>
+<li><code>dataset.commit()</code> will commit outstanding changes.  The behavior of commit
+depends upon the dataset implementation; please see the dataset
+documentation to understand how it works for each one.</li>
+<li><code>dataset.id()</code> returns the id of the dataset</li>
+<li><code>dataset.type()</code> returns the type of the dataset</li>
+<li><code>dataset.config()</code> returns the configuration of the dataset</li>
+<li><code>dataset.status()</code> returns the status of the dataset</li>
+<li><code>dataset.details()</code> returns the details of the dataset</li>
+<li><code>dataset.getTimestampRange()</code> returns the range of timestamps present in
+the dataset</li>
+</ul>
+
+<h3>Procedure objects</h3>
+
+<p>A procedure object can be created using <code>mldb.createProcedure(config)</code>.
+The <code>config</code> is the same JSON object that would be <code>POST</code>ed to <code>/v1/procedures</code>
+to create the procedure.  If no <code>id</code> is passed, then the procedure is
+anonymous and will have an <code>id</code> auto-generated.</p>
+
+<p>The procedure object has the following methods defined:</p>
+
+<ul>
+<li><code>procedure.run(args)</code> runs the procedure, with the given arguments,
+waits for it to finish, and returns the output of the procedure.  It&#39;s
+equivalent to <code>POST</code>ing to the <code>/runs</code> route of the procedure.</li>
+<li><code>procedure.id()</code> returns the id of the procedure</li>
+<li><code>procedure.type()</code> returns the type of the procedure</li>
+<li><code>procedure.config()</code> returns the configuration of the procedure</li>
+<li><code>procedure.status()</code> returns the status of the procedure</li>
+<li><code>procedure.details()</code> returns the details of the procedure</li>
+</ul>
+
+<h3>Function objects</h3>
+
+<p>A function object is created similarly to procedure and dataset objects.</p>
+
+<p>It has the following methods defined:</p>
+
+<ul>
+<li><code>function.callJson(args)</code> calls the function, with the given single
+JSON argument, waits for it to finish, and returns the JSON output of
+the function.</li>
+<li><code>function.call(args)</code> calls the function, with the given arguments,
+waits for it to finish, and returns the output of the function.
+The input and output are JSON-encoded ExpressionValue objects, which
+are hard to work with.  It is recommended that the callJson object
+be used instead.</li>
+<li><code>function.id()</code> returns the id of the function</li>
+<li><code>function.type()</code> returns the type of the function</li>
+<li><code>function.config()</code> returns the configuration of the function</li>
+<li><code>function.status()</code> returns the status of the function</li>
+<li><code>function.details()</code> returns the details of the function</li>
+</ul>
+
+<h2>Debugging</h2>
+
+<p>The following are useful for debugging MLDB, but should not be used in normal
+use of MLDB:</p>
+
+<ul>
+<li><code>mldb.debugSetPathOptimizationLevel(level)</code> controls whether MLDB takes
+optimized or generic paths.  It can be used to unit-test the equivalence
+of optimized and non-optimized paths.  Setting to <code>&quot;always&quot;</code> (the default)
+will make MLDB always use optimized implementations when possible.  Setting
+to <code>&quot;never&quot;</code> has the opposite effect.  Setting to <code>&quot;sometimes&quot;</code> will
+randomly and non-deterministically choose whether or not to use an
+optimized path each time that one is encountered (50% probability of each).
+Note that this setting applies to the entire MLDB instance, and so should
+not be used in production.</li>
+</ul>
+</body>
+</html>

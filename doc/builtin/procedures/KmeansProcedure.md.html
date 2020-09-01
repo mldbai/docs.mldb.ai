@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset='utf-8' />
+<title>MLDB Documentation</title>
+<script src='/resources/js/mathjax_TeX-AMS-MML_HTMLorMML.js'></script>
+<link rel='stylesheet' href='/resources/css/prism.css'>
+<link rel='stylesheet' href='/resources/css/doc.css'>
+<script src='/resources/js/jquery-1.11.2.min.js'></script>
+<script src='/resources/js/prism.js'></script>
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  if(window.location.origin == 'http://mldb.ai')
+  { ga('create', 'UA-16909325-9', 'auto'); }
+  else
+  { ga('create', 'UA-16909325-10', {'cookieDomain': 'none'}); }
+  ga('send', 'pageview');
+</script>
+</head>
+<body style='margin-left: 50px; max-width: 1000px'>
+<h1>K-Means Training Procedure</h1>
+
+<p>This procedure trains a K-means clustering model and stores the result model (i.e. cluster centroids)
+into an output dataset, as well as storing the cluster labels for its input dataset into a separate output dataset.</p>
+
+<h2>Configuration</h2>
+
+<p><p>A new procedure of type <code>kmeans.train</code> named <code>&lt;id&gt;</code> can be created as follows:</p><pre><code class="language-python">mldb.put(&quot;/v1/procedures/&quot;+&lt;id&gt;, {
+    &quot;type&quot;: &quot;kmeans.train&quot;,
+    &quot;params&quot;: {
+        "trainingData": &lt;<a href="/doc/builtin/procedures/InputQuery.md.html">InputQuery</a>&gt;,
+        "outputDataset": &lt;<a href="/doc/builtin/procedures/OutputDatasetSpec.md.html">OutputDatasetSpec</a> (Optional)&gt;,
+        "centroidsDataset": &lt;<a href="/doc/builtin/procedures/OutputDatasetSpec.md.html">OutputDatasetSpec</a> (Optional)&gt;,
+        "numInputDimensions": &lt;int&gt;,
+        "numClusters": &lt;int&gt;,
+        "maxIterations": &lt;int&gt;,
+        "metric": &lt;MetricSpace&gt;,
+        "modelFileUrl": &lt;<a href="/doc/builtin/Url.md.html">Url</a>&gt;,
+        "functionName": &lt;string&gt;,
+        "runOnCreation": &lt;bool&gt;
+    }
+})</code></pre><p>with the following key-value definitions for <code>params</code>:</p><table class="params table" width='100%'><tr><th align='right'>Field, Type, Default</th><th>Description</th></tr>
+<tr><td align='right'><p><strong>trainingData</strong> <br/> <nobr><a href="/doc/builtin/procedures/InputQuery.md.html">InputQuery</a></nobr> <br/> <code></code></p></td><td><p>Specification of the data for input to the k-means procedure.  This should be organized as an embedding, with each selected row containing the same set of columns with numeric values to be used as coordinates.  The select statement does not support groupby and having clauses.</p>
+</td></tr>
+<tr><td align='right'><p><strong>outputDataset</strong> <br/> <nobr><a href="/doc/builtin/procedures/OutputDatasetSpec.md.html">OutputDatasetSpec</a> (Optional)</nobr> <br/> <code>{"type":"embedding"}</code></p></td><td><p>Dataset for cluster assignment.  This dataset will contain the same row names as the input dataset, but the coordinates will be replaced by a single column giving the cluster number that the row was assigned to.</p>
+</td></tr>
+<tr><td align='right'><p><strong>centroidsDataset</strong> <br/> <nobr><a href="/doc/builtin/procedures/OutputDatasetSpec.md.html">OutputDatasetSpec</a> (Optional)</nobr> <br/> <code>{"type":"embedding"}</code></p></td><td><p>Dataset in which the centroids will be recorded.  This dataset will have the same coordinates (columns) as those selected from the input dataset, but will have one row per cluster, providing the centroid of the cluster.</p>
+</td></tr>
+<tr><td align='right'><p><strong>numInputDimensions</strong> <br/> <nobr>int</nobr> <br/> <code>-1</code></p></td><td><p>Number of dimensions from the input to use (-1 = all).  This limits the number of columns used.  Columns will be ordered alphabetically and the lowest ones kept.</p>
+</td></tr>
+<tr><td align='right'><p><strong>numClusters</strong> <br/> <nobr>int</nobr> <br/> <code>10</code></p></td><td><p>Number of clusters to create.  This will provide the total number of centroids created.  There must be at least as many rows selected as clusters.</p>
+</td></tr>
+<tr><td align='right'><p><strong>maxIterations</strong> <br/> <nobr>int</nobr> <br/> <code>100</code></p></td><td><p>Maximum number of iterations to perform.  If no convergeance is reached within this number of iterations, the current clustering will be returned.</p>
+</td></tr>
+<tr><td align='right'><p><strong>metric</strong> <br/> <nobr>MetricSpace</nobr> <br/> <code>"cosine"</code></p></td><td><p>Metric space in which the k-means distances will be calculated. Normally this will be Cosine for an orthonormal basis, and Euclidian for another basis</p>
+</td></tr>
+<tr><td align='right'><p><strong>modelFileUrl</strong> <br/> <nobr><a href="/doc/builtin/Url.md.html">Url</a></nobr> <br/> <code></code></p></td><td><p>URL where the model file (with extension &#39;.kms&#39;) should be saved. This file can be loaded by the <a href="/doc/builtin/functions/Kmeans.md.html"><code>kmeans</code> function type</a>. This parameter is optional unless the <code>functionName</code> parameter is used.</p>
+</td></tr>
+<tr><td align='right'><p><strong>functionName</strong> <br/> <nobr>string</nobr> <br/> <code></code></p></td><td><p>If specified, an instance of the <a href="/doc/builtin/functions/Kmeans.md.html"><code>kmeans</code> function type</a> of this name will be created using the trained model. Note that to use this parameter, the <code>modelFileUrl</code> must also be provided.</p>
+</td></tr>
+<tr><td align='right'><p><strong>runOnCreation</strong> <br/> <nobr>bool</nobr> <br/> <code>true</code></p></td><td><p>If true, the procedure will be run immediately. The response will contain an extra field called <code>firstRun</code> pointing to the URL of the run.</p>
+</td></tr>
+</table></p>
+
+<p><h4>Enumeration <code>MetricSpace</code></h4><table class="params table"><tr><th>Value</th><th>Description</th></tr>
+<tr><td><code>none</code></td><td><p>No metric is chosen.  This will cause an error.</td></tr>
+<tr><td><code>euclidean</code></td><td><p>Use Euclidian distance for metric. This is a good choice for geometric embeddings like the t-SNE algorithm.</td></tr>
+<tr><td><code>cosine</code></td><td><p>Use cosine distance for metric.  This is a good choice for normalized and high-dimensional embeddings like the SVD.</td></tr>
+</table></p>
+
+<h2>Training</h2>
+
+<p>The k-means procedure is used to take a set of points, each of which is
+characterized by its coordinates in an embedding space, and group them such
+that each one belongs to one cluster.  The clusters are described by a single
+point that is the cluster centroid.</p>
+
+<p>The input dataset has one row per point, with the coordinates being in the
+columns.  There must be the same set of numeric coordinates per row.</p>
+
+<p>As an example, the following input would be suitable for the k-means algorithm:</p>
+
+<table>
+<thead>
+<tr>
+<th>rowName</th>
+<th>x</th>
+<th>y</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>row1</td>
+<td>1</td>
+<td>4</td>
+</tr>
+<tr>
+<td>row2</td>
+<td>1</td>
+<td>3</td>
+</tr>
+<tr>
+<td>row3</td>
+<td>3</td>
+<td>1</td>
+</tr>
+<tr>
+<td>row4</td>
+<td>4</td>
+<td>1</td>
+</tr>
+</tbody>
+</table>
+
+<p>Using the k-means procedure with the Euclidean metric to create two clusters (i.e. with <code>metric</code> set to <code>Euclidean</code> and <code>numClusters</code> set to 2),
+the output would be the centroids:</p>
+
+<table>
+<thead>
+<tr>
+<th>_rowName</th>
+<th>x</th>
+<th>y</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>&quot;0&quot;</td>
+<td>1</td>
+<td>3.5</td>
+</tr>
+<tr>
+<td>&quot;1&quot;</td>
+<td>3.5</td>
+<td>1</td>
+</tr>
+</tbody>
+</table>
+
+<p>Using the output of the procedure to classify new points is done by calculating
+the distance from the point to each of the cluster centroids, and then assigning
+the point to the cluster with the shortest distance.</p>
+
+<h2>Examples</h2>
+
+<ul>
+<li>The <a href="/doc/nblink.html#_demos/Mapping%20Reddit" target="_blank">Mapping Reddit</a> demo notebook</li>
+<li>The <a href="/doc/nblink.html#_demos/Visualizing%20StackOverflow%20Tags" target="_blank">Visualizing StackOverflow Tags</a> demo notebook</li>
+</ul>
+
+<h1>See also</h1>
+
+<ul>
+<li><a href="http://en.wikipedia.org/wiki/K-means_clustering" target="_blank">Wikipedia k-means Article</a></li>
+<li>the <a href="/doc/builtin/functions/Kmeans.md.html"><code>kmeans</code> function type</a> applies the centroids to new data points to deternine
+which cluster they fit in to.</li>
+</ul>
+</body>
+</html>

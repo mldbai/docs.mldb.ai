@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset='utf-8' />
+<title>MLDB Documentation</title>
+<script src='/resources/js/mathjax_TeX-AMS-MML_HTMLorMML.js'></script>
+<link rel='stylesheet' href='/resources/css/prism.css'>
+<link rel='stylesheet' href='/resources/css/doc.css'>
+<script src='/resources/js/jquery-1.11.2.min.js'></script>
+<script src='/resources/js/prism.js'></script>
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  if(window.location.origin == 'http://mldb.ai')
+  { ga('create', 'UA-16909325-9', 'auto'); }
+  else
+  { ga('create', 'UA-16909325-10', {'cookieDomain': 'none'}); }
+  ga('send', 'pageview');
+</script>
+</head>
+<body style='margin-left: 50px; max-width: 1000px'>
+<h1>Create Entity Procedure</h1>
+
+<p>The <code>createEntity</code> procedure type can create other entities as a procedure
+step.  This is useful when views or similar need to be created as part
+of a procedure running.</p>
+
+<p>The createEntity procedure type can create all kinds of entities: procedures,
+functions, datasets and plugins.</p>
+
+<h2>Execution</h2>
+
+<p>When run, the procedure will have the same effect as a <code>POST</code> of the given
+object to <code>/v1/&lt;kind&gt;s</code> endpoint.</p>
+
+<h2>Errors</h2>
+
+<p>In the case of an error, the run will indicate that the step had an error.</p>
+
+<h2>Configuration</h2>
+
+<p><p>A new procedure of type <code>createEntity</code> named <code>&lt;id&gt;</code> can be created as follows:</p><pre><code class="language-python">mldb.put(&quot;/v1/procedures/&quot;+&lt;id&gt;, {
+    &quot;type&quot;: &quot;createEntity&quot;,
+    &quot;params&quot;: {
+        "id": &lt;string&gt;,
+        "type": &lt;string&gt;,
+        "params": &lt;Any&gt;,
+        "persistent": &lt;bool&gt;,
+        "deterministic": &lt;bool&gt;,
+        "kind": &lt;string&gt;,
+        "runOnCreation": &lt;bool&gt;
+    }
+})</code></pre><p>with the following key-value definitions for <code>params</code>:</p><table class="params table" width='100%'><tr><th align='right'>Field, Type, Default</th><th>Description</th></tr>
+<tr><td align='right'><p><strong>id</strong> <br/> <nobr>string</nobr> <br/> <code></code></p></td><td><p>ID of the entity.  This indicates what name the entity will be called when accessed via the REST API.</p>
+</td></tr>
+<tr><td align='right'><p><strong>type</strong> <br/> <nobr>string</nobr> <br/> <code></code></p></td><td><p>Type of the entity.  This indicates what implementation type to use for the entity.</p>
+</td></tr>
+<tr><td align='right'><p><strong>params</strong> <br/> <nobr>Any</nobr> <br/> <code></code></p></td><td><p>Entity configuration parameters.  This is always an object, and the type of object accepted depends upon the &#39;type&#39; field.</p>
+</td></tr>
+<tr><td align='right'><p><strong>persistent</strong> <br/> <nobr>bool</nobr> <br/> <code>false</code></p></td><td><p>If true, then this element will have its configuration stored and will be reloaded on startup</p>
+</td></tr>
+<tr><td align='right'><p><strong>deterministic</strong> <br/> <nobr>bool</nobr> <br/> <code>true</code></p></td><td><p>If true, the entity has no hidden state </p>
+</td></tr>
+<tr><td align='right'><p><strong>kind</strong> <br/> <nobr>string</nobr> <br/> <code></code></p></td><td><p>Kind of entity to create.  Valid values are &#39;function&#39;, &#39;procedure&#39;, &#39;dataset&#39; or &#39;plugin&#39;.</p>
+</td></tr>
+<tr><td align='right'><p><strong>runOnCreation</strong> <br/> <nobr>bool</nobr> <br/> <code>true</code></p></td><td><p>If true, the procedure will be run immediately. The response will contain an extra field called <code>firstRun</code> pointing to the URL of the run.</p>
+</td></tr>
+</table></p>
+
+<h2>Output</h2>
+
+<p>The procedure&#39;s output will be in the following form, which allows for the
+expanded configuration and the ID of the new entity to be obtained by the
+caller:</p>
+
+<p><table class="params table" width='100%'><tr><th align='right'>Field, Type, Default</th><th>Description</th></tr>
+<tr><td align='right'><p><strong>kind</strong> <br/> <nobr>string</nobr> <br/> <code></code></p></td><td><p>Kind of entity created</p>
+</td></tr>
+<tr><td align='right'><p><strong>config</strong> <br/> <nobr>PolyConfig</nobr> <br/> <code></code></p></td><td><p>Configuration of the entity created</p>
+</td></tr>
+<tr><td align='right'><p><strong>status</strong> <br/> <nobr>Any</nobr> <br/> <code></code></p></td><td><p>Status of entity creation</p>
+</td></tr>
+</table></p>
+
+<h1>See also</h1>
+
+<ul>
+<li><a href="Procedures.md.html">Procedures</a> for a description of procedures and what they can do.</li>
+<li><a href="../functions/FunctionConfig.md.html">Function Configuration</a></li>
+<li><a href="../datasets/DatasetConfig.md.html">Dataset Configuration</a></li>
+<li><a href="../plugins/PluginConfig.md.html">Plugin Configuration</a></li>
+<li><a href="../procedures/ProcedureConfig.md.html">Procedure Configuration</a></li>
+</ul>
+</body>
+</html>

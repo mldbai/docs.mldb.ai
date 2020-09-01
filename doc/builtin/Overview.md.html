@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset='utf-8' />
+<title>MLDB Documentation</title>
+<script src='/resources/js/mathjax_TeX-AMS-MML_HTMLorMML.js'></script>
+<link rel='stylesheet' href='/resources/css/prism.css'>
+<link rel='stylesheet' href='/resources/css/doc.css'>
+<script src='/resources/js/jquery-1.11.2.min.js'></script>
+<script src='/resources/js/prism.js'></script>
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  if(window.location.origin == 'http://mldb.ai')
+  { ga('create', 'UA-16909325-9', 'auto'); }
+  else
+  { ga('create', 'UA-16909325-10', {'cookieDomain': 'none'}); }
+  ga('send', 'pageview');
+</script>
+</head>
+<body style='margin-left: 50px; max-width: 1000px'>
+<h1>MLDB Overview</h1>
+
+<div style="text-align: center;"><img src="img/BasicMLFlow.svg"></div>
+
+<p>In MLDB, machine learning models are applied using <strong>Functions</strong>, which are parameterized by the output of training <strong>Procedures</strong>, which run over <strong>Datasets</strong> containing training data. Functions are also available to SQL Queries and as REST Endpoints. This document gives an overview of how these concepts work together.</p>
+
+<hr style="clear:both" />
+
+<div style="float: right;"><img src="img/Functions.svg" style="width: 400px; margin: 15px"></div>
+
+<h2>Functions</h2>
+
+<p>Functions are named, reusable programs used to implement streaming computations which can accept arguments and return values. Functions are used to:</p>
+
+<ul>
+<li>Encapsulate <a href="sql/Sql.md.html">SQL expressions</a></li>
+<li>Apply machine learning models parameterized by the output of a training Procedure</li>
+</ul>
+
+<p>All MLDB Functions are also automatically accessible as <a href="functions/Application.md.html">REST Endpoints</a>, which can be used to apply machine learning models in a streaming/real-time process. Additionally, <a href="sql/Sql.md.html">SQL queries</a> can use Functions to efficiently apply machine learning models to data in a batch process.</p>
+
+<p>MLDB provides a number of built-in Functions types for various use-cases. <a href="functions/Functions.md.html">Learn more about Functions</a>.</p>
+
+<hr style="clear:both" />
+
+<div style="float: right;"><img src="img/Procedures.svg" style="width: 400px; margin: 15px"></div>
+
+<h2>Procedures</h2>
+
+<p>Procedures are named, reusable programs used to implement long-running batch operations with no return values. Procedures generally run over Datasets and can be configured via <a href="sql/Sql.md.html">SQL expressions</a>. The outputs of a Procedure can include Datasets and files. Procedures are used to:</p>
+
+<ul>
+<li>Transform or clean up data</li>
+<li>Train machine learning models</li>
+<li>Apply machine models in batch mode</li>
+</ul>
+
+<p>MLDB provides a number of built-in Procedure types for various use-cases. <a href="procedures/Procedures.md.html">Learn more about Procedures</a>.</p>
+
+<hr style="clear:both" />
+
+<div style="float: right;"><img src="img/Datasets.svg" style="width: 400px; margin: 15px"></div>
+
+<h2>Datasets</h2>
+
+<p>Datasets are named sets of data points composed of (row, column, timestamp, value) tuples. Datasets can have millions of named columns and rows, and data points can take on multiple timestamped values which can be numbers or strings. </p>
+
+<p>Datasets can be loaded from or saved to files, and can serve as the input to Procedures as well as be created by them. And of course, Datasets can be queried via <a href="sql/Sql.md.html">SQL queries</a>. </p>
+
+<p>MLDB provides a number of built-in Dataset types for various use-cases.  <a href="datasets/Datasets.md.html">Learn more about Datasets</a>.</p>
+
+<hr style="clear:both" />
+
+<div style="float: right;"><img src="img/Files.svg" style="width: 400px; margin: 15px"></div>
+
+<h2>Files</h2>
+
+<p>MLDB gives users full control over where and how data is persisted. Datasets can be saved and loaded from files. Procedures can create files and Functions can load up parameters from files. </p>
+
+<p>If data is stored in a system such as S3 or HDFS, it is possible to run multiple instances of MLDB so as to distribute computational load. For example, one powerful and expensive machine could handle model training, storing model files on S3, while a load-balanced cluster of smaller, cheaper machines could load these model files and do real-time scoring over HTTP. </p>
+
+<p>MLDB accesses files via URLs, with various protocols being recognized, such as <code>file://</code>, <code>s3://</code>,<code>hdfs://</code>, <code>http://</code> and <code>https://</code>. <a href="Url.md.html">Learn more about Files and URLs.</a></p>
+
+<hr style="clear:both" />
+
+<h2>Putting it all together</h2>
+
+<div style="text-align: center;"><img src="img/ComplexMLFlow.svg" style="width: 750px;"></div>
+
+<p>The diagram above shows how the various abstractions decribed in this document can be used together to solve a machine learning problem.</p>
+
+<ol>
+<li>We start with a file full of training data, which is loaded into a Training Dataset.</li>
+<li>A Training Procedure is run, to produce a Model File</li>
+<li>The Model File is used to parameterize a Scoring Function</li>
+<li>This Scoring Function is immediately accessible via a REST Endpoint for real-time scoring</li>
+<li>The Scoring Function is also immediately accesible via an SQL Query</li>
+<li>A Batch Scoring Procedure uses SQL to apply the Scoring Function to an Unscored Dataset in batch, producing a Scored Dataset</li>
+</ol>
+
+<h2>A working example</h2>
+
+<p>The <a href="/doc/nblink.html#_demos/Predicting%20Titanic%20Survival" target="_blank">Predicting Titanic Survival</a> Notebook contains a full example of the flow described above.</p>
+
+<h2>See also</h2>
+
+<ul>
+<li><a href="datasets/Datasets.md.html">Datasets</a></li>
+<li><a href="procedures/Procedures.md.html">Procedures</a></li>
+<li><a href="functions/Functions.md.html">Functions</a></li>
+<li><a href="sql/Sql.md.html">SQL Queries</a></li>
+<li><a href="Url.md.html">Files and URLs</a></li>
+</ul>
+</body>
+</html>

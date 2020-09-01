@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset='utf-8' />
+<title>MLDB Documentation</title>
+<script src='/resources/js/mathjax_TeX-AMS-MML_HTMLorMML.js'></script>
+<link rel='stylesheet' href='/resources/css/prism.css'>
+<link rel='stylesheet' href='/resources/css/doc.css'>
+<script src='/resources/js/jquery-1.11.2.min.js'></script>
+<script src='/resources/js/prism.js'></script>
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  if(window.location.origin == 'http://mldb.ai')
+  { ga('create', 'UA-16909325-9', 'auto'); }
+  else
+  { ga('create', 'UA-16909325-10', {'cookieDomain': 'none'}); }
+  ga('send', 'pageview');
+</script>
+</head>
+<body style='margin-left: 50px; max-width: 1000px'>
+<h1>Feature Hashing Function</h1>
+
+<p>The hashed column feature generator function is a vectorizer that can be used
+on large or variable length rows, or fixed lenght rows with lots of categorical values,
+to produce a smaller fixed length numerical feature vector.</p>
+
+<h2>Configuration</h2>
+
+<p><p>A new function of type <code>feature_hasher</code> named <code>&lt;id&gt;</code> can be created as follows:</p><pre><code class="language-python">mldb.put(&quot;/v1/functions/&quot;+&lt;id&gt;, {
+    &quot;type&quot;: &quot;feature_hasher&quot;,
+    &quot;params&quot;: {
+        "numBits": &lt;int&gt;,
+        "mode": &lt;HashingMode&gt;
+    }
+})</code></pre><p>with the following key-value definitions for <code>params</code>:</p><table class="params table" width='100%'><tr><th align='right'>Field, Type, Default</th><th>Description</th></tr>
+<tr><td align='right'><p><strong>numBits</strong> <br/> <nobr>int</nobr> <br/> <code>8</code></p></td><td><p>Number of bits to use for the hash. The number of resulting buckets will be \(2^{\text{numBits}}\).</p>
+</td></tr>
+<tr><td align='right'><p><strong>mode</strong> <br/> <nobr>HashingMode</nobr> <br/> <code>"columns"</code></p></td><td><p>Hashing mode to use. Controls what gets hashed.</p>
+</td></tr>
+</table></p>
+
+<h3>Hashing mode</h3>
+
+<p>The <code>mode</code> field controls what gets hashed:</p>
+
+<ul>
+<li><code>columns</code>: This mode should be used if you&#39;re hashing a generally sparse
+<em>bag of words</em>, where <em>words</em> are in the columns and the value represents
+a count. Only the column names will be hashed.</li>
+<li><code>columnsAndValues</code>: This mode should be used if you&#39;re hashing dense data,
+where fixed columns can take different values. The contatenation of both the
+column name and the cell value will be hashed.</li>
+</ul>
+
+<h2>Input and Output Value</h2>
+
+<p>Functions of this type have a single input value called <code>columns</code> which is a row and
+a single output value called <code>hash</code> which is a row of size \(2^{\text{numBits}}\).</p>
+
+<h2>See also</h2>
+
+<ul>
+<li><a href="https://en.wikipedia.org/wiki/Feature_hashing" target="_blank">Feature hashing Wikipedia article</a></li>
+</ul>
+</body>
+</html>

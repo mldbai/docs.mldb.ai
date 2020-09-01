@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset='utf-8' />
+<title>MLDB Documentation</title>
+<script src='/resources/js/mathjax_TeX-AMS-MML_HTMLorMML.js'></script>
+<link rel='stylesheet' href='/resources/css/prism.css'>
+<link rel='stylesheet' href='/resources/css/doc.css'>
+<script src='/resources/js/jquery-1.11.2.min.js'></script>
+<script src='/resources/js/prism.js'></script>
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  if(window.location.origin == 'http://mldb.ai')
+  { ga('create', 'UA-16909325-9', 'auto'); }
+  else
+  { ga('create', 'UA-16909325-10', {'cookieDomain': 'none'}); }
+  ga('send', 'pageview');
+</script>
+</head>
+<body style='margin-left: 50px; max-width: 1000px'>
+<h1>Query API: <code>GET /v1/query</code></h1>
+
+<p>This endpoint accepts the following query-string parameters:</p>
+
+<ul>
+<li><code>q</code>: a full <a href="Sql.md.html">SQL query</a></li>
+<li><code>format</code>: string (default <code>full</code>), gives the output format.  Possible values are:
+
+<ul>
+<li><code>full</code> (default): full sparse output as array of deep objects. 
+
+<ul>
+<li>All values for each cell are returned, with timestamps.</li>
+</ul></li>
+<li><code>table</code>: a table represented as an array of rows represented as
+a position arrays of values,with an optional header row (like a CSV file in JSON).<br/>
+
+<ul>
+<li>Missing values are represented as null. </li>
+<li>Timestamp, interval and Nan/Inf values are converted to strings.</li>
+<li>Latest value returned per cell, without timestamp</li>
+</ul></li>
+<li><code>aos</code> (for &quot;array of structures&quot;): an array of objects, one per row.
+
+<ul>
+<li>Each row is represented by an object, with column names as keys and
+cell values as the value.</li>
+<li>Latest value returned per cell, without timestamp</li>
+</ul></li>
+<li><code>soa</code> (for &quot;structure of arrays&quot;): an object, with one entry per column.
+
+<ul>
+<li>Each column has an array with one value per row.</li>
+<li>Missing values are represented as nulls.</li>
+<li>Latest value returned per cell, without timestamp</li>
+</ul></li>
+<li><code>sparse</code>: an array of arrays of arrays. Same as <code>aos</code> format except that
+rows are represented as arrays of 2-element [column, value] arrays instead
+of objects. 
+
+<ul>
+<li>All values for each cell are returned, without timestamps</li>
+</ul></li>
+<li><code>atom</code>: a single atomic value, without the row name or the column name
+
+<ul>
+<li>The query will fail if anything else than a single row / column is returned.</li>
+</ul></li>
+</ul></li>
+<li><code>headers</code>: boolean (default <code>true</code>), if <code>true</code> the table format will include a header.</li>
+<li><code>rowNames</code>: boolean (default <code>true</code>), if <code>true</code> an implicit column called <code>_rowName</code> will
+be added, containing the row name.</li>
+<li><code>rowHashes</code>: boolean (default <code>false</code>), if <code>true</code> an implicit column called
+<code>_rowHash</code> will be added. Forced to <code>true</code> when <code>format=full</code>.</li>
+</ul>
+
+<p>Note that instead of passing the parameters in the query string, you can
+alternatively pass them in the body.</p>
+
+<h3>Cell value representation</h3>
+
+<p>JSON defines numerical, string, boolean and null representations, but not timestamps, intervals, NaN or Inf.
+In order to deal with this, the output of the Query API (except when in <code>format=table</code> mode) will represent
+these types of values as a JSON object as follows:</p>
+
+<pre><code class="language-python">{&quot;ts&quot; : &quot;1969-07-20T01:02:03.000Z&quot;}
+{&quot;interval&quot;: &quot;3 MONTH 14D 1S&quot;}
+{&quot;num&quot;: &quot;NaN&quot;}
+{&quot;num&quot;: &quot;Inf&quot;}
+{&quot;num&quot;: &quot;-Inf&quot;}
+</code></pre>
+
+<h3>Examples</h3>
+
+<p>For the following dataset, where all values have the timestamp <code>2015-01-01T00:00:00.000Z</code>:</p>
+
+<table>
+<thead>
+<tr>
+<th>rowName</th>
+<th>x</th>
+<th>y</th>
+<th>z</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>row1</td>
+<td>0</td>
+<td>3</td>
+<td></td>
+</tr>
+<tr>
+<td>row2</td>
+<td>1</td>
+<td>2</td>
+<td>&quot;yes&quot;</td>
+</tr>
+<tr>
+<td>row3</td>
+<td>2</td>
+<td>1</td>
+<td></td>
+</tr>
+<tr>
+<td>row4</td>
+<td>3</td>
+<td>0</td>
+<td>&quot;no&quot;</td>
+</tr>
+</tbody>
+</table>
+
+<p>Then the query</p>
+
+<pre><code class="language-sql">SELECT * ORDER BY rowName()
+</code></pre>
+
+<p>would return, depending on the parameters:</p>
+
+<h4>Default format with no <code>format</code> parameter or <code>format=full</code></h4>
+
+<pre><code class="language-javascript">[
+   {
+      &quot;columns&quot; : [
+         [ &quot;x&quot;, 0, &quot;2015-01-01T00:00:00.000Z&quot; ],
+         [ &quot;y&quot;, 3, &quot;2015-01-01T00:00:00.000Z&quot; ]
+      ],
+      &quot;rowHash&quot; : &quot;397de880d5f0376e&quot;,
+      &quot;rowName&quot; : &quot;ex1&quot;
+   },
+   {
+      &quot;columns&quot; : [
+         [ &quot;z&quot;, &quot;yes&quot;, &quot;2015-01-01T00:00:00.000Z&quot; ],
+         [ &quot;x&quot;, 1, &quot;2015-01-01T00:00:00.000Z&quot; ],
+         [ &quot;y&quot;, 2, &quot;2015-01-01T00:00:00.000Z&quot; ]
+      ],
+      &quot;rowHash&quot; : &quot;ed64a202cef7ccf1&quot;,
+      &quot;rowName&quot; : &quot;ex2&quot;
+   },
+   {
+      &quot;columns&quot; : [
+         [ &quot;y&quot;, 1, &quot;2015-01-01T00:00:00.000Z&quot; ],
+         [ &quot;x&quot;, 2, &quot;2015-01-01T00:00:00.000Z&quot; ]
+      ],
+      &quot;rowHash&quot; : &quot;418b8ce19e0de7a3&quot;,
+      &quot;rowName&quot; : &quot;ex3&quot;
+   },
+   {
+      &quot;columns&quot; : [
+         [ &quot;x&quot;, 3, &quot;2015-01-01T00:00:00.000Z&quot; ],
+         [ &quot;z&quot;, &quot;no&quot;, &quot;2015-01-01T00:00:00.000Z&quot; ],
+         [ &quot;y&quot;, 0, &quot;2015-01-01T00:00:00.000Z&quot; ]
+      ],
+      &quot;rowHash&quot; : &quot;213ca5902e95224e&quot;,
+      &quot;rowName&quot; : &quot;ex4&quot;
+   }
+]
+</code></pre>
+
+<h4>Table with <code>format=table</code></h4>
+
+<pre><code class="language-javascript"> [
+   [ &quot;_rowName&quot;, &quot;x&quot;, &quot;y&quot;, &quot;z&quot; ],
+   [ &quot;ex1&quot;, 0, 3, null ],
+   [ &quot;ex2&quot;, 1, 2, &quot;yes&quot; ],
+   [ &quot;ex3&quot;, 2, 1, null ],
+   [ &quot;ex4&quot;, 3, 0, &quot;no&quot; ]
+]
+</code></pre>
+
+<h4>Structure of Arrays with <code>format=soa</code></h4>
+
+<pre><code class="language-javascript"> {
+   &quot;_rowName&quot; : [ &quot;ex1&quot;, &quot;ex2&quot;, &quot;ex3&quot;, &quot;ex4&quot; ],
+   &quot;x&quot; : [ 0, 1, 2, 3 ],
+   &quot;y&quot; : [ 3, 2, 1, 0 ],
+   &quot;z&quot; : [ null, &quot;yes&quot;, null, &quot;no&quot; ]
+}
+</code></pre>
+
+<h3>Array of Structures with <code>format=aos</code></h3>
+
+<pre><code class="language-javascript">[
+ { &quot;_rowName&quot; : &quot;ex1&quot;, &quot;x&quot; : 0, &quot;y&quot; : 3 },
+ { &quot;_rowName&quot; : &quot;ex2&quot;, &quot;x&quot; : 1, &quot;y&quot; : 2, &quot;z&quot; : &quot;yes&quot; },
+ { &quot;_rowName&quot; : &quot;ex3&quot;, &quot;x&quot; : 2, &quot;y&quot; : 1 },
+ { &quot;_rowName&quot; : &quot;ex4&quot;, &quot;x&quot; : 3, &quot;y&quot; : 0, &quot;z&quot; : &quot;no&quot;  }
+]
+</code></pre>
+
+<h4>Sparse format with <code>format=sparse</code></h4>
+
+<pre><code class="language-javascript">[
+   [
+      [ &quot;_rowName&quot;, &quot;ex1&quot; ],
+      [ &quot;x&quot;, 0 ],
+      [ &quot;y&quot;, 3 ]
+   ],
+   [
+      [ &quot;_rowName&quot;, &quot;ex2&quot; ],
+      [ &quot;z&quot;, &quot;yes&quot; ],
+      [ &quot;x&quot;, 1 ],
+      [ &quot;y&quot;, 2 ]
+   ],
+   [
+      [ &quot;_rowName&quot;, &quot;ex3&quot; ],
+      [ &quot;y&quot;, 1 ],
+      [ &quot;x&quot;, 2 ]
+   ],
+   [
+      [ &quot;_rowName&quot;, &quot;ex4&quot; ],
+      [ &quot;x&quot;, 3 ],
+      [ &quot;z&quot;, &quot;no&quot; ],
+      [ &quot;y&quot;, 0 ]
+   ]
+]
+</code></pre>
+</body>
+</html>

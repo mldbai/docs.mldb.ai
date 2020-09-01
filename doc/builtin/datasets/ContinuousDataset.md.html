@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset='utf-8' />
+<title>MLDB Documentation</title>
+<script src='/resources/js/mathjax_TeX-AMS-MML_HTMLorMML.js'></script>
+<link rel='stylesheet' href='/resources/css/prism.css'>
+<link rel='stylesheet' href='/resources/css/doc.css'>
+<script src='/resources/js/jquery-1.11.2.min.js'></script>
+<script src='/resources/js/prism.js'></script>
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  if(window.location.origin == 'http://mldb.ai')
+  { ga('create', 'UA-16909325-9', 'auto'); }
+  else
+  { ga('create', 'UA-16909325-10', {'cookieDomain': 'none'}); }
+  ga('send', 'pageview');
+</script>
+</head>
+<body style='margin-left: 50px; max-width: 1000px'>
+<h1>Continuous Dataset</h1>
+
+<p>The continuous dataset is used in MLDB to model a continuous stream of
+data, for example that collected from a pixel or a log file.  It is the
+primary means of collecting data (as opposed to loading data already stored
+elsewhere) with MLDB.</p>
+
+<p>This is a lower-level primitive that other, higher level functionality
+can be built on top of.</p>
+
+<h2>Data model</h2>
+
+<p>The continuous dataset models a stream of events, with each event
+occuring on a point on a timeline (the timestamp field).  The continuous
+dataset records events as they come in into an internal dataset, and
+every so often (or when <code>commit</code> is called) the internal dataset is
+written to files on disk.</p>
+
+<p><img src="../img/ContinuousDatasetModel.svg" alt="ContinuousDatasetModel"/></p>
+
+<p>The recorded files can then be queried by timestamp, and combined
+into a dataset that can be processed with MLDB as normal.</p>
+
+<p><strong><em>Warning:</em></strong> The only timestamp that is processed by the continuous
+dataset is the timestamp on the recorded rows.  The current system
+time is not used anywhere.  In other words, if you record a timestamp
+from 1980 in 2015, then it will be processed as if it occurred in 1980.</p>
+
+<h2>Configuration of <code>continuous</code> Datasets</h2>
+
+<p>A recordable continuous dataset is created using the <code>continuous</code> dataset
+type. To create a view of a time window of a continuous dataset, the
+<code>continuous.window</code> dataset is used (see below).</p>
+
+<p><p>A new dataset of type <code>continuous</code> named <code>&lt;id&gt;</code> can be created as follows:</p><pre><code class="language-python">mldb.put(&quot;/v1/datasets/&quot;+&lt;id&gt;, {
+    &quot;type&quot;: &quot;continuous&quot;,
+    &quot;params&quot;: {
+        "metadataDataset": &lt;<a href="/doc/builtin/procedures/OutputDatasetSpec.md.html">OutputDatasetSpec</a>&gt;,
+        "createStorageDataset": &lt;<a href="/doc/builtin/procedures/ProcedureConfig.md.html">Procedure</a>&gt;,
+        "saveStorageDataset": &lt;<a href="/doc/builtin/procedures/ProcedureConfig.md.html">Procedure</a>&gt;,
+        "commitInterval": &lt;TimePeriod&gt;
+    }
+})</code></pre><p>with the following key-value definitions for <code>params</code>:</p><table class="params table" width='100%'><tr><th align='right'>Field, Type, Default</th><th>Description</th></tr>
+<tr><td align='right'><p><strong>metadataDataset</strong> <br/> <nobr><a href="/doc/builtin/procedures/OutputDatasetSpec.md.html">OutputDatasetSpec</a></nobr> <br/> <code></code></p></td><td><p>Dataset used to store metadata in</p>
+</td></tr>
+<tr><td align='right'><p><strong>createStorageDataset</strong> <br/> <nobr><a href="/doc/builtin/procedures/ProcedureConfig.md.html">Procedure</a></nobr> <br/> <code></code></p></td><td><p>Procedure that will create a dataset for storage</p>
+</td></tr>
+<tr><td align='right'><p><strong>saveStorageDataset</strong> <br/> <nobr><a href="/doc/builtin/procedures/ProcedureConfig.md.html">Procedure</a></nobr> <br/> <code></code></p></td><td><p>Procedure that will save a storage dataset returning metadata</p>
+</td></tr>
+<tr><td align='right'><p><strong>commitInterval</strong> <br/> <nobr>TimePeriod</nobr> <br/> <code>"0s"</code></p></td><td><p>Interval between auto-commit operations</p>
+</td></tr>
+</table></p>
+
+<h2>Querying live data</h2>
+
+<p>Querying a continuous dataset will query ONLY the live data stream
+that has not yet been committed.  Note that this is a live view,
+and so results may change from one query to another.  For this reason
+queries should be limited to lookups of rows by row name.  In particular,
+analytical queries will likely fail due to different sub-queries
+returning non-consistent results due to data being recorded in the
+middle.</p>
+
+<h2>Querying historical data with <code>continuous.window</code> Datasets</h2>
+
+<p>To create a view over historical data in a continuous dataset, it is
+necessary to use the <code>continuous.window</code> dataset type.  This allows
+for a time range to be specified, as well as a filter on the metadata
+of datasets to be loaded.</p>
+
+<p><p>A new dataset of type <code>continuous.window</code> named <code>&lt;id&gt;</code> can be created as follows:</p><pre><code class="language-python">mldb.put(&quot;/v1/datasets/&quot;+&lt;id&gt;, {
+    &quot;type&quot;: &quot;continuous.window&quot;,
+    &quot;params&quot;: {
+        "metadataDataset": &lt;<a href="/doc/builtin/datasets/DatasetConfig.md.html">Dataset (read-only)</a>&gt;,
+        "from": &lt;Date&gt;,
+        "to": &lt;Date&gt;,
+        "datasetFilter": &lt;<a href="/doc/builtin/sql/ValueExpression.md.html">string</a>&gt;
+    }
+})</code></pre><p>with the following key-value definitions for <code>params</code>:</p><table class="params table" width='100%'><tr><th align='right'>Field, Type, Default</th><th>Description</th></tr>
+<tr><td align='right'><p><strong>metadataDataset</strong> <br/> <nobr><a href="/doc/builtin/datasets/DatasetConfig.md.html">Dataset (read-only)</a></nobr> <br/> <code></code></p></td><td><p>Dataset used to store metadata in</p>
+</td></tr>
+<tr><td align='right'><p><strong>from</strong> <br/> <nobr>Date</nobr> <br/> <code>"1970-01-01T00:00:00Z"</code></p></td><td><p>Earliest date to include within the dataset</p>
+</td></tr>
+<tr><td align='right'><p><strong>to</strong> <br/> <nobr>Date</nobr> <br/> <code>"1970-01-01T00:00:00Z"</code></p></td><td><p>Latest date to include within the dataset</p>
+</td></tr>
+<tr><td align='right'><p><strong>datasetFilter</strong> <br/> <nobr><a href="/doc/builtin/sql/ValueExpression.md.html">string</a></nobr> <br/> <code>"true"</code></p></td><td><p>Filter to apply to dataset metadata when choosing datasets</p>
+</td></tr>
+</table></p>
+
+<h2>Under the hood</h2>
+
+<p>The following section describes the design and implementation of the
+continuous dataset, to aid in understanding of how to implement
+advanced use-cases.</p>
+
+<h3>Design</h3>
+
+<p>The continuous dataset builds on top of four core MLDB features to
+implement its functionality:</p>
+
+<ol>
+<li> The set of available datasets is saved in a metadata dataset.
+This dataset has one entry per <code>commit</code>, and does not require
+high performance (it is written once per commit, and queried
+when a dataset is loaded).  The metadata dataset is a standard
+MLDB dataset.  If an ACID dataset is used (eg, the <code>sqlite.sparse</code>
+dataset), then the continuous dataset inherits its consistency,
+availability and durability.</li>
+<li> The (mutable) dataset into which current events are recorded is
+a standard MLDB dataset, and the choice of different mutable
+datasets will allow for different guarantees to be made.</li>
+<li> When the continuous dataset needs to create a new dataset to
+hold the next chunk of recorded data, it will call the MLDB
+procedure in the <code>createStorageDataset</code> configuration
+parameter.  This procedure should return a JSON response
+containing a <code>config</code> field that specifies a dataset config
+that can be loaded by MLDB to create the dataset.</li>
+<li> When the continuous dataset needs to save a chunk of recorded
+data, it will call the MLDB procedure in the <code>saveStorageDataset</code>
+configuration parameter.  This procedure will be passed the
+ID of the dataset to be saved in the <code>datasetId</code> argument,
+and returns a JSON object with two fields: <code>metadata</code>, which is
+a JSON object that will be recorded to the metadata dataset
+as user metadata, and <code>config</code>, which is a dataset configuration
+object that can be used by MLDB to load the saved dataset
+in the future.</li>
+</ol>
+
+<h3>Performance</h3>
+
+<p>The continuous dataset can record up to 500,000 events per second on
+a large server if they are presented in small batches of 1,000 events
+or so.  The actual speed depends upon the following characteristics:</p>
+
+<ul>
+<li>The characteristics of the underlying recording dataset.  For example,
+the <a href="/v1/plugins/pro/doc/MutableBehaviourDataset.md.html"><code>beh.mutable</code> dataset type</a> is slow when recording real-valued variables.</li>
+<li>The cardinality of the row and column space.  A very high cardinality
+(over 10,000 columns or so) requires extra memory accesses which
+reduces the speed.  A very low cardinality (under 100 columns or so)
+causes contention on internal data structures.</li>
+<li>How the examples are presented.  Presenting single events is much
+less efficient than presenting in small batches.</li>
+<li>The frequency of the commit() operation.  High performance requires
+that most of the events record to existing columns, and a commit()
+has the effect of creating a new dataset that doesn&#39;t know of any
+columns.</li>
+</ul>
+
+<h3>Distributed usage</h3>
+
+<p>If a client-server database (like postgresql) is used as the metadata
+dataset, then it is possible for multiple MLDB instances to share a
+continuous dataset.  In particular,</p>
+
+<ul>
+<li>Multiple <code>continuous</code> datasets can share a distributed metadata dataset, which
+will allow them to all contribute data to the continuous dataset.</li>
+<li>A <code>continuous.window</code> dataset can point to a distributed metadata dataset,
+which will allow each of them to query over the entire window.</li>
+</ul>
+
+<p>Note that issues of data distribution will need to be addressed at
+the application level.  For example, loading up a <code>continuous.window</code>
+dataset that queries data stored in multiple geographic locations may
+be slow and expensive due to bandwidth cost and limitations.  In that
+case, it may be better to tag the datasets with geographical location
+and load them up in separate distributed MLDB instances, distributing
+the query at the application level.</p>
+
+<h3>Metadata format</h3>
+
+<p>The metadata is written in a sparse format, and so requires a dataset
+that supports sparse queries.</p>
+
+<p>The metadata dataset contains three main sets of data:</p>
+
+<ul>
+<li>Statistics.  This is an <code>earliest</code> and <code>latest</code> column which
+describes the time range of data that is present in the file.</li>
+<li>Configuration.  This lives under the prefix &#39;config.&#39;.  It records
+the JSON configuration parameters required to make MLDB re-load
+the dataset.</li>
+<li>User metadata.  This lives under the prefix <code>md.</code>.  Any user-supplied
+data can be provided here.  For example, if there was a separate
+continuous dataset recording to the same metadata database for each
+country, then the <code>md.country</code> field might be recorded into the
+metadata database.  This would allow a <code>continuous.window</code> dataset to
+be constructed that only contained data from given countries.</li>
+</ul>
+
+<h3>Limitations</h3>
+
+<ul>
+<li>The underlying dataset&#39;s <code>commit</code> is only called just before the
+dataset is saved.  For most datasets, this means that on a crash of
+MLDB, all data that hasn&#39;t finished saving will be lost.  A write-
+ahead log will be added in a further release to protect against
+this eventuality.</li>
+<li>MLDB will not notice if a file mentioned in the metadata database
+is removed, and if this happens the construction of a window dataset
+will fail.</li>
+<li>If a file mentioned in the metadata database is rewritten or modified,
+MLDB will not notice that its contents are different, and will access
+the file as if it contained the original contents.  This may be
+surprising to the user.  The best way to avoid this happening is to
+never overwrite a file used for a dataset.</li>
+<li>The continuous dataset does not clean up old files.  This should be
+performed by an external process with access to the metadata database,
+which should be cleaned up consistently with respect the actual files
+(in other words, entries should be removed from the metadata database
+BEFORE they are removed from disk, and there should be a grace period
+to allow an in-progress load to finish loading a file before it
+disappears).</li>
+<li>There is no way to add existing datasets into a continuous dataset
+(ie, to bulk-load data that is already in MLDB).  This can be done 
+manually by writing it to a persistent dataset and adding the
+appropriate entries to the metadata database.</li>
+<li>Currently, only the <a href="/v1/plugins/pro/doc/MutableBinaryBehaviourDataset.md.html"><code>beh.binary.mutable</code> dataset type</a> dataset type implements all
+of the functionality required to be reliably used with MLDB.</li>
+</ul>
+
+<h1>Example</h1>
+
+<p>Here is a sample configuration of the <code>createStorageDataset</code> procedure.
+The JS source of the procedure is:</p>
+
+<pre><code class="language-javascript">// Create a binary behaviour dataset to save into
+var config = { type: &quot;beh.binary.mutable&quot; };
+var dataset = mldb.createDataset(config);
+
+// Construct our output, which has a `config` parameter to pass back
+var output = { config: dataset.config() };
+
+// Return our output
+output;
+</code></pre>
+
+<p>And the <code>saveStorageDataset</code> procedure is:</p>
+
+<pre><code class="language-javascript">// This is the URI we save our dataset to
+var uri = &quot;file://mydata/&quot; + new Date().toISOString() + &quot;.beh&quot;;
+
+// The REST address for the dataset
+var addr = &quot;/v1/datasets/&quot; + args.datasetId; 
+
+// Call its save route
+var res = mldb.post(addr + &quot;/routes/saves&quot;, { dataFileUrl: uri });
+
+// Log the result of the REST call
+mldb.log(res);
+
+// Construct our response to return to MLDB, with our
+var output = { metadata: mldb.get(addr).json.status, config: res.json, metadata: { country: &#39;france&#39; } };
+
+// Return the result as the output of the procedure
+output;
+</code></pre>
+
+<p>Putting it together, we construct our continuous dataset as follows</p>
+
+<pre><code class="language-python">mldb.put(&quot;/v1/datasets/recorder&quot;, {
+    &quot;type&quot;: &quot;continuous&quot;,
+    &quot;params&quot;: {
+        &quot;commitInterval&quot;: &quot;1s&quot;,
+        &quot;metadataDataset&quot;: {
+            &quot;type&quot;: &quot;sqliteSparse&quot;,
+            &quot;id&quot;: &quot;metadata-db&quot;,
+            &quot;params&quot;: {
+                &quot;dataFileUrl&quot;: &quot;file://mydata/metadata.sqlite&quot;
+            }
+        },
+        &quot;createStorageDataset&quot;: {
+            &quot;type&quot;: &quot;script.run&quot;,
+            &quot;params&quot;: {
+                &quot;language&quot;: &quot;javascript&quot;,
+                &quot;scriptConfig&quot;: {
+                    &quot;source&quot;: &quot;&lt;as above&gt;&quot;
+                }
+            }
+        },
+        &quot;saveStorageDataset&quot;: {
+            &quot;type&quot;: &quot;script.run&quot;,
+            &quot;params&quot;: {
+                &quot;language&quot;: &quot;javascript&quot;,
+                &quot;scriptConfig&quot;: {
+                    &quot;source&quot;: &quot;&lt;as above&gt;&quot;
+                }
+            }
+        }
+    }
+})
+</code></pre>
+
+<p>And a configuration to read data recorded in the last 3 days is</p>
+
+<pre><code class="language-python">mldb.put(&quot;/v1/datasets/window&quot;, {
+    &quot;type&quot;: &quot;continuous.window&quot;,
+    &quot;params&quot;: {
+        &quot;metadataDataset&quot;: {
+            &quot;id&quot;: &quot;metadata-db&quot;,
+        },
+        &quot;from&quot;: &quot;&lt;3 days ago in ISO8601 format&gt;&quot;,
+        &quot;to&quot;: &quot;&lt;now in ISO8601 format&gt;&quot;
+    }
+})
+</code></pre>
+
+<h1>See also</h1>
+
+<ul>
+<li>The <a href="/v1/plugins/pro/doc/MutableBehaviourDataset.md.html"><code>beh.mutable</code> dataset type</a> allows files
+of the given format to be created.</li>
+</ul>
+</body>
+</html>

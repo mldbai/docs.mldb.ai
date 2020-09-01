@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset='utf-8' />
+<title>MLDB Documentation</title>
+<script src='/resources/js/mathjax_TeX-AMS-MML_HTMLorMML.js'></script>
+<link rel='stylesheet' href='/resources/css/prism.css'>
+<link rel='stylesheet' href='/resources/css/doc.css'>
+<script src='/resources/js/jquery-1.11.2.min.js'></script>
+<script src='/resources/js/prism.js'></script>
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  if(window.location.origin == 'http://mldb.ai')
+  { ga('create', 'UA-16909325-9', 'auto'); }
+  else
+  { ga('create', 'UA-16909325-10', {'cookieDomain': 'none'}); }
+  ga('send', 'pageview');
+</script>
+</head>
+<body style='margin-left: 50px; max-width: 1000px'>
+<h1>SQL implementation in MLDB</h1>
+
+<p>MLDB implements a query language based upon SQL&#39;s <code>select</code> syntax.
+This is used both for efficient evaluation of expressions, and to 
+specify queries. </p>
+
+<h2>Query Clauses</h2>
+
+<ul>
+<li><code>SELECT &lt;</code><a href="SelectExpression.md.html"><code>Select Expression</code></a><code>&gt;</code> specifies the columns to put in the output dataset</li>
+<li><code>NAMED &lt;</code><a href="ValueExpression.md.html"><code>Value Expression</code></a><code>&gt;</code> specifies the name of the rows in the output dataset</li>
+<li><code>FROM &lt;</code><a href="FromExpression.md.html"><code>From Expression</code></a><code>&gt;</code> specifies the dataset(s) to select from</li>
+<li><code>WHEN &lt;</code><a href="WhenExpression.md.html"><code>When Expression</code></a><code>&gt;</code> specifies which values to put in the output dataset based on their timestamp</li>
+<li><code>WHERE &lt;</code><a href="WhereExpression.md.html"><code>Where Expression</code></a><code>&gt;</code> specifies which rows in the input contribute to the output dataset</li>
+<li><code>GROUP BY &lt;</code><a href="GroupByExpression.md.html"><code>Group-By Expression</code></a><code>&gt;</code> specifies how to group the output for aggregate functions</li>
+<li><code>HAVING &lt;</code><a href="WhereExpression.md.html"><code>Where Expression</code></a><code>&gt;</code> specifies the groups to select</li>
+<li><code>ORDER BY &lt;</code><a href="OrderByExpression.md.html"><code>Order-By Expression</code></a><code>&gt;</code> specifies the order to output the results</li>
+<li><code>LIMIT &lt;int&gt;</code> specifies the number of output rows</li>
+<li><code>OFFSET &lt;int&gt;</code> specifies how many output rows to skip</li>
+</ul>
+
+<h2>General Syntax Rules</h2>
+
+<ul>
+<li>Queries are not whitespace-sensitive, and may contain newline characters.</li>
+<li>SQL comments are supported: <code>--</code> denotes the start of a line comment and <code>/* ... */</code> denotes a block comment which can span multiple lines</li>
+<li>Keywords and operators are not case-sensitive.</li>
+<li>Double-quote (i.e. <code>&quot;</code>) denote identifiers and single-quote characters (i.e. <code>&#39;</code>) denote strings</li>
+<li>Identifiers such as the names of dataset, column and function are case sensitive and may contain any Unicode character.</li>
+<li>Identifiers may appear unquoted in queries if and only if they start with a letter and contain only ASCII letters, numbers and underscore characters (i.e. <code>_</code>), and don&#39;t clash with a reserved word such as <code>from</code> or <code>timestamp</code>. In all other cases they must be surrounded by double-quote characters (i.e. <code>&quot;</code>). Double-quote characters within quotes must be doubled (i.e. <code>&quot;&quot;</code>). 
+
+<ul>
+<li>For example, to
+refer to a dataset, column or function called <code>François says &quot;hello&quot;, eh?</code> in a query, you would need to
+surround it in double-quotes (because of the spaces, punctuation and non-ASCII character) and double the inner double-quotes: <code>&quot;François says &quot;&quot;hello&quot;&quot;, eh?&quot;</code>.</li>
+</ul></li>
+<li>Column and row names are special identifiers: they are the string representation of column and row paths, as detailed in the <a href="../datasets/Datasets.md.html">Intro to Datasets</a></li>
+<li>The dot, or period, character (i.e. <code>.</code>) is an indirection operator, much like the minus, or dash, character (i.e. <code>-</code>) is a mathematical operator, so while either may appear in an quoted identifier, confusion and excess quoting can be avoided by avoiding this practice. The only punctuation mark which is not and will never be an operator is the underscore character (i.e. <code>_</code>).</li>
+</ul>
+
+<h2>See also</h2>
+
+<ul>
+<li><a href="QueryAPI.md.html">Query API</a></li>
+<li><a href="../datasets/Datasets.md.html">introduction to Datasets</a></li>
+<li><a href="TypeSystem.md.html">the MLDB Type System</a></li>
+</ul>
+</body>
+</html>

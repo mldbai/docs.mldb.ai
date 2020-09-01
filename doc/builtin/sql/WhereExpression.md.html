@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset='utf-8' />
+<title>MLDB Documentation</title>
+<script src='/resources/js/mathjax_TeX-AMS-MML_HTMLorMML.js'></script>
+<link rel='stylesheet' href='/resources/css/prism.css'>
+<link rel='stylesheet' href='/resources/css/doc.css'>
+<script src='/resources/js/jquery-1.11.2.min.js'></script>
+<script src='/resources/js/prism.js'></script>
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  if(window.location.origin == 'http://mldb.ai')
+  { ga('create', 'UA-16909325-9', 'auto'); }
+  else
+  { ga('create', 'UA-16909325-10', {'cookieDomain': 'none'}); }
+  ga('send', 'pageview');
+</script>
+</head>
+<body style='margin-left: 50px; max-width: 1000px'>
+<h1>SQL Where Expressions</h1>
+
+<p>An SQL Where
+expression is a standard SQL <a href="ValueExpression.md.html">Value Expression</a>, and is
+coerced to a boolean type after evaluation. The SQL <code>WHERE</code> clause is used to select 
+a subset of rows to process. Only rows which are <code>true</code> are kept;
+rows that evaluate to <code>null</code> or <code>false</code> are discarded.</p>
+
+<h2>Optimization of Where Expressions over datasets using indexes</h2>
+
+<p>The following patterns in a Where expression will be optimized against a dataset by
+using the column index for the given column:</p>
+
+<ul>
+<li><code>WHERE rowName() = constant</code></li>
+<li><code>WHERE constant = rowName()</code></li>
+<li><code>WHERE rowName() IN (constant, constant, ...)</code></li>
+<li><code>WHERE rowName() % constant &lt;op&gt; constant</code> (op can be one of <code>=</code>, <code>!=</code>, <code>&lt;</code>, <code>&gt;</code>, <code>&lt;=</code>, <code>&gt;=</code>)</li>
+<li><code>WHERE column = constant</code></li>
+<li><code>WHERE column</code></li>
+<li><code>WHERE column IS TRUE</code></li>
+<li><code>WHERE column IS NOT NULL</code></li>
+<li><code>WHERE x AND y</code> (where both x and y are in this list)</li>
+<li><code>WHERE x OR y</code> (where both x and y are in this list)</li>
+</ul>
+
+<p>This can considerably speed up a lot of MLDB queries.</p>
+</body>
+</html>

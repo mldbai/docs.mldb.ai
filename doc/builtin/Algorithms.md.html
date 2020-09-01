@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset='utf-8' />
+<title>MLDB Documentation</title>
+<script src='/resources/js/mathjax_TeX-AMS-MML_HTMLorMML.js'></script>
+<link rel='stylesheet' href='/resources/css/prism.css'>
+<link rel='stylesheet' href='/resources/css/doc.css'>
+<script src='/resources/js/jquery-1.11.2.min.js'></script>
+<script src='/resources/js/prism.js'></script>
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  if(window.location.origin == 'http://mldb.ai')
+  { ga('create', 'UA-16909325-9', 'auto'); }
+  else
+  { ga('create', 'UA-16909325-10', {'cookieDomain': 'none'}); }
+  ga('send', 'pageview');
+</script>
+</head>
+<body style='margin-left: 50px; max-width: 1000px'>
+<h1>Algorithm Support</h1>
+
+<p>MLDB <a href="procedures/Procedures.md.html">Procedures</a> are used to train models, which can then be applied via <a href="functions/Functions.md.html">Functions</a>.</p>
+
+<h2>Supervised Machine Learning</h2>
+
+<ul>
+<li>The <a href="/doc/builtin/procedures/Classifier.md.html"><code>classifier.train</code> procedure type</a> can train:
+
+<ul>
+<li><a href="https://en.wikipedia.org/wiki/Generalized_linear_model" target="_blank">Generalized Linear Models</a> </li>
+<li><a href="https://en.wikipedia.org/wiki/Logistic_regression" target="_blank">Logistic Regressions</a></li>
+<li><a href="https://en.wikipedia.org/wiki/Decision_tree_learning" target="_blank">Decision Trees</a> (including <a href="https://en.wikipedia.org/wiki/Random_forest" target="_blank">Random Forests</a>)</li>
+<li><a href="https://en.wikipedia.org/wiki/Artificial_neural_network" target="_blank">Neural Networks</a></li>
+<li><a href="https://en.wikipedia.org/wiki/Naive_Bayes_classifier" target="_blank">Naive Bayes models</a></li>
+<li>with <a href="https://en.wikipedia.org/wiki/Bootstrap_aggregating" target="_blank">Bagging</a></li>
+<li>with <a href="https://en.wikipedia.org/wiki/Boosting_(machine_learning)" target="_blank">Boosting</a></li>
+</ul></li>
+<li>The <a href="/doc/builtin/procedures/Svm.md.html"><code>svm.train</code> procedure type</a> can train <a href="https://en.wikipedia.org/wiki/Support_vector_machine" target="_blank">Support Vector Machines (SVM)</a></li>
+<li>The <a href="/doc/builtin/procedures/Probabilizer.md.html"><code>probabilizer.train</code> procedure type</a> can calibrate classifiers</li>
+</ul>
+
+<h2>Deep Learning</h2>
+
+<ul>
+<li>The <a href="/v1/plugins/tensorflow/doc/TensorflowGraph.md.html"><code>tensorflow.graph</code> function type</a> can execute <a href="https://www.tensorflow.org/" target="_blank">TensorFlow</a> models</li>
+</ul>
+
+<h2>Clustering</h2>
+
+<ul>
+<li>The <a href="/doc/builtin/procedures/KmeansProcedure.md.html"><code>kmeans.train</code> procedure type</a> can train <a href="https://en.wikipedia.org/wiki/K-means_clustering" target="_blank">K-Means models</a> </li>
+</ul>
+
+<h2>Dimensionality Reduction, Visualization &amp; Manifold Learning</h2>
+
+<ul>
+<li>The <a href="/doc/builtin/procedures/Svd.md.html"><code>svd.train</code> procedure type</a> can perform <a href="https://en.wikipedia.org/wiki/Singular_value_decomposition" target="_blank">Truncated Singular Value Decompositions (SVD)</a></li>
+<li>The <a href="/doc/builtin/procedures/TsneProcedure.md.html"><code>tsne.train</code> procedure type</a> can perform <a href="https://en.wikipedia.org/wiki/T-distributed_stochastic_neighbor_embedding" target="_blank">t-distributed Stochastic Neighbor Embedding (t-SNE)</a></li>
+</ul>
+
+<h2>Feature Engineering</h2>
+
+<ul>
+<li>The <a href="/doc/builtin/procedures/SentiWordNetImporter.md.html"><code>import.sentiwordnet</code> procedure type</a> can import <a href="http://sentiwordnet.isti.cnr.it/" target="_blank">SentiWordNet</a> models </li>
+<li>The <a href="/doc/builtin/procedures/Word2VecImporter.md.html"><code>import.word2vec</code> procedure type</a> can import <a href="https://code.google.com/p/word2vec/" target="_blank">Word2Vec</a> embeddings </li>
+<li>The <a href="/doc/builtin/procedures/TfidfProcedure.md.html"><code>tfidf.train</code> procedure type</a> can train <a href="https://en.wikipedia.org/wiki/Tf%E2%80%93idf" target="_blank">Term-Frequency/Inverse-Document-Frequency (TF-IDF) models</a></li>
+<li>The <a href="/doc/builtin/procedures/StatsTableProcedure.md.html"><code>statsTable.train</code> procedure type</a> can assemble tables of counts to assemble <a href="https://www.youtube.com/watch?v=b7OSggJUVPY" target="_blank">count-based features</a></li>
+<li>The <a href="/doc/builtin/functions/FeatureHashingFunction.md.html"><code>feature_hasher</code> function type</a> can be used to do <a href="https://en.wikipedia.org/wiki/Feature_hashing" target="_blank">feature hashing</a>, which is a way to vectorize features</li>
+</ul>
+</body>
+</html>

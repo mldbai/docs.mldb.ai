@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset='utf-8' />
+<title>MLDB Documentation</title>
+<script src='/resources/js/mathjax_TeX-AMS-MML_HTMLorMML.js'></script>
+<link rel='stylesheet' href='/resources/css/prism.css'>
+<link rel='stylesheet' href='/resources/css/doc.css'>
+<script src='/resources/js/jquery-1.11.2.min.js'></script>
+<script src='/resources/js/prism.js'></script>
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  if(window.location.origin == 'http://mldb.ai')
+  { ga('create', 'UA-16909325-9', 'auto'); }
+  else
+  { ga('create', 'UA-16909325-10', {'cookieDomain': 'none'}); }
+  ga('send', 'pageview');
+</script>
+</head>
+<body style='margin-left: 50px; max-width: 1000px'>
+<h1>Embedding Dataset</h1>
+
+<p>The embedding dataset can store a fixed-length coordinate vector in each row.
+It is used to store the output of embeddings, and enables them to be queried
+efficiently for nearest neighbours type queries.</p>
+
+<p>The embedding dataset has strict requirements:</p>
+
+<ul>
+<li>Each row can only be recorded once</li>
+<li>Each recorded row must have exactly the same set of columns</li>
+<li>Each column value must be a number, and not an infinity or a NaN</li>
+<li>No column can have a null value, or a string value</li>
+</ul>
+
+<p>Currently, the embedding dataset can only exist in memory.</p>
+
+<p>The dataset is typically used as the
+output of a procedure that generates the embedding, such as the <a href="/doc/builtin/procedures/TsneProcedure.md.html"><code>tsne.train</code> procedure type</a>, the <a href="/doc/builtin/procedures/Svd.md.html"><code>svd.train</code> procedure type</a> or the <a href="/doc/builtin/procedures/KmeansProcedure.md.html"><code>kmeans.train</code> procedure type</a></p>
+
+<h2>Configuration</h2>
+
+<p><p>A new dataset of type <code>embedding</code> named <code>&lt;id&gt;</code> can be created as follows:</p><pre><code class="language-python">mldb.put(&quot;/v1/datasets/&quot;+&lt;id&gt;, {
+    &quot;type&quot;: &quot;embedding&quot;,
+    &quot;params&quot;: {
+        "metric": &lt;MetricSpace&gt;
+    }
+})</code></pre><p>with the following key-value definitions for <code>params</code>:</p><table class="params table" width='100%'><tr><th align='right'>Field, Type, Default</th><th>Description</th></tr>
+<tr><td align='right'><p><strong>metric</strong> <br/> <nobr>MetricSpace</nobr> <br/> <code>"euclidean"</code></p></td><td><p>Metric space which is used to index the data for nearest neighbors calculations.  Options are &#39;cosine&#39; (which is good for normalized embeddings like the SVD) and &#39;euclidean&#39; (which is good for geometric embeddings like the t-SNE algorithm).</p>
+</td></tr>
+</table></p>
+
+<h3>Metric space</h3>
+
+<p>The metric field has the following possibilities:</p>
+
+<p><h4>Enumeration <code>MetricSpace</code></h4><table class="params table"><tr><th>Value</th><th>Description</th></tr>
+<tr><td><code>none</code></td><td><p>No metric is chosen.  This will cause an error.</td></tr>
+<tr><td><code>euclidean</code></td><td><p>Use Euclidian distance for metric. This is a good choice for geometric embeddings like the t-SNE algorithm.</td></tr>
+<tr><td><code>cosine</code></td><td><p>Use cosine distance for metric.  This is a good choice for normalized and high-dimensional embeddings like the SVD.</td></tr>
+</table></p>
+
+<h2>Querying Nearest Neighbors</h2>
+
+<p>The embedding dataset stores an index in a <a href="http://en.wikipedia.org/wiki/Vantage-point_tree" target="_blank" title="Vantage Point Tree">Vantage Point Tree</a> which allows
+for efficient queries of points that are close in the embedding space.  This
+can be used for nearest-neighbors searches, which when combined with a good
+embedding algorithm can be used to implement recommendations.</p>
+
+<p>See the <a href="/doc/builtin/functions/NearestNeighborsFunction.md.html"><code>embedding.neighbors</code> function type</a> for more details.</p>
+
+<h2>Examples</h2>
+
+<ul>
+<li>The <a href="/doc/nblink.html#_demos/Recommending%20Movies" target="_blank">Recommending Movies</a> demo notebook</li>
+<li>The <a href="/doc/nblink.html#_demos/Exploring%20Favourite%20Recipes" target="_blank">Exploring Favourite Recipes</a> demo notebook</li>
+</ul>
+
+<h2>See Also</h2>
+
+<ul>
+<li><a href="http://en.wikipedia.org/wiki/Vantage-point_tree" target="_blank" title="Vantage Point Tree">Vantage Point Tree</a> is the data structure used to allow quick lookups</li>
+<li>the <a href="/doc/builtin/functions/NearestNeighborsFunction.md.html"><code>embedding.neighbors</code> function type</a> is used to find nearest neighbors in an embedding dataset.</li>
+<li>the <a href="/doc/builtin/procedures/KmeansProcedure.md.html"><code>kmeans.train</code> procedure type</a> is another way of identifying similar points.</li>
+<li>the <a href="/doc/builtin/procedures/Svd.md.html"><code>svd.train</code> procedure type</a> procedure is often used to train an embedding with a high number of dimensions</li>
+<li>the <a href="/doc/builtin/procedures/TsneProcedure.md.html"><code>tsne.train</code> procedure type</a> can be used to train a 2 or 3 dimensional embedding</li>
+</ul>
+</body>
+</html>

@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset='utf-8' />
+<title>MLDB Documentation</title>
+<script src='/resources/js/mathjax_TeX-AMS-MML_HTMLorMML.js'></script>
+<link rel='stylesheet' href='/resources/css/prism.css'>
+<link rel='stylesheet' href='/resources/css/doc.css'>
+<script src='/resources/js/jquery-1.11.2.min.js'></script>
+<script src='/resources/js/prism.js'></script>
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  if(window.location.origin == 'http://mldb.ai')
+  { ga('create', 'UA-16909325-9', 'auto'); }
+  else
+  { ga('create', 'UA-16909325-10', {'cookieDomain': 'none'}); }
+  ga('send', 'pageview');
+</script>
+</head>
+<body style='margin-left: 50px; max-width: 1000px'>
+<h1>Files and URLs</h1>
+
+<p>MLDB gives users full control over where and how data is persisted. Datasets can be saved and loaded from files. Procedures can create files and Functions can load up parameters from files.</p>
+
+<p>If data is stored in a system such as S3 or HDFS, it is possible to run multiple instances of MLDB so as to distribute computational load. For example, one powerful and expensive machine could handle model training, storing model files on S3, while a load-balanced cluster of smaller, cheaper machines could load these model files and do real-time scoring over HTTP.</p>
+
+<h2>Protocol Handlers</h2>
+
+<p>The following protocols are available for URLs:</p>
+
+<ul>
+<li><code>http://</code> and <code>https://</code>: standard HTTP, to get a file from an HTTP server on the public
+internet or a private intranet.</li>
+<li><code>s3://</code>: Refers to a file on Amazon&#39;s S3 service.  If the file is not public, then
+credentials must be added.</li>
+<li><code>sftp://</code> Refers to a file on an SFTP server. Credentials must be added. If a custom port is used,
+it must simply be part of the url. (For example, <code>sftp://host.com:1234/</code>.) The same is true
+for the credentials location parameter. (To continue with the same example, <code>host.com:12345</code>.)</li>
+<li><code>file://</code>: Refers to a file inside the MLDB container.  These resources are only
+accessible from the same container that created them.  A relative path (for example
+<code>file://filename.txt</code>) has two slashes after <code>file:</code>, and will create a file in the
+working directory of MLDB, that is the <code>mldb_data</code> directory.  An absolute path has
+three slashes after the <code>file:</code>, and will create a path relative to the root
+directory of the MLDB container (for example, <code>file:///mldb_data/filename.txt</code>).</li>
+</ul>
+
+<p>A URL that is passed without a protocol will cause an error.</p>
+
+<p>For examples of how to use the above protocol handlers, take a look at the 
+<a href="/doc/nblink.html#_tutorials/Loading%20Data%20Tutorial" target="_blank">Loading Data Tutorial</a> and the <a href="/doc/nblink.html#_tutorials/Loading%20Data%20From%20An%20HTTP%20Server%20Tutorial" target="_blank">Loading Data From An HTTP Server Tutorial</a>.</p>
+
+<h2>Compression support</h2>
+
+<p>MLDB supports decompression of files using the gzip, bzip2, xz and lz4 algorithms.
+In addition, it supports most compression schemes including zip and rar when
+opening archives (see below).  This decompression is performed transparently
+to the user.</p>
+
+<h2>Accessing files inside archives</h2>
+
+<p>It is possible to extract files from archives, by using the <code>archive+</code> scheme
+prefix.  This is done by:</p>
+
+<ol>
+<li> Obtain a URI to the archive itself, for example `http://site.com/files.zip&#39;</li>
+<li> Add the prefix <code>archive+</code> to the file, to show that we should be entering
+in to the archive.  So our example becomes <code>archive+http://site.com/files.zip</code>.</li>
+<li> Add a <code>#</code> character and the path of the file within the archive to extract.
+So the final URI to load becomes <code>archive+http://site.com/files.zip#path/file.txt</code></li>
+</ol>
+
+<p>Most archive formats, including compressed, are supported with this scheme.
+Note that extracting a file from an archive may require loading the entire
+archive, so for complex manipulation of archives it&#39;s still better to use
+external tools.</p>
+
+<h2>Credentials</h2>
+
+<p>MLDB can store credentials and supply them whenever required.</p>
+
+<p>MLDB exposes a REST API which is accessible at the route <code>/v1/credentials</code>. It
+is also possible to specify credentials when starting MLDB.  Please refer
+to the <a href="BatchMode.md.html">BatchMode</a> Section for details.</p>
+
+<h3>Credential rules</h3>
+
+<p>Credentials are specified by giving rules.  A credential rule contains two parts:</p>
+
+<ol>
+<li> The credentials, which gives the actual secret information to access a resource as well
+as the location of that resource and other metadata required for the service
+hosting the resource to complete the request;</li>
+<li> A rule which includes the resource type (e.g. S3) and a resource path prefix.
+The rule allows a user to store many credentials for the same service
+and control when the credentials is used.</li>
+</ol>
+
+<p>When a resource that requires credentials is requested, MLDB will scan the stored
+rules for matching credentials.  The matching is performed on the resource path
+using prefixes.  For example, suppose that two sets of credentials are stored
+in MLDB for the AWS S3 service, one set with read-only access</p>
+
+<pre><code>{
+  &quot;store&quot;:{
+    &quot;resource&quot;:&quot;s3://public.example.com&quot;,
+    &quot;resourceType&quot;:&quot;aws:s3&quot;,
+    &quot;credential&quot;:{
+      &quot;protocol&quot;:&quot;http&quot;,
+      &quot;location&quot;:&quot;s3.amazonaws.com&quot;,
+      &quot;id&quot;:&quot;&lt;READ ACCESS KEY ID&gt;&quot;,
+      &quot;secret&quot;:&quot;&lt;READ ACCESS KEY&gt;&quot;,
+      &quot;validUntil&quot;:&quot;2030-01-01T00:00:00Z&quot;
+    }
+  }
+}
+</code></pre>
+
+<p>and one set with read-write access</p>
+
+<pre><code>{
+  &quot;store&quot;:{
+    &quot;resource&quot;:&quot;s3://public.example.com/mystuff&quot;,
+    &quot;resourceType&quot;:&quot;aws:s3&quot;,
+    &quot;credential&quot;:{
+      &quot;protocol&quot;:&quot;http&quot;,
+      &quot;location&quot;:&quot;s3.amazonaws.com&quot;,
+      &quot;id&quot;:&quot;&lt;READ-WRITE ACCESS KEY ID&gt;&quot;,
+      &quot;secret&quot;:&quot;&lt;READ-WRITE ACCESS KEY&gt;&quot;,
+      &quot;validUntil&quot;:&quot;2030-01-01T00:00:00Z&quot;
+    }
+  }
+}
+</code></pre>
+
+<p>When requesting this resource <code>s3://public.example.com/text.csv</code>, MLDB will match the first
+rule only because its <code>resource</code> field is a prefix of the resource path and it will therefore
+use the read-only credentials. On the other-hand, if the resource
+<code>s3://public.example.com/mystuff/text.csv</code> is requested, both rules will match but
+MLDB will use the second one because it matches a longer prefix of the resource path.</p>
+
+<h3>Credentials storage</h3>
+
+<p>Unlike other resources stored in MLDB, the credentials are persisted to disk under the <code>.mldb_credentials</code>
+sub-folder of the <code>mldb_data</code> folder.  The credentials are persisted in clear so it is important to
+protect them and users are encourage to put in place the proper safeguards on that location.
+Deleting a credential entity will also delete its persisted copy.</p>
+
+<h3>Credentials objects</h3>
+
+<p>Credentials are represented as JSON objects with the following fields.</p>
+
+<p><table class="params table" width='100%'><tr><th align='right'>Field, Type, Default</th><th>Description</th></tr>
+<tr><td align='right'><p><strong>resourceType</strong> <br/> <nobr>string</nobr> <br/> <code></code></p></td><td><p>Type of resource that this credential rule applies to.  Currently, resources of type aws:s3 are supported when accessing AWS S3.</p>
+</td></tr>
+<tr><td align='right'><p><strong>resource</strong> <br/> <nobr>string</nobr> <br/> <code></code></p></td><td><p>Resource that this credential rule applies to.  This is a URI style path. If the requested resource match this prefix, the credentials will be used. The most specific match is used.  If this is empty, the credentials will be used for all resources of type <code>resourceType</code>.</p>
+</td></tr>
+<tr><td align='right'><p><strong>expiration</strong> <br/> <nobr>Date</nobr> <br/> <code>"1970-01-01T00:00:00Z"</code></p></td><td><p>Date on which credentials expire.  After this date they will no longer match.</p>
+</td></tr>
+<tr><td align='right'><p><strong>extra</strong> <br/> <nobr>JSON</nobr> <br/> <code></code></p></td><td><p>Extra credential parameters.  Some credentials types require extra information; that information can be put here.  See the documentation for the specific credentials type for more information.</p>
+</td></tr>
+<tr><td align='right'><p><strong>credential</strong> <br/> <nobr>Credential</nobr> <br/> <code></code></p></td><td><p>Credentials for when the pattern matches.  These will be returned to the caller if the above rules match.</p>
+</td></tr>
+</table></p>
+
+<p>with the <code>credential</code> field (which define the actual credentials and the resource to
+access) as follows:</p>
+
+<p><table class="params table" width='100%'><tr><th align='right'>Field, Type, Default</th><th>Description</th></tr>
+<tr><td align='right'><p><strong>provider</strong> <br/> <nobr>string</nobr> <br/> <code></code></p></td><td><p>Provider of credentials.  This is an identifier that could help locating where the credentials are stored. </p>
+</td></tr>
+<tr><td align='right'><p><strong>protocol</strong> <br/> <nobr>string</nobr> <br/> <code></code></p></td><td><p>Protocol to use to access the service</p>
+</td></tr>
+<tr><td align='right'><p><strong>location</strong> <br/> <nobr>string</nobr> <br/> <code></code></p></td><td><p>Location of the service.  This is used where there are multiple places that the same service can be provided, but we want to access the most local one.</p>
+</td></tr>
+<tr><td align='right'><p><strong>id</strong> <br/> <nobr>string</nobr> <br/> <code></code></p></td><td><p>User ID to use to access the service.  This is sometimes called the key ID or user name.</p>
+</td></tr>
+<tr><td align='right'><p><strong>secret</strong> <br/> <nobr>string</nobr> <br/> <code></code></p></td><td><p>Secret key to use to access the service.  This is sometimes called the access key or password.  It is secret and sensitive.</p>
+</td></tr>
+<tr><td align='right'><p><strong>extra</strong> <br/> <nobr>JSON</nobr> <br/> <code></code></p></td><td><p>Extra configuration needed to access the service.  Some service providers require extra information that can&#39;t be added to the rest of the fields, and that information should go here.  See the documentation for the service providers for more information.</p>
+</td></tr>
+<tr><td align='right'><p><strong>validUntil</strong> <br/> <nobr>Date</nobr> <br/> <code>"1970-01-01T00:00:00Z"</code></p></td><td><p>Time until which the credential is valid.  After this date the credentials should not be used; instead a new call should be made to get new credentials.</p>
+</td></tr>
+</table></p>
+
+<h3>Storing credentials</h3>
+
+<p>You can <code>PUT</code> (without an ID) or <code>POST</code> (with an ID) the following object to
+<code>/v1/credentials</code> in order to store new credentials:</p>
+
+<p><table class="params table" width='100%'><tr><th align='right'>Field, Type, Default</th><th>Description</th></tr>
+<tr><td align='right'><p><strong>id</strong> <br/> <nobr>string</nobr> <br/> <code></code></p></td><td><p>ID of rule</p>
+</td></tr>
+<tr><td align='right'><p><strong>store</strong> <br/> <nobr>LINK std::shared_ptr<MLDB::StoredCredentials></nobr> <br/> <code></code></p></td><td><p>Credentials to be stored</p>
+</td></tr>
+</table></p>
+
+<h3>Example: storing Amazon Web Services S3 credentials</h3>
+
+<p>The first thing that you will probably want to do is to post some AWS S3
+credentials into MLDB, as otherwise you won&#39;t be able to
+do anything on Amazon.</p>
+
+<p>The way to do this is to <code>PUT</code> to <code>/v1/credentials/&lt;id&gt;</code>:</p>
+
+<pre><code class="language-python">mldb.put(&quot;/v1/credentials/mys3creds&quot;, {
+    &quot;store&quot;:
+    {
+        &quot;resource&quot;:&quot;s3://&quot;,
+        &quot;resourceType&quot;:&quot;aws:s3&quot;,
+        &quot;credential&quot;:
+        {
+            &quot;protocol&quot;: &quot;http&quot;,
+            &quot;location&quot;:&quot;s3.amazonaws.com&quot;,
+            &quot;id&quot;:&lt;ACCESS KEY ID&gt;,
+            &quot;secret&quot;:&lt;ACCESS KEY&gt;,
+            &quot;validUntil&quot;:&quot;2030-01-01T00:00:00Z&quot;
+        }
+    }
+})
+</code></pre>
+
+<p>That will be stored in the <code>mldb_data/.mldb_credentials/mys3creds</code> file, and
+automatically reloaded next time that the container gets loaded up.</p>
+
+<p>Be very careful about the firewall rules on your machine; credentials
+are stored in plain text on the filesystem inside the container, and
+it is possible to run arbitrary Python code that can access that filesystem
+from plugins.</p>
+
+<p>It is dangerous to use credentials that
+have more permission than is strictly required (usually, read and possibly write
+access to a specific path on a bucket).  See, for example, the <a href="http://docs.aws.amazon.com/general/latest/gr/aws-access-keys-best-practices.html" target="_blank">Amazon Web Services</a>
+page on best practices with access keys.</p>
+
+<h2>Credentials Resources</h2>
+
+<p>This section lists, per resource type, the type of credentials calls that are made
+for that resource.</p>
+
+<h3>Amazon Web Services</h3>
+
+<p>Requests to AWS all start with <code>resourceType</code> of <code>aws:</code>.</p>
+
+<h4>Amazon S3</h4>
+
+<p>Requests to read from an Amazon S3 account, under <code>s3://</code> will result in a
+credentials request with the following parameters:</p>
+
+<ul>
+<li><code>resourceType</code>: <code>aws:s3</code></li>
+<li><code>resource</code>: <code>s3://...</code></li>
+</ul>
+
+<p>The <code>extra</code> parameters that can be returned are:</p>
+
+<ul>
+<li><code>bandwidthToServiceMbps</code>: if this is set, then it indicates the available total
+bandwidth to the S3 service in mbps (default 20).  This influences the timeouts
+that are calculated on S3 requests.</li>
+</ul>
+</body>
+</html>

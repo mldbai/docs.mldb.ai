@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset='utf-8' />
+<title>MLDB Documentation</title>
+<script src='/resources/js/mathjax_TeX-AMS-MML_HTMLorMML.js'></script>
+<link rel='stylesheet' href='/resources/css/prism.css'>
+<link rel='stylesheet' href='/resources/css/doc.css'>
+<script src='/resources/js/jquery-1.11.2.min.js'></script>
+<script src='/resources/js/prism.js'></script>
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  if(window.location.origin == 'http://mldb.ai')
+  { ga('create', 'UA-16909325-9', 'auto'); }
+  else
+  { ga('create', 'UA-16909325-10', {'cookieDomain': 'none'}); }
+  ga('send', 'pageview');
+</script>
+</head>
+<body style='margin-left: 50px; max-width: 1000px'>
+<h1>Importing Text</h1>
+
+<p>This procedure is used to import data from text files with each line in the file corresponding to a row in the output dataset. Delimited file formats such as Comma-Separated Values (CSV) or Tab-Separated Values (TSV) are supported by configuring delimiters and quote characters.</p>
+
+<h2>Configuration</h2>
+
+<p><p>A new procedure of type <code>import.text</code> named <code>&lt;id&gt;</code> can be created as follows:</p><pre><code class="language-python">mldb.put(&quot;/v1/procedures/&quot;+&lt;id&gt;, {
+    &quot;type&quot;: &quot;import.text&quot;,
+    &quot;params&quot;: {
+        "dataFileUrl": &lt;<a href="/doc/builtin/Url.md.html">Url</a>&gt;,
+        "outputDataset": &lt;<a href="/doc/builtin/procedures/OutputDatasetSpec.md.html">OutputDatasetSpec</a>&gt;,
+        "headers": &lt;ARRAY [ string ]&gt;,
+        "quoteChar": &lt;string&gt;,
+        "delimiter": &lt;string&gt;,
+        "limit": &lt;int&gt;,
+        "offset": &lt;int&gt;,
+        "encoding": &lt;string&gt;,
+        "ignoreBadLines": &lt;bool&gt;,
+        "structuredColumnNames": &lt;bool&gt;,
+        "replaceInvalidCharactersWith": &lt;string&gt;,
+        "select": &lt;<a href="/doc/builtin/sql/SelectExpression.md.html">SqlSelectExpression</a>&gt;,
+        "where": &lt;<a href="/doc/builtin/sql/ValueExpression.md.html">string</a>&gt;,
+        "named": &lt;<a href="/doc/builtin/sql/ValueExpression.md.html">string</a>&gt;,
+        "timestamp": &lt;<a href="/doc/builtin/sql/ValueExpression.md.html">string</a>&gt;,
+        "allowMultiLines": &lt;bool&gt;,
+        "autoGenerateHeaders": &lt;bool&gt;,
+        "ignoreExtraColumns": &lt;bool&gt;,
+        "runOnCreation": &lt;bool&gt;
+    }
+})</code></pre><p>with the following key-value definitions for <code>params</code>:</p><table class="params table" width='100%'><tr><th align='right'>Field, Type, Default</th><th>Description</th></tr>
+<tr><td align='right'><p><strong>dataFileUrl</strong> <br/> <nobr><a href="/doc/builtin/Url.md.html">Url</a></nobr> <br/> <code></code></p></td><td><p>URL of the text data to import</p>
+</td></tr>
+<tr><td align='right'><p><strong>outputDataset</strong> <br/> <nobr><a href="/doc/builtin/procedures/OutputDatasetSpec.md.html">OutputDatasetSpec</a></nobr> <br/> <code>{"type":"tabular"}</code></p></td><td><p>Dataset to record the data into.</p>
+</td></tr>
+<tr><td align='right'><p><strong>headers</strong> <br/> <nobr>ARRAY [ string ]</nobr> <br/> <code></code></p></td><td><p>List of headers for when first row doesn&#39;t contain headers</p>
+</td></tr>
+<tr><td align='right'><p><strong>quoteChar</strong> <br/> <nobr>string</nobr> <br/> <code>"\""</code></p></td><td><p>Character to enclose strings</p>
+</td></tr>
+<tr><td align='right'><p><strong>delimiter</strong> <br/> <nobr>string</nobr> <br/> <code>","</code></p></td><td><p>Delimiter for column separation</p>
+</td></tr>
+<tr><td align='right'><p><strong>limit</strong> <br/> <nobr>int</nobr> <br/> <code>0</code></p></td><td><p>Maximum number of lines to process.  Bad lines including empty lines contribute to the limit.  As a result, it is possible for the dataset to contain less rows that the requested limit.</p>
+</td></tr>
+<tr><td align='right'><p><strong>offset</strong> <br/> <nobr>int</nobr> <br/> <code>0</code></p></td><td><p>Skip the first n lines (excluding the header if present).</p>
+</td></tr>
+<tr><td align='right'><p><strong>encoding</strong> <br/> <nobr>string</nobr> <br/> <code>"utf-8"</code></p></td><td><p>Character encoding of file: &#39;us-ascii&#39;, &#39;ascii&#39;, &#39;latin1&#39;, &#39;iso8859-1&#39;, &#39;utf8&#39; or &#39;utf-8&#39;</p>
+</td></tr>
+<tr><td align='right'><p><strong>ignoreBadLines</strong> <br/> <nobr>bool</nobr> <br/> <code>false</code></p></td><td><p>If true, any line causing a parsing error will be skipped. Empty lines are considered bad lines.</p>
+</td></tr>
+<tr><td align='right'><p><strong>structuredColumnNames</strong> <br/> <nobr>bool</nobr> <br/> <code>false</code></p></td><td><p>If true, column names that look like &#39;x.y&#39; will import like <code>{ x: { y: ... } }</code> instead of <code>{ &quot;x.y&quot;: ... }</code>, in other words structure will be preserved.  The flip side is that quotes will need to be doubled and any name that includes a period will need to be quoted.  The default is to not preserve structure</p>
+</td></tr>
+<tr><td align='right'><p><strong>replaceInvalidCharactersWith</strong> <br/> <nobr>string</nobr> <br/> <code></code></p></td><td><p>If this is set, it should be a single Unicode character will be used to replace badly-encoded characters in the input. The default is nothing, which will cause lines with badly-encoded characters to throw an error.</p>
+</td></tr>
+<tr><td align='right'><p><strong>select</strong> <br/> <nobr><a href="/doc/builtin/sql/SelectExpression.md.html">SqlSelectExpression</a></nobr> <br/> <code>"*"</code></p></td><td><p>Which columns to use.</p>
+</td></tr>
+<tr><td align='right'><p><strong>where</strong> <br/> <nobr><a href="/doc/builtin/sql/ValueExpression.md.html">string</a></nobr> <br/> <code>"true"</code></p></td><td><p>Which lines to use to create rows.</p>
+</td></tr>
+<tr><td align='right'><p><strong>named</strong> <br/> <nobr><a href="/doc/builtin/sql/ValueExpression.md.html">string</a></nobr> <br/> <code>"lineNumber()"</code></p></td><td><p>Row name expression for output dataset. Note that each row must have a unique name.</p>
+</td></tr>
+<tr><td align='right'><p><strong>timestamp</strong> <br/> <nobr><a href="/doc/builtin/sql/ValueExpression.md.html">string</a></nobr> <br/> <code>"fileTimestamp()"</code></p></td><td><p>Expression for row timestamp.</p>
+</td></tr>
+<tr><td align='right'><p><strong>allowMultiLines</strong> <br/> <nobr>bool</nobr> <br/> <code>false</code></p></td><td><p>Allows columns with multi-line quoted strings. This option disables many optimizations and makes the procedure run much slower. Only use if necessary. The <code>offset</code> parameter will not be reliable when this is activated.</p>
+</td></tr>
+<tr><td align='right'><p><strong>autoGenerateHeaders</strong> <br/> <nobr>bool</nobr> <br/> <code>false</code></p></td><td><p>If true, the indexes of the columns will be used to name them.This cannot be set to true if headers is defined.</p>
+</td></tr>
+<tr><td align='right'><p><strong>ignoreExtraColumns</strong> <br/> <nobr>bool</nobr> <br/> <code>false</code></p></td><td><p>Ignore extra columns that weren&#39;t in header.  This allows for files that have optional trailing columns that aren&#39;t listed in the header or for files with a partially fixed, partially variable column set to be imported.</p>
+</td></tr>
+<tr><td align='right'><p><strong>runOnCreation</strong> <br/> <nobr>bool</nobr> <br/> <code>true</code></p></td><td><p>If true, the procedure will be run immediately. The response will contain an extra field called <code>firstRun</code> pointing to the URL of the run.</p>
+</td></tr>
+</table></p>
+
+<h2>Functions available when creating rows</h2>
+
+<p>The following functions are available in the <code>select</code>, <code>named</code>, <code>where</code> and <code>timestamp</code> expressions:</p>
+
+<ul>
+<li><code>lineNumber()</code>: returns the line number in the file</li>
+<li><code>rowHash()</code>: returns the internal hash value of the current row, useful for random sampling</li>
+<li><code>fileTimestamp()</code>: returns the timestamp (last modified time) of the file</li>
+<li><code>dataFileUrl()</code>: returns the URL of the file, from the configuration</li>
+</ul>
+
+<h2>Notes</h2>
+
+<ul>
+<li>The <code>named</code> clause must result in unique row names.  If the row names are not
+unique, the dataset will fail to be created when being indexed.  The default
+<code>named</code> expression, which is <code>lineNumber()</code>, will result in each line having
+a unique name.</li>
+<li>The number of rows skipped (due to a parsing error) will be returned in the
+<code>numLineErrors</code> field of the dataset status.</li>
+<li>The column used for the row name will <em>not</em> be automatically removed from the
+dataset.  If it needs to be removed, it should be done from the select
+using the <code>excluding (colName)</code> syntax.</li>
+<li>Columns can be renamed using the select statement.  For example, to add
+the prefix <code>xyz.</code> to each field, use <code>* AS xyz.*</code> in the <code>select</code> parameter.</li>
+</ul>
+
+<h2>Examples</h2>
+
+<ul>
+<li>The <a href="/doc/nblink.html#_tutorials/Loading%20Data%20Tutorial" target="_blank">Loading Data Tutorial</a></li>
+<li>The <a href="/doc/nblink.html#_demos/Predicting%20Titanic%20Survival" target="_blank">Predicting Titanic Survival</a> demo</li>
+</ul>
+
+<h2>See also</h2>
+
+<ul>
+<li>The <a href="/doc/builtin/procedures/JSONImporter.md.html"><code>import.json</code> procedure type</a> can be used to import a text file with one JSON per line.</li>
+</ul>
+</body>
+</html>

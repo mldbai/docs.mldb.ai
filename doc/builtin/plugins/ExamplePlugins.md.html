@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset='utf-8' />
+<title>MLDB Documentation</title>
+<script src='/resources/js/mathjax_TeX-AMS-MML_HTMLorMML.js'></script>
+<link rel='stylesheet' href='/resources/css/prism.css'>
+<link rel='stylesheet' href='/resources/css/doc.css'>
+<script src='/resources/js/jquery-1.11.2.min.js'></script>
+<script src='/resources/js/prism.js'></script>
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  if(window.location.origin == 'http://mldb.ai')
+  { ga('create', 'UA-16909325-9', 'auto'); }
+  else
+  { ga('create', 'UA-16909325-10', {'cookieDomain': 'none'}); }
+  ga('send', 'pageview');
+</script>
+</head>
+<body style='margin-left: 50px; max-width: 1000px'>
+<h1 id="plugin-gallery">Plugin Gallery</h1>
+
+<p>Here is a short list of open-source plugins for MLDB that you can make use of immediately or use as starting points to create new plugins.</p>
+
+<script src="/resources/js/jquery-1.11.2.min.js"></script>
+<script>
+$(function(){
+    $.getJSON("https://plugins.mldb.ai/registry.json", function(plugins){
+        $("#plugin-gallery").parent().append( 
+            plugins.map(function(plugin){
+                return $("<div>").append(
+                    $("<h2>").text(plugin.name),
+                    $("<p>").text(plugin.description),
+                    $("<p>").append($("<a>", {href: plugin.website, target: "_blank"}).text(plugin.website))
+                );
+            })
+        );
+    });
+});
+</script>
+</body>
+</html>

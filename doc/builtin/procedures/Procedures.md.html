@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset='utf-8' />
+<title>MLDB Documentation</title>
+<script src='/resources/js/mathjax_TeX-AMS-MML_HTMLorMML.js'></script>
+<link rel='stylesheet' href='/resources/css/prism.css'>
+<link rel='stylesheet' href='/resources/css/doc.css'>
+<script src='/resources/js/jquery-1.11.2.min.js'></script>
+<script src='/resources/js/prism.js'></script>
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  if(window.location.origin == 'http://mldb.ai')
+  { ga('create', 'UA-16909325-9', 'auto'); }
+  else
+  { ga('create', 'UA-16909325-10', {'cookieDomain': 'none'}); }
+  ga('send', 'pageview');
+</script>
+</head>
+<body style='margin-left: 50px; max-width: 1000px'>
+<h1>Intro to Procedures</h1>
+
+<p>Procedures are named, reusable programs used to implement long-running batch operations with no return values. Procedures generally run over Datasets and can be configured via <a href="../sql/Sql.md.html">SQL expressions</a>. The outputs of a Procedure can include Datasets and files. Procedures are used to:</p>
+
+<ul>
+<li>Transform/clean up data</li>
+<li>Train machine learning models (by creating <a href="../functions/Functions.md.html">Functions</a>)</li>
+<li>Apply machine models in batch mode</li>
+</ul>
+
+<h2>Running a Procedure</h2>
+
+<p>Creating a Procedure does not automatically cause it to run unless the <code>runOnCreation</code> flag is set. Procedures are run via a REST API call <code>POST /v1/procedures/&lt;id&gt;/runs {&lt;parameters&gt;}</code>, where <code>&lt;parameters&gt;</code> can override any of the parameters given to the procedure on creation.  For most procedures, it is possible to perform a first run on creation of the procedure by setting the flag <code>runOnCreation</code> to true in the parameters.  Refer to the specific procedure documentation to see if it supports it.</p>
+
+<h2>Obtaining results of a procedure</h2>
+
+<p>A procedure may return results as follows:</p>
+
+<ul>
+<li>It may create entities (datasets, functions, other procedures, ...) that
+encapsulate the results of running the procedure.</li>
+<li>It may create artifacts (files on disk or on a remote file system, sftp, ...)
+that contain the outcome of running the procedure.</li>
+<li><p>Each run of a procedure has a JSON output similar to this:</p>
+
+<pre><code>{
+    &quot;runStarted&quot;: &quot;2015-10-21T19:33:00.091Z&quot;,
+    &quot;state&quot;: &quot;finished&quot;,
+    &quot;runFinished&quot;: &quot;2015-10-21T19:33:00.151Z&quot;,
+    &quot;id&quot;: &quot;2015-10-21T19:33:00.090622Z-5bc7042b732cb41f&quot;
+}
+</code></pre>
+
+<p>When making a synchronous call (default) to create a run, that output is returned in
+the body of the response.  For asynchronous calls, that output
+is available by performing a <code>GET</code> on <code>/v1/procedures/&lt;id&gt;/runs/&lt;id&gt;</code>.</p></li>
+<li><p>In addition, each run has a JSON <code>details</code> output, which can be queried by performing a
+<code>GET</code> on <code>/v1/procedures/&lt;id&gt;/runs/&lt;id&gt;/details</code>.  This output depends on the procedure but it
+may contain a more detailed set of information about what was done including elements like
+logs of messages and errors.</p></li>
+</ul>
+
+<h2>Getting the progress of a procedure</h2>
+
+<p>Once created, a procedure returns its progress via a <code>GET</code> at <code>/v1/procedures/&lt;id&gt;</code>.
+This uri can be obtained from the <code>location</code> header that is part of the creation response.
+Here is an example of a progress response for the <code>bucketize</code> procedure</p>
+
+<pre><code>&quot;progress&quot;: {
+        &quot;steps&quot;: [
+            {
+                &quot;started&quot;: &quot;2016-12-15T19:43:52.9386692Z&quot;,
+                &quot;ended&quot;: &quot;2016-12-15T19:43:52.9768956Z&quot;,
+                &quot;type&quot;: &quot;percentile&quot;,
+                &quot;name&quot;: &quot;iterating&quot;,
+                &quot;value&quot;: 1.0
+            },
+            {
+                &quot;started&quot;: &quot;2016-12-15T19:43:52.9768965Z&quot;,
+                &quot;type&quot;: &quot;percentile&quot;,
+                &quot;name&quot;: &quot;bucketizing&quot;,
+                &quot;value&quot;: 0.8191999793052673
+            }
+        ]
+    },
+    &quot;state&quot;: &quot;executing&quot;,
+    &quot;id&quot;: &quot;2016-12-15T19:43:52.938291Z-463496b56263af05&quot;
+}
+</code></pre>
+
+<p>Other procedures will have similar responses. Note that this is currently implemented for procedures
+of type <code>transform</code>, <code>import.text</code> and <code>bucketize</code>.</p>
+
+<h2>Cancelling a procedure</h2>
+
+<p>Procedures can take a long time to execute. It is possible to interrupt a running procedure using a
+<code>PUT</code> at <code>/v1/procedures/&lt;idp&gt;/runs/&lt;idr&gt;/state</code> where <code>idp</code> is the procedure id and <code>idr</code> is the 
+run id with the following payload
+<code>
+{
+        &quot;state&quot;: &quot;cancelled&quot;
+}
+</code>
+Note that some processing is not cancellable.  As a result, the procedure may continue running for
+some time before it is finally interrupted.</p>
+
+<h2>Available Procedure Types</h2>
+
+<p>Procedures are created via a <a href="ProcedureConfig.md.html">REST API call</a> with one of the following types:</p>
+
+<p><table class="table"><tr><th>Type</th><th>Description</th><th>Doc</th></tr>
+<tr><td><code>classifier.experiment</code></td><td>Train and test a classifier</td><td><a href="/doc/builtin/procedures/ExperimentProcedure.md.html">[doc]</a></td></tr>
+<tr><td><code>classifier.test</code></td><td>Calculate the accuracy of a classifier on held-out data</td><td><a href="/doc/builtin/procedures/Accuracy.md.html">[doc]</a></td></tr>
+<tr><td><code>classifier.train</code></td><td>Train a supervised classifier</td><td><a href="/doc/builtin/procedures/Classifier.md.html">[doc]</a></td></tr>
+<tr><td><code>export.csv</code></td><td>Exports a dataset to a target location as a CSV</td><td><a href="/doc/builtin/procedures/CsvExportProcedure.md.html">[doc]</a></td></tr>
+<tr><td><code>import.git</code></td><td>Import a Git repository&#39;s metadata into MLDB</td><td><a href="/doc/builtin/procedures/GitImporter.md.html">[doc]</a></td></tr>
+<tr><td><code>import.json</code></td><td>Import a text file with one JSON per line into MLDB</td><td><a href="/doc/builtin/procedures/JSONImporter.md.html">[doc]</a></td></tr>
+<tr><td><code>import.sentiwordnet</code></td><td>Import a SentiWordNet file into MLDB</td><td><a href="/doc/builtin/procedures/SentiWordNetImporter.md.html">[doc]</a></td></tr>
+<tr><td><code>import.text</code></td><td>Import from a text file, line by line.</td><td><a href="/doc/builtin/procedures/importtextprocedure.md.html">[doc]</a></td></tr>
+<tr><td><code>import.word2vec</code></td><td>Import a word2vec file into MLDB</td><td><a href="/doc/builtin/procedures/Word2VecImporter.md.html">[doc]</a></td></tr>
+<tr><td><code>kmeans.train</code></td><td>Simple clustering algorithm based on cluster centroids in embedding space</td><td><a href="/doc/builtin/procedures/KmeansProcedure.md.html">[doc]</a></td></tr>
+<tr><td><code>melt</code></td><td>Performs a melt operation on a dataset</td><td><a href="/doc/builtin/procedures/MeltProcedure.md.html">[doc]</a></td></tr>
+<tr><td><code>mongodb.import</code></td><td>Import a dataset from MongoDB</td><td><a href="/v1/plugins/mongodb/doc/MongoImport.md.html">[doc]</a></td></tr>
+<tr><td><code>permuter.run</code></td><td>Run a child procedure with permutations of its configuration</td><td><a href="/doc/builtin/procedures/PermuterProcedure.md.html">[doc]</a></td></tr>
+<tr><td><code>probabilizer.train</code></td><td>Trains a model to calibrate a score into a probability</td><td><a href="/doc/builtin/procedures/Probabilizer.md.html">[doc]</a></td></tr>
+<tr><td><code>randomforest.binary.train</code></td><td>Train a supervised binary random forest</td><td><a href="/doc/builtin/procedures/RandomForest.md.html">[doc]</a></td></tr>
+<tr><td><code>statsTable.bagOfWords.train</code></td><td>Create statistical tables of trials against outcomes for bag of words</td><td><a href="/doc/builtin/procedures/BagOfWordsStatsTableProcedure.md.html">[doc]</a></td></tr>
+<tr><td><code>statsTable.train</code></td><td>Create statistical tables of trials against outcomes</td><td><a href="/doc/builtin/procedures/StatsTableProcedure.md.html">[doc]</a></td></tr>
+<tr><td><code>summary.statistics</code></td><td>Creates a dataset with summary statistics for each columns of an input dataset</td><td><a href="/doc/builtin/procedures/SummaryStatisticsProcedure.md.html">[doc]</a></td></tr>
+<tr><td><code>svd.train</code></td><td>Train a SVD to convert rows or columns to embedding coordinates</td><td><a href="/doc/builtin/procedures/Svd.md.html">[doc]</a></td></tr>
+<tr><td><code>tfidf.train</code></td><td>Prepare data for a TF-IDF function</td><td><a href="/doc/builtin/procedures/TfidfProcedure.md.html">[doc]</a></td></tr>
+<tr><td><code>transform</code></td><td>Apply an SQL expression over a dataset to transform into another dataset</td><td><a href="/doc/builtin/procedures/TransformDataset.md.html">[doc]</a></td></tr>
+<tr><td><code>tsne.train</code></td><td>Project a high dimensional space into a low-dimensional space suitable for visualization</td><td><a href="/doc/builtin/procedures/TsneProcedure.md.html">[doc]</a></td></tr>
+</table></p>
+
+<h2>See also</h2>
+
+<ul>
+<li><a href="/doc/nblink.html#_tutorials/Procedures%20and%20Functions%20Tutorial" target="_blank">Procedures and Functions Tutorial</a> </li>
+</ul>
+</body>
+</html>

@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset='utf-8' />
+<title>MLDB Documentation</title>
+<script src='/resources/js/mathjax_TeX-AMS-MML_HTMLorMML.js'></script>
+<link rel='stylesheet' href='/resources/css/prism.css'>
+<link rel='stylesheet' href='/resources/css/doc.css'>
+<script src='/resources/js/jquery-1.11.2.min.js'></script>
+<script src='/resources/js/prism.js'></script>
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  if(window.location.origin == 'http://mldb.ai')
+  { ga('create', 'UA-16909325-9', 'auto'); }
+  else
+  { ga('create', 'UA-16909325-10', {'cookieDomain': 'none'}); }
+  ga('send', 'pageview');
+</script>
+</head>
+<body style='margin-left: 50px; max-width: 1000px'>
+<h1>Distribution Table Procedure</h1>
+
+<p>For a combination of feature columns (the <code>training_data</code> parameter) and outcomes, this procedure
+will iteratively (over the rows) calculate different statistics (count, avg, std, min, max) on
+the outcomes, for each values of the feature columns. </p>
+
+<p>The feature columns are assumed to be string-valued, and the outcome numeric-valued (type <code>INTEGER</code> or <code>NUMBER</code>). </p>
+
+<p>This procedure can be viewed as a <a href="/doc/builtin/procedures/StatsTableProcedure.md.html"><code>statsTable.train</code> procedure type</a> where the
+labels are numbers instead of booleans.</p>
+
+<p>You can optionally specify an output dataset that will contain the computed rolling statistics for each feature column / outcome
+combination. Since we are doing it iteratively, it means that the statistics for row <code>n</code> will only use the <code>n-1</code> preceding rows.</p>
+
+<p>The resulting statistical tables can be persisted using the <code>distTableFileUrl</code> parameter
+and used later on to lookup counts using the <a href="/doc/builtin/functions/DistTableGetStats.md.html"><code>experimental.distTable.getStats</code> function type</a>.</p>
+
+<h2>Configuration</h2>
+
+<p><p>A new procedure of type <code>experimental.distTable.train</code> named <code>&lt;id&gt;</code> can be created as follows:</p><pre><code class="language-python">mldb.put(&quot;/v1/procedures/&quot;+&lt;id&gt;, {
+    &quot;type&quot;: &quot;experimental.distTable.train&quot;,
+    &quot;params&quot;: {
+        "trainingData": &lt;<a href="/doc/builtin/procedures/InputQuery.md.html">InputQuery</a>&gt;,
+        "outputDataset": &lt;<a href="/doc/builtin/procedures/OutputDatasetSpec.md.html">OutputDatasetSpec</a> (Optional)&gt;,
+        "outcomes": &lt;ARRAY [ TUPLE [ string, <a href="/doc/builtin/sql/ValueExpression.md.html">string</a> ] ]&gt;,
+        "statistics": &lt;ARRAY [ string ]&gt;,
+        "mode": &lt;DistTableMode&gt;,
+        "distTableFileUrl": &lt;<a href="/doc/builtin/Url.md.html">Url</a>&gt;,
+        "functionName": &lt;string&gt;,
+        "runOnCreation": &lt;bool&gt;
+    }
+})</code></pre><p>with the following key-value definitions for <code>params</code>:</p><table class="params table" width='100%'><tr><th align='right'>Field, Type, Default</th><th>Description</th></tr>
+<tr><td align='right'><p><strong>trainingData</strong> <br/> <nobr><a href="/doc/builtin/procedures/InputQuery.md.html">InputQuery</a></nobr> <br/> <code></code></p></td><td><p>SQL query to select the data on which the rolling operations will be performed.</p>
+</td></tr>
+<tr><td align='right'><p><strong>outputDataset</strong> <br/> <nobr><a href="/doc/builtin/procedures/OutputDatasetSpec.md.html">OutputDatasetSpec</a> (Optional)</nobr> <br/> <code>{"type":"tabular"}</code></p></td><td><p>Output dataset</p>
+</td></tr>
+<tr><td align='right'><p><strong>outcomes</strong> <br/> <nobr>ARRAY [ TUPLE [ string, <a href="/doc/builtin/sql/ValueExpression.md.html">string</a> ] ]</nobr> <br/> <code></code></p></td><td><p>List of expressions to generate the outcomes. Each can be any expression involving the columns in the dataset. The type of the outcomes must be of type <code>INTEGER</code> or <code>NUMBER</code></p>
+</td></tr>
+<tr><td align='right'><p><strong>statistics</strong> <br/> <nobr>ARRAY [ string ]</nobr> <br/> <code>["count","avg","std","min","max"]</code></p></td><td><p>List of statistics to track for each outcome.</p>
+</td></tr>
+<tr><td align='right'><p><strong>mode</strong> <br/> <nobr>DistTableMode</nobr> <br/> <code>"fixedColumns"</code></p></td><td><p>Distribution table mode. This must match the type of data to use: fixed columns or bag of words.</p>
+</td></tr>
+<tr><td align='right'><p><strong>distTableFileUrl</strong> <br/> <nobr><a href="/doc/builtin/Url.md.html">Url</a></nobr> <br/> <code></code></p></td><td><p>URL where the model file (with extension &#39;.dt&#39;) should be saved. This file can be loaded by the <a href="/doc/builtin/functions/DistTableGetStats.md.html"><code>experimental.distTable.getStats</code> function type</a>. This parameter is optional unless the <code>functionName</code> parameter is used.</p>
+</td></tr>
+<tr><td align='right'><p><strong>functionName</strong> <br/> <nobr>string</nobr> <br/> <code></code></p></td><td><p>If specified, an instance of the <a href="/doc/builtin/functions/DistTableGetStats.md.html"><code>experimental.distTable.getStats</code> function type</a> of this name will be created using the trained dist tables. Note that to use this parameter, the <code>distTableFileUrl</code> must also be provided.</p>
+</td></tr>
+<tr><td align='right'><p><strong>runOnCreation</strong> <br/> <nobr>bool</nobr> <br/> <code>true</code></p></td><td><p>If true, the procedure will be run immediately. The response will contain an extra field called <code>firstRun</code> pointing to the URL of the run.</p>
+</td></tr>
+</table></p>
+
+<h2>Example</h2>
+
+<p>Let&#39;s assume a dataset made up of data from a real-time bidding online campaign. Each row
+represents a bid request and each column represents a field in the bid request. We&#39;re interested
+in tracking statistics on each outcome, given some feature columns. The outcome we will be
+interested in here is the <code>purchase_value</code>, and the features will be the <code>host</code> and the <code>region</code>.</p>
+
+<table>
+<thead>
+<tr>
+<th>rowName</th>
+<th>host</th>
+<th>region</th>
+<th>click_on_ad</th>
+<th>purchase_value</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>br_1</td>
+<td>patate.com</td>
+<td>qc</td>
+<td>1</td>
+<td>0</td>
+</tr>
+<tr>
+<td>br_2</td>
+<td>carotte.net</td>
+<td>on</td>
+<td>1</td>
+<td>25</td>
+</tr>
+<tr>
+<td>br_3</td>
+<td>patate.com</td>
+<td>on</td>
+<td>0</td>
+<td>12</td>
+</tr>
+<tr>
+<td>br_4</td>
+<td>carotte.net</td>
+<td>on</td>
+<td>0</td>
+<td>0</td>
+</tr>
+</tbody>
+</table>
+
+<p>Assume this partial configuration:</p>
+
+<pre><code class="language-javascript">{
+    &quot;trainingData&quot;: &quot;* EXCLUDING(purchase_value)&quot;,
+    &quot;outcomes&quot;: [
+        [&quot;price&quot;, &quot;purchase_value&quot;]
+    ]
+}
+</code></pre>
+
+<p>Here is an excerpt of the statistics table (as saved in <code>distTableFileUrl</code>)</p>
+
+<table>
+<thead>
+<tr>
+<th>outcome</th>
+<th>column</th>
+<th>value</th>
+<th>stat</th>
+<th>stat_value</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>price</td>
+<td>host</td>
+<td>patate.com</td>
+<td>count</td>
+<td>2</td>
+</tr>
+<tr>
+<td>price</td>
+<td>host</td>
+<td>patate.com</td>
+<td>avg</td>
+<td>2</td>
+</tr>
+<tr>
+<td>price</td>
+<td>host</td>
+<td>patate.com</td>
+<td>std</td>
+<td>1.4142</td>
+</tr>
+<tr>
+<td>price</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+</tr>
+<tr>
+<td>price</td>
+<td>region</td>
+<td>on</td>
+<td>std</td>
+<td>1</td>
+</tr>
+<tr>
+<td>price</td>
+<td>region</td>
+<td>on</td>
+<td>min</td>
+<td>1</td>
+</tr>
+<tr>
+<td>price</td>
+<td>region</td>
+<td>on</td>
+<td>max</td>
+<td>3</td>
+</tr>
+</tbody>
+</table>
+
+<p>The iteratively calculated dataset would look like this:</p>
+
+<table>
+<thead>
+<tr>
+<th>rowName</th>
+<th>price.host.count</th>
+<th>price.host.avg</th>
+<th>price.host.std</th>
+<th>...</th>
+<th>price.region.std</th>
+<th>price.region.min</th>
+<th>price.max</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>br_1</td>
+<td>0</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>...</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+</tr>
+<tr>
+<td>br_2</td>
+<td>0</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>...</td>
+<td>NaN</td>
+<td>1</td>
+<td>1</td>
+</tr>
+<tr>
+<td>br_3</td>
+<td>1</td>
+<td>1</td>
+<td>NaN</td>
+<td>...</td>
+<td>1.4142</td>
+<td>1</td>
+<td>2</td>
+</tr>
+<tr>
+<td>br_4</td>
+<td>1</td>
+<td>2</td>
+<td>NaN</td>
+<td>...</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+</tr>
+</tbody>
+</table>
+
+<p>Now why is this dataset useful? Imagine we used this procedure on a series of
+bid requests sorted in time. In the resulting dataset, each row will correspond
+to one of the bid requests, and the columns will be the different statistics on the
+outcomes, using only the previous bid requests with corresponding attributes. 
+From a machine learning perspective, this generates training examples that
+are unbiased with regards to the new information provided by this bid request
+after it has been bid on.</p>
+
+<h2>See also</h2>
+
+<ul>
+<li>The <a href="/doc/builtin/functions/DistTableGetStats.md.html"><code>experimental.distTable.getStats</code> function type</a> does a lookup in stats tables for an input row.</li>
+</ul>
+</body>
+</html>

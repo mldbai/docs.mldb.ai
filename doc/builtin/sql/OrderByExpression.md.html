@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset='utf-8' />
+<title>MLDB Documentation</title>
+<script src='/resources/js/mathjax_TeX-AMS-MML_HTMLorMML.js'></script>
+<link rel='stylesheet' href='/resources/css/prism.css'>
+<link rel='stylesheet' href='/resources/css/doc.css'>
+<script src='/resources/js/jquery-1.11.2.min.js'></script>
+<script src='/resources/js/prism.js'></script>
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  if(window.location.origin == 'http://mldb.ai')
+  { ga('create', 'UA-16909325-9', 'auto'); }
+  else
+  { ga('create', 'UA-16909325-10', {'cookieDomain': 'none'}); }
+  ga('send', 'pageview');
+</script>
+</head>
+<body style='margin-left: 50px; max-width: 1000px'>
+<h1>SQL Order-By Expressions</h1>
+
+<p>An SQL Order-By expression is a comma-delimited list of <a href="ValueExpression.md.html">Value Expressions</a>, where each expression can be followed by <code>ASC</code> or <code>DESC</code> to specify ascending or descending order, respectively. Query results will be sorted by the order of the expressions in the Order-By expression.</p>
+
+<p>All Order-By expressions (including the default, empty, Order-By expression) have <code>rowHash()</code> appended to them, so as to provide a stable sort order at all times.</p>
+
+<p>The Order-By expressions support ordering with complex types (e.g. row) using lexicographical ordering.
+Consider this fictive dataset <code>docs</code> containing the list of programming languages mentioned in a given set of documents:</p>
+
+<table>
+<thead>
+<tr>
+<th>rowName</th>
+<th>terms</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>doc1</td>
+<td>&quot;c++,python,c++,java,c++&quot;</td>
+</tr>
+<tr>
+<td>doc2</td>
+<td>&quot;scala,scala,java,java,scala,java,scala,c++&quot;</td>
+</tr>
+<tr>
+<td>doc3</td>
+<td>&quot;python,ada,ada&quot;</td>
+</tr>
+</tbody>
+</table>
+
+<p>The rows returned by this query</p>
+
+<pre><code class="language-sql">SELECT tokenize(terms) as term FROM docs ORDER BY tokenize(terms) 
+</code></pre>
+
+<p>are lexicographically ordered using the ordered column&#39;s names (i.e. the programming language name) and the column&#39;s values.</p>
+
+<pre><code class="language-javascript">[
+  {
+    &quot;columns&quot;:[
+      [&quot;term.ada&quot;,2,&quot;2015-12-01T13:25:54Z&quot;],
+      [&quot;term.python&quot;,1,&quot;2015-12-01T13:25:54Z&quot;]
+    ],
+    &quot;rowHash&quot;:&quot;47adff9d728370ae&quot;,
+    &quot;rowName&quot;:&quot;doc3&quot;
+  },
+  {
+    &quot;columns&quot;:[
+      [&quot;term.c++&quot;,1,&quot;2015-12-01T13:25:54Z&quot;],
+      [&quot;term.java&quot;,3,&quot;2015-12-01T13:25:54Z&quot;],
+      [&quot;term.scala&quot;,4,&quot;2015-12-01T13:25:54Z&quot;]
+    ],
+    &quot;rowHash&quot;:&quot;a5b0ac997090aa3e&quot;,
+    &quot;rowName&quot;:&quot;doc2&quot;
+  },
+  {
+    &quot;columns&quot;:[
+      [&quot;term.java&quot;,1,&quot;2015-12-01T13:25:54Z&quot;],
+      [&quot;term.python&quot;,1,&quot;2015-12-01T13:25:54Z&quot;],
+      [&quot;term.c++&quot;,3,&quot;2015-12-01T13:25:54Z&quot;]
+    ],
+    &quot;rowHash&quot;:&quot;86065feec3521acc&quot;,
+    &quot;rowName&quot;:&quot;doc1&quot;
+  }
+]
+</code></pre>
+
+<p>More details about the ordering of complex types can be found in <a href="TypeSystem.md.html">MLDB Type System</a>.</p>
+
+<p>Should the Order-By expression return values of varying types, in ascending order they will be sorted in this fashion: First <code>null</code> values, then atomic values, then row values, and finally embedding values.</p>
+</body>
+</html>

@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset='utf-8' />
+<title>MLDB Documentation</title>
+<script src='/resources/js/mathjax_TeX-AMS-MML_HTMLorMML.js'></script>
+<link rel='stylesheet' href='/resources/css/prism.css'>
+<link rel='stylesheet' href='/resources/css/doc.css'>
+<script src='/resources/js/jquery-1.11.2.min.js'></script>
+<script src='/resources/js/prism.js'></script>
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  if(window.location.origin == 'http://mldb.ai')
+  { ga('create', 'UA-16909325-9', 'auto'); }
+  else
+  { ga('create', 'UA-16909325-10', {'cookieDomain': 'none'}); }
+  ga('send', 'pageview');
+</script>
+</head>
+<body style='margin-left: 50px; max-width: 1000px'>
+<h1>Plugin Configuration</h1>
+
+<p>A plugin configuration object is used to create or load a <a href="Plugins.md.html">plugin</a>.</p>
+
+<p>It is a JSON object that looks like this:</p>
+
+<pre><code class="language-json">{ 
+  &quot;id&quot;: &lt;id&gt;, 
+  &quot;type&quot;: &lt;type&gt;, 
+  &quot;params&quot;: { 
+    &lt;params&gt; 
+  } 
+}
+</code></pre>
+
+<ul>
+<li><code>id</code> is a string that defines the URL at which the plugin will be available via the REST API</li>
+<li><code>type</code> is a string that specified the plugin&#39;s type (see below)</li>
+<li><code>params</code> is an object that configures the plugin, and whose contents will vary according to the type</li>
+</ul>
+
+<p>Not all three of these fields are required in all contexts:</p>
+
+<ul>
+<li>one or both of <code>id</code> and <code>type</code> must be specified
+
+<ul>
+<li>if only <code>id</code> is specified, MLDB will assume this is a pre-existing plugin and will try to load it (an error will ensue if it doesn&#39;t already exist)</li>
+<li>if <code>type</code> is specified, MLDB will assume that the plugin doesn&#39;t exist yet and will try to create it (an error will ensue if it already exists)
+
+<ul>
+<li>if <code>type</code> is specified without <code>id</code>, an id will be auto-generated</li>
+<li>if <code>type</code> is specified with <code>id</code>, the plugin will be created with the specified <code>id</code> unless a plugin already exists with that id</li>
+<li>if <code>type</code> is specified, then a corresponding <code>params</code> function must be specified if the type requires it</li>
+</ul></li>
+</ul></li>
+</ul>
+
+<p>The following types of plugins are available:</p>
+
+<p><table class="table"><tr><th>Type</th><th>Description</th><th>Doc</th></tr>
+<tr><td><code>javascript</code></td><td>Javascript plugin loader</td><td><a href="/doc/builtin/lang/Javascript.md.html">[doc]</a></td></tr>
+<tr><td><code>python</code></td><td>Load plugins or run scripts written in the Python language</td><td><a href="/doc/builtin/lang/Python.md.html">[doc]</a></td></tr>
+<tr><td><code>sharedLibrary</code></td><td>Plugin loader for compiled shared libraries</td><td><a href="/doc/builtin/plugins/SharedLibrary.md.html">[doc]</a></td></tr>
+</table></p>
+
+<h2>See also</h2>
+
+<ul>
+<li><a href="../datasets/Datasets.md.html">Datasets</a></li>
+<li><a href="../procedures/Procedures.md.html">Procedures</a></li>
+<li><a href="../functions/Functions.md.html">Functions</a></li>
+<li><a href="../plugins/Plugins.md.html">Plugins</a></li>
+</ul>
+</body>
+</html>

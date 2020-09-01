@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset='utf-8' />
+<title>MLDB Documentation</title>
+<script src='/resources/js/mathjax_TeX-AMS-MML_HTMLorMML.js'></script>
+<link rel='stylesheet' href='/resources/css/prism.css'>
+<link rel='stylesheet' href='/resources/css/doc.css'>
+<script src='/resources/js/jquery-1.11.2.min.js'></script>
+<script src='/resources/js/prism.js'></script>
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  if(window.location.origin == 'http://mldb.ai')
+  { ga('create', 'UA-16909325-9', 'auto'); }
+  else
+  { ga('create', 'UA-16909325-10', {'cookieDomain': 'none'}); }
+  ga('send', 'pageview');
+</script>
+</head>
+<body style='margin-left: 50px; max-width: 1000px'>
+<h1>Parse User-Agent Function</h1>
+
+<p>Functions of this type parse a <a href="https://en.wikipedia.org/wiki/User_agent" target="_blank">user agent string</a> into its components.</p>
+
+<p>It is a wrapper around the <a href="http://www.browserscope.org" target="_blank">BrowserScope</a>&#39;s user agent string parser.</p>
+
+<h2>Configuration</h2>
+
+<p><p>A new function of type <code>http.useragent</code> named <code>&lt;id&gt;</code> can be created as follows:</p><pre><code class="language-python">mldb.put(&quot;/v1/functions/&quot;+&lt;id&gt;, {
+    &quot;type&quot;: &quot;http.useragent&quot;,
+    &quot;params&quot;: {
+        "regexFile": &lt;string&gt;
+    }
+})</code></pre><p>with the following key-value definitions for <code>params</code>:</p><table class="params table" width='100%'><tr><th align='right'>Field, Type, Default</th><th>Description</th></tr>
+<tr><td align='right'><p><strong>regexFile</strong> <br/> <nobr>string</nobr> <br/> <code>"/opt/bin/useragent-regexes.yaml"</code></p></td><td><p>User agent string parser YAML configuration file</p>
+</td></tr>
+</table></p>
+
+<h2>Input and Output Values</h2>
+
+<p>Functions of this type have a single input value named <code>ua</code> which is a string.</p>
+
+<p>The output values of functions of this type are:</p>
+
+<ul>
+<li><code>os</code>: Operating system with two sub fields: <code>family</code> and <code>version</code>.</li>
+<li><code>browser</code>: Browser with two sub fields: <code>family</code> and <code>version</code>.</li>
+<li><code>device</code>: Device with two sub fields: <code>brand</code> and <code>model</code>.</li>
+<li><code>isSpider</code>: Boolean representing if the user agent is a spider. </li>
+</ul>
+
+<h2>Example</h2>
+
+<p>Assume we have created a function of this type called <code>ua_parser</code>, the following call:</p>
+
+<pre><code class="language-sql">SELECT ua_parser({ua: &#39;Mozilla/5.0 (iPhone; CPU iPhone OS 5_1_1 like Mac OS X) AppleWebKit/534.46 (KHTML, like Gecko) Version/5.1 Mobile/9B206 Safari/7534.48.3&#39;}) as *
+</code></pre>
+
+<p>will return:</p>
+
+<table>
+<thead>
+<tr>
+<th>rowName</th>
+<th>browser.family</th>
+<th>browser.version</th>
+<th>device.brand</th>
+<th>device.model</th>
+<th>isSpider</th>
+<th>os.family</th>
+<th>os.version</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>result</td>
+<td>Mobile Safari</td>
+<td>5.1.0</td>
+<td>Apple</td>
+<td>iPhone</td>
+<td>0</td>
+<td>iOS</td>
+<td>5.1.1</td>
+</tr>
+</tbody>
+</table>
+
+<h2>See also</h2>
+
+<ul>
+<li>The other <a href="../sql/ValueExpression.md.html#httpfunctions">Web data built-in functions</a></li>
+<li><a href="http://www.browserscope.org" target="_blank">BrowserScope</a> website</li>
+<li><a href="https://github.com/ua-parser/uap-core" target="_blank">uap-core</a> project</li>
+</ul>
+</body>
+</html>

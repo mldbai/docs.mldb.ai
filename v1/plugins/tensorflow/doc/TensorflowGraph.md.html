@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset='utf-8' />
+<title>MLDB Documentation</title>
+<script src='/resources/js/mathjax_TeX-AMS-MML_HTMLorMML.js'></script>
+<link rel='stylesheet' href='/resources/css/prism.css'>
+<link rel='stylesheet' href='/resources/css/doc.css'>
+<script src='/resources/js/jquery-1.11.2.min.js'></script>
+<script src='/resources/js/prism.js'></script>
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  if(window.location.origin == 'http://mldb.ai')
+  { ga('create', 'UA-16909325-9', 'auto'); }
+  else
+  { ga('create', 'UA-16909325-10', {'cookieDomain': 'none'}); }
+  ga('send', 'pageview');
+</script>
+</head>
+<body style='margin-left: 50px; max-width: 1000px'>
+<h1>Tensorflow Graph Function</h1>
+
+<p>The Tensorflow Graph function creates a function which, when called,
+will apply a Tensorflow graph to the given inputs.</p>
+
+<h2>Configuration</h2>
+
+<p><p>A new function of type <code>tensorflow.graph</code> named <code>&lt;id&gt;</code> can be created as follows:</p><pre><code class="language-python">mldb.put(&quot;/v1/functions/&quot;+&lt;id&gt;, {
+    &quot;type&quot;: &quot;tensorflow.graph&quot;,
+    &quot;params&quot;: {
+        "modelFileUrl": &lt;<a href="/doc/builtin/Url.md.html">Url</a>&gt;,
+        "inputs": &lt;<a href="/doc/builtin/sql/SelectExpression.md.html">SqlSelectExpression</a>&gt;,
+        "outputs": &lt;<a href="/doc/builtin/sql/SelectExpression.md.html">SqlSelectExpression</a>&gt;,
+        "devices": &lt;Regex&gt;
+    }
+})</code></pre><p>with the following key-value definitions for <code>params</code>:</p><table class="params table" width='100%'><tr><th align='right'>Field, Type, Default</th><th>Description</th></tr>
+<tr><td align='right'><p><strong>modelFileUrl</strong> <br/> <nobr><a href="/doc/builtin/Url.md.html">Url</a></nobr> <br/> <code></code></p></td><td><p>Model file to load graph from.  This is probably a .pb file (protobuf file).</p>
+</td></tr>
+<tr><td align='right'><p><strong>inputs</strong> <br/> <nobr><a href="/doc/builtin/sql/SelectExpression.md.html">SqlSelectExpression</a></nobr> <br/> <code></code></p></td><td><p>Inputs to the graph, including names</p>
+</td></tr>
+<tr><td align='right'><p><strong>outputs</strong> <br/> <nobr><a href="/doc/builtin/sql/SelectExpression.md.html">SqlSelectExpression</a></nobr> <br/> <code></code></p></td><td><p>Outputs of the graph that are returned as the result of the function</p>
+</td></tr>
+<tr><td align='right'><p><strong>devices</strong> <br/> <nobr>Regex</nobr> <br/> <code>".*"</code></p></td><td><p>Regular expression that matches the devices on which the graph is allowed to run.  For example, <code>.*</code> means all devices (CPU and GPU), <code>/cpu:.*</code> means CPU only, <code>/gpu:.*</code> means GPU only, <code>/gpu:[01]</code> means on the first two GPUs.</p>
+</td></tr>
+</table></p>
+
+<h2>Functions</h2>
+
+<p>The <code>tf_extract_constant(graph, node)</code> function allows the value of a node
+in a graph to be extracted.  For example, in the Inception graph below,
+the following call</p>
+
+<pre><code class="language-sql">select tf_extract_constant(&#39;imageEmbedding&#39;, [&#39;mixed&#39;,&#39;conv&#39;, &#39;batchnorm&#39;, &#39;beta&#39;])
+</code></pre>
+
+<p>would return the value of the <code>mixed/conv/batchnorm/beta</code> node in the
+Inception V3 graph that have been previously loaded under
+<code>/v1/functions/imageEmbedding</code> as a <code>tensorflow.graph</code> graph.</p>
+
+<p>This can be used to help visualize and understand the structure of an
+existing neural network or to transform the graph programatically.</p>
+
+<h2>Example</h2>
+
+<p>The following function configuration will load the Tensorflow &quot;inception&quot;
+model (which is made publicly available by Google) to predict the top 5
+classes of an arbitrary image passed in as a URL.</p>
+
+<pre><code class="language-python"># The URI from which we load the Inception model.  We&#39;re assuming
+# that you&#39;ve already downloaded it from Google at the following
+# URL; you can also load it directly from Google if you have
+# access to a lot of bandwidth by replacing the file:// URL below
+# with the following:
+# https://storage.googleapis.com/download.tensorflow.org/models/inception_dec_2015.zip
+
+inceptionUrl = &#39;file://inception_dec_2015.zip&#39;
+
+# This sets up a fetcher function, which will download a given URL
+# and return it as a blob.
+mldb.put(&#39;/v1/functions/fetch&#39;, {
+    &quot;id&quot;: &#39;fetch&#39;,
+    &quot;type&quot;: &#39;fetcher&#39;,
+    &quot;params&quot;: {
+    }
+})
+
+
+# The labels for the Inception classifier live within the zip file
+# downloaded above.  We read them into a dataset so that we can
+# join against them later on and turn category numbers into category
+# names.
+mldb.put(&#39;/v1/procedures/imagenetLabels&#39;, {
+    &quot;type&quot;: &#39;import.text&#39;,
+    &quot;params&quot;: {
+        &quot;dataFileUrl&quot;: &#39;archive+&#39; + inceptionUrl + &#39;#imagenet_comp_graph_label_strings.txt&#39;,
+        &quot;headers&quot;: [&#39;label&#39;],
+        &quot;outputDataset&quot;: &quot;imagenetLabels&quot;,
+        &quot;runOnCreation&quot;: True
+    }
+})
+
+# This function takes the output of an inception graph, which is a
+# 1x1008 matrix, and joins the top 5 scores against the image labels,
+# producing a result set that contains an ordered set of category
+# labels.  The line numbers of the dataset start at 1, so we need to
+# subtract one to join with the label names.
+mldb.put(&#39;/v1/functions/lookupLabels&#39;, {
+    &quot;type&quot;: &#39;sql.query&#39;,
+    &quot;params&quot;: {
+        &quot;query&quot;: &quot;&quot;&quot;
+            SELECT il.label AS column, scores.value AS value 
+            FROM row_dataset($scores) AS scores 
+            JOIN imagenetLabels AS il 
+            ON CAST(scores.column AS INTEGER) = (CAST (il.rowName() AS INTEGER) - 1) 
+            ORDER BY scores.value DESC 
+            LIMIT 5
+        &quot;&quot;&quot;,
+        &quot;output&quot;: &#39;NAMED_COLUMNS&#39;
+    }
+})
+
+# Finally, we create the main function.  This is passed in a URL to
+# classify as the url argument, and will download the image, process
+# it through the inception net, and return the top 5 categories with
+# their weights as output.
+#
+# The image itself is fed into the DecodeJpeg/contents node, and the
+# output is read from softmax node of the graph.
+mldb.put(&#39;/v1/functions/imageEmbedding&#39;, {
+    &quot;type&quot;: &#39;tensorflow.graph&#39;,
+    &quot;params&quot;: {
+        &quot;modelFileUrl&quot;: &#39;archive+&#39; + inceptionUrl + &#39;#tensorflow_inception_graph.pb&#39;,
+        &quot;inputs&quot;: &#39;fetch({url})[content] AS &quot;DecodeJpeg/contents&quot;&#39;,
+        &quot;outputs&quot;: &quot;lookupLabels({scores: flatten(softmax)}) AS *&quot;
+    }
+})
+
+filename = &quot;https://upload.wikimedia.org/wikipedia/commons/thumb/5/58/Calle_E_Monroe_St%2C_Chicago%2C_Illinois%2C_Estados_Unidos%2C_2012-10-20%2C_DD_04.jpg/560px-Calle_E_Monroe_St%2C_Chicago%2C_Illinois%2C_Estados_Unidos%2C_2012-10-20%2C_DD_04.jpg&quot;
+
+mldb.log(&quot;classifying &quot; + filename)
+
+res = mldb.query(&#39;SELECT imageEmbedding({url: &#39; + mldb.sqlEscape(filename) + &#39;})[output] AS *&#39;)
+
+mldb.log(res)
+</code></pre>
+
+<p>This example will classify the following image of Chicago&#39;s riverfront and skyline:</p>
+
+<p><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/58/Calle_E_Monroe_St%2C_Chicago%2C_Illinois%2C_Estados_Unidos%2C_2012-10-20%2C_DD_04.jpg/560px-Calle_E_Monroe_St%2C_Chicago%2C_Illinois%2C_Estados_Unidos%2C_2012-10-20%2C_DD_04.jpg" width=120></img></p>
+
+<p>and return these results:</p>
+
+<pre><code>[
+   {
+      &quot;columns&quot; : [
+         [ &quot;pier&quot;, 0.2122125625610352, &quot;2015-12-03T18:23:04Z&quot; ],
+         [ &quot;breakwater&quot;, 0.07164951413869858, &quot;2015-12-03T18:23:04Z&quot; ],
+         [ &quot;lakeside&quot;, 0.06921710819005966, &quot;2015-12-03T18:23:04Z&quot; ],
+         [ &quot;monitor&quot;, 0.06208378449082375, &quot;2015-12-03T18:23:04Z&quot; ],
+         [ &quot;airship&quot;, 0.05300721898674965, &quot;2015-12-03T18:23:04Z&quot; ]
+      ]
+   }
+]
+</code></pre>
+
+<h2>Examples</h2>
+
+<ul>
+<li>The <a href="/doc/nblink.html#_tutorials/Tensorflow%20Image%20Recognition%20Tutorial" target="_blank">Tensorflow Image Recognition Tutorial</a> notebook</li>
+<li>The <a href="/doc/nblink.html#_demos/Transfer%20Learning%20with%20Tensorflow" target="_blank">Transfer Learning with Tensorflow</a> demo notebook</li>
+<li>The <a href="/doc/nblink.html#_demos/Image%20Processing%20with%20Convolutions" target="_blank">Image Processing with Convolutions</a> demo notebook</li>
+</ul>
+
+<h2>See also</h2>
+
+<ul>
+<li>TensorFlow&#39;s <a href="https://www.tensorflow.org/versions/r0.7/tutorials/image_recognition/index.html" target="_blank">Image Recognition tutorial</a></li>
+</ul>
+</body>
+</html>

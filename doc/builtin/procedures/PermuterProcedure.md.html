@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset='utf-8' />
+<title>MLDB Documentation</title>
+<script src='/resources/js/mathjax_TeX-AMS-MML_HTMLorMML.js'></script>
+<link rel='stylesheet' href='/resources/css/prism.css'>
+<link rel='stylesheet' href='/resources/css/doc.css'>
+<script src='/resources/js/jquery-1.11.2.min.js'></script>
+<script src='/resources/js/prism.js'></script>
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  if(window.location.origin == 'http://mldb.ai')
+  { ga('create', 'UA-16909325-9', 'auto'); }
+  else
+  { ga('create', 'UA-16909325-10', {'cookieDomain': 'none'}); }
+  ga('send', 'pageview');
+</script>
+</head>
+<body style='margin-left: 50px; max-width: 1000px'>
+<h1>Permuter procedure</h1>
+
+<p>The permuter procedure is used to run a child procedure multiple times while 
+modifying some of its parameters at each run. It works by doing the cartesian
+product over all the elements provided in its configuration.</p>
+
+<p>This procedure can be used to do a grid search to find the best hyper-parameter for
+an algorithm on a dataset.</p>
+
+<h2>Configuration</h2>
+
+<p><p>A new procedure of type <code>permuter.run</code> named <code>&lt;id&gt;</code> can be created as follows:</p><pre><code class="language-python">mldb.put(&quot;/v1/procedures/&quot;+&lt;id&gt;, {
+    &quot;type&quot;: &quot;permuter.run&quot;,
+    &quot;params&quot;: {
+        "procedure": &lt;PolyConfig&gt;,
+        "permutations": &lt;Any&gt;,
+        "runOnCreation": &lt;bool&gt;
+    }
+})</code></pre><p>with the following key-value definitions for <code>params</code>:</p><table class="params table" width='100%'><tr><th align='right'>Field, Type, Default</th><th>Description</th></tr>
+<tr><td align='right'><p><strong>procedure</strong> <br/> <nobr>PolyConfig</nobr> <br/> <code></code></p></td><td><p>Base configuration of the procedure to run the permutations over.</p>
+</td></tr>
+<tr><td align='right'><p><strong>permutations</strong> <br/> <nobr>Any</nobr> <br/> <code></code></p></td><td><p>Object with a key structure that follows the procedure&#39;s configuration. Values can either by objects or lists. Lists need to contain the elements to permute.</p>
+</td></tr>
+<tr><td align='right'><p><strong>runOnCreation</strong> <br/> <nobr>bool</nobr> <br/> <code>true</code></p></td><td><p>If true, the procedure will be run immediately. The response will contain an extra field called <code>firstRun</code> pointing to the URL of the run.</p>
+</td></tr>
+</table></p>
+
+<p>The string <code>$permutation</code> can be used anywhere in the configuration blobs and will be replaced by
+an identifier for each permutation. This can be used if the procedure generates artifacts
+at each run and they need to be distinguishable.</p>
+
+<h2>Example</h2>
+
+<p>The following example will use the <a href="/doc/builtin/procedures/ExperimentProcedure.md.html"><code>classifier.experiment</code> procedure type</a>, 
+that is used to train and test a classifier. We will be trying two types
+of classifiers as well as different values for the <code>equalizationFactor</code>.</p>
+
+<p>Notice how the key structure of the <code>permutations</code> object matches the
+<code>procedure_configuration.params</code> object.</p>
+
+<pre><code class="language-python">mldb.put(&quot;/v1/procedures/&lt;id&gt;&quot;, &quot;{
+    &quot;type&quot;: &quot;permuter.run&quot;
+    &quot;params&quot;: {
+        &quot;procedure&quot;: {
+            &quot;type&quot;: &quot;classifier.experiment&quot;,
+            &quot;params&quot;: {
+                &quot;experimentName&quot;: &quot;my_test-exp_$permutation&quot;,
+                &quot;training_dataset&quot;: &quot;my_dataset&quot;,
+                &quot;testing_dataset&quot;: &quot;my_dataset&quot;,
+                &quot;select&quot;: &quot;* EXCLUDING(label)&quot;,
+                &quot;label&quot;: &quot;label&quot;,
+                &quot;modelFileUrlPattern&quot;: &quot;file://bouya-$runid.cls&quot;,
+                &quot;algorithm&quot;: &quot;glz&quot;,
+                &quot;equalizationFactor&quot;: 0.5,
+                &quot;mode&quot;: &quot;boolean&quot;
+            }
+        },
+        &quot;permutations&quot;: {
+            &quot;equalizationFactor&quot;: [0.5, 0.9],
+            &quot;algorithm&quot;: [&quot;glz&quot;, &quot;bglz&quot;]
+        }
+    }
+})
+</code></pre>
+
+<h2>Output</h2>
+
+<p>The procedure will return a list of objects, one per permutation.
+Each one will have the following structure:</p>
+
+<pre><code class="language-python">{
+    &quot;configuration&quot;: { &lt;permutation&gt; },
+    &quot;results&quot;: { &lt;child procedure output&gt; }
+}
+</code></pre>
+
+<h2>See also</h2>
+
+<ul>
+<li><a href="https://en.wikipedia.org/wiki/Hyperparameter_optimization" target="_blank">Hyperparameter optimization</a> on Wikipedia</li>
+</ul>
+</body>
+</html>

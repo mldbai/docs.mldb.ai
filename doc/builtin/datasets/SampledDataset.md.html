@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset='utf-8' />
+<title>MLDB Documentation</title>
+<script src='/resources/js/mathjax_TeX-AMS-MML_HTMLorMML.js'></script>
+<link rel='stylesheet' href='/resources/css/prism.css'>
+<link rel='stylesheet' href='/resources/css/doc.css'>
+<script src='/resources/js/jquery-1.11.2.min.js'></script>
+<script src='/resources/js/prism.js'></script>
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  if(window.location.origin == 'http://mldb.ai')
+  { ga('create', 'UA-16909325-9', 'auto'); }
+  else
+  { ga('create', 'UA-16909325-10', {'cookieDomain': 'none'}); }
+  ga('send', 'pageview');
+</script>
+</head>
+<body style='margin-left: 50px; max-width: 1000px'>
+<h1>Sampled Dataset</h1>
+
+<p>The sampled dataset type allows sampling of another dataset. The sampling 
+operation is virtual, in other words, no copy of the initial dataset is made.</p>
+
+<h2>Configuration</h2>
+
+<p><p>A new dataset of type <code>sampled</code> named <code>&lt;id&gt;</code> can be created as follows:</p><pre><code class="language-python">mldb.put(&quot;/v1/datasets/&quot;+&lt;id&gt;, {
+    &quot;type&quot;: &quot;sampled&quot;,
+    &quot;params&quot;: {
+        "rows": &lt;int&gt;,
+        "fraction": &lt;float&gt;,
+        "withReplacement": &lt;bool&gt;,
+        "dataset": &lt;<a href="/doc/builtin/sql/FromExpression.md.html">SqlFromExpression</a>&gt;,
+        "seed": &lt;int&gt;
+    }
+})</code></pre><p>with the following key-value definitions for <code>params</code>:</p><table class="params table" width='100%'><tr><th align='right'>Field, Type, Default</th><th>Description</th></tr>
+<tr><td align='right'><p><strong>rows</strong> <br/> <nobr>int</nobr> <br/> <code>0</code></p></td><td><p>Number of rows to sample from <code>dataset</code>. Cannot be used with <code>fraction</code>. Cannot be higher than the number of rows in <code>dataset</code> unless <code>withReplacement</code> = 1. Default = 1 if <code>fraction</code> is 0.</p>
+</td></tr>
+<tr><td align='right'><p><strong>fraction</strong> <br/> <nobr>float</nobr> <br/> <code>0.0</code></p></td><td><p>Fraction of rows to sample from <code>dataset</code>. Cannot be used when <code>rows</code> != 0. Value should be between 0 and 1.</p>
+</td></tr>
+<tr><td align='right'><p><strong>withReplacement</strong> <br/> <nobr>bool</nobr> <br/> <code>false</code></p></td><td><p>Sample with or without replacement. Sampling with replacement means that the same input row can appear in the output more than once.</p>
+</td></tr>
+<tr><td align='right'><p><strong>dataset</strong> <br/> <nobr><a href="/doc/builtin/sql/FromExpression.md.html">SqlFromExpression</a></nobr> <br/> <code></code></p></td><td><p>Dataset to sample</p>
+</td></tr>
+<tr><td align='right'><p><strong>seed</strong> <br/> <nobr>int</nobr> <br/> <code>0</code></p></td><td><p>Seed value for the random number generator. The purpose of this parameter is to permit reproducible random samples. This parameter is optional, with the default value being selected randomly for each sample.</p>
+</td></tr>
+</table></p>
+
+<h2>See also</h2>
+
+<ul>
+<li>The <code>sample</code> function can also be used within <a href="../sql/FromExpression.md#sample-function">From expressions</a>.</li>
+<li>The <a href="/doc/builtin/datasets/MergedDataset.md.html"><code>merged</code> dataset type</a> is another dataset transformation</li>
+<li>The <a href="/doc/builtin/procedures/TransformDataset.md.html"><code>transform</code> procedure type</a> can be used to modify a dataset ready for merging</li>
+<li>The <a href="/doc/nblink.html#_tutorials/Virtual%20Manipulation%20of%20Datasets%20Tutorial" target="_blank">Virtual Manipulation of Datasets Tutorial</a></li>
+</ul>
+</body>
+</html>

@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset='utf-8' />
+<title>MLDB Documentation</title>
+<script src='/resources/js/mathjax_TeX-AMS-MML_HTMLorMML.js'></script>
+<link rel='stylesheet' href='/resources/css/prism.css'>
+<link rel='stylesheet' href='/resources/css/doc.css'>
+<script src='/resources/js/jquery-1.11.2.min.js'></script>
+<script src='/resources/js/prism.js'></script>
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  if(window.location.origin == 'http://mldb.ai')
+  { ga('create', 'UA-16909325-9', 'auto'); }
+  else
+  { ga('create', 'UA-16909325-10', {'cookieDomain': 'none'}); }
+  ga('send', 'pageview');
+</script>
+</head>
+<body style='margin-left: 50px; max-width: 1000px'>
+<h1>Running MLDB in batch mode</h1>
+
+<p>MLDB can be run in batch mode by running the executable directly via docker:</p>
+
+<pre><code>docker run \
+  --rm=true \
+  -v &lt;/absolute/path/to/mldb_data&gt;:/mldb_data \
+  -e MLDB_IDS=&quot;`id`&quot; \
+  quay.io/mldb/mldb:latest /opt/bin/mldb_runner \
+  --plugin-directory /opt/mldb/plugins \
+  --run-script /mldb_data/&lt;script&gt;
+</code></pre>
+
+<p>The <code>&lt;script&gt;</code> argument can be local (in the mldb_data directory) or hosted.
+For privately accessible location, one must provide the proper credentials
+on the command-line as documented below.</p>
+
+<p>If you want MLDB to continue to run after the script is done, you may wish to
+pass the HTTP arguments and make Docker listen on a port, as so:</p>
+
+<pre><code>docker run \
+  --rm=true \
+  -v &lt;/absolute/path/to/mldb_data&gt;:/mldb_data \
+  -e MLDB_IDS=&quot;`id`&quot; \
+  -p 127.0.0.1:&lt;mldbport&gt;:80 \
+  quay.io/mldb/mldb:latest /opt/bin/mldb_runner \
+  --http-listen-port 80 \
+  --plugin-directory /opt/mldb/plugins \
+  --dont-exit-after-script yes \
+  --run-script /mldb_data/&lt;script&gt;
+</code></pre>
+
+<h2>Passing arguments to the MLDB script</h2>
+
+<p>The <code>--script-args &lt;json blob&gt;</code> option can be used to pass in arguments to the run
+script.  The argument should be in the form of a JSON object, array or value.
+The arguments will be available to the script depending upon the language; see
+the language documentation for more details.</p>
+
+<p>The <code>--script-args-url &lt;url&gt;</code> option can be used to read the script arguments
+from a URL.  The contents of the URL must be a JSON object, array or value.</p>
+
+<h2>Making credentials available to MLDB in batch mode</h2>
+
+<p>Credentials are JSON objects that have the following format:</p>
+
+<p><table class="params table" width='100%'><tr><th align='right'>Field, Type, Default</th><th>Description</th></tr>
+<tr><td align='right'><p><strong>resourceType</strong> <br/> <nobr>string</nobr> <br/> <code></code></p></td><td><p>Type of resource that this credential rule applies to.  Currently, resources of type aws:s3 are supported when accessing AWS S3.</p>
+</td></tr>
+<tr><td align='right'><p><strong>resource</strong> <br/> <nobr>string</nobr> <br/> <code></code></p></td><td><p>Resource that this credential rule applies to.  This is a URI style path. If the requested resource match this prefix, the credentials will be used. The most specific match is used.  If this is empty, the credentials will be used for all resources of type <code>resourceType</code>.</p>
+</td></tr>
+<tr><td align='right'><p><strong>expiration</strong> <br/> <nobr>Date</nobr> <br/> <code>"1970-01-01T00:00:00Z"</code></p></td><td><p>Date on which credentials expire.  After this date they will no longer match.</p>
+</td></tr>
+<tr><td align='right'><p><strong>extra</strong> <br/> <nobr>JSON</nobr> <br/> <code></code></p></td><td><p>Extra credential parameters.  Some credentials types require extra information; that information can be put here.  See the documentation for the specific credentials type for more information.</p>
+</td></tr>
+<tr><td align='right'><p><strong>credential</strong> <br/> <nobr>Credential</nobr> <br/> <code></code></p></td><td><p>Credentials for when the pattern matches.  These will be returned to the caller if the above rules match.</p>
+</td></tr>
+</table></p>
+
+<p>with the <code>credential</code> field (which define the actual credentials and the resource to
+access) as follows:</p>
+
+<p><table class="params table" width='100%'><tr><th align='right'>Field, Type, Default</th><th>Description</th></tr>
+<tr><td align='right'><p><strong>provider</strong> <br/> <nobr>string</nobr> <br/> <code></code></p></td><td><p>Provider of credentials.  This is an identifier that could help locating where the credentials are stored. </p>
+</td></tr>
+<tr><td align='right'><p><strong>protocol</strong> <br/> <nobr>string</nobr> <br/> <code></code></p></td><td><p>Protocol to use to access the service</p>
+</td></tr>
+<tr><td align='right'><p><strong>location</strong> <br/> <nobr>string</nobr> <br/> <code></code></p></td><td><p>Location of the service.  This is used where there are multiple places that the same service can be provided, but we want to access the most local one.</p>
+</td></tr>
+<tr><td align='right'><p><strong>id</strong> <br/> <nobr>string</nobr> <br/> <code></code></p></td><td><p>User ID to use to access the service.  This is sometimes called the key ID or user name.</p>
+</td></tr>
+<tr><td align='right'><p><strong>secret</strong> <br/> <nobr>string</nobr> <br/> <code></code></p></td><td><p>Secret key to use to access the service.  This is sometimes called the access key or password.  It is secret and sensitive.</p>
+</td></tr>
+<tr><td align='right'><p><strong>extra</strong> <br/> <nobr>JSON</nobr> <br/> <code></code></p></td><td><p>Extra configuration needed to access the service.  Some service providers require extra information that can&#39;t be added to the rest of the fields, and that information should go here.  See the documentation for the service providers for more information.</p>
+</td></tr>
+<tr><td align='right'><p><strong>validUntil</strong> <br/> <nobr>Date</nobr> <br/> <code>"1970-01-01T00:00:00Z"</code></p></td><td><p>Time until which the credential is valid.  After this date the credentials should not be used; instead a new call should be made to get new credentials.</p>
+</td></tr>
+</table></p>
+
+<p>There are examples of credentials under the <a href="Url.md.html">Url</a> page.</p>
+
+<p>Credentials can be passed in to MLDB in batch mode via one or both of the
+following means:</p>
+
+<ol>
+<li> Passing them on the command line in a JSON blob, using the
+<code>--add-credential</code> command line option, with the credentials following.
+This can be used multiple times to pass in multiple credentials objects.</li>
+<li><p>Putting them into a file, and providing the URL of the file to the
+<code>--add-credentials-url</code> command line option.  If credentials are
+needed to access the URL, then they should be added using the
+<code>--add-credential</code> option before hand.</p>
+
+<p>The contents of the file at the URL can either be:</p>
+
+<ul>
+<li>A text file with JSON credentials objects one after the other, or</li>
+<li>A text file containing one JSON array, with each element of the array
+being a JSON credentials object.</li>
+<li>Using the REST API as documented in <a href="Url.md.html">Url</a> page.</li>
+</ul></li>
+</ol>
+
+<h2>Loading plugins in batch mode</h2>
+
+<p>MLDB will not automatically load any plugins in batch mode.  To make it do
+so, add the <code>--plugin-directory &lt;dir&gt;</code> option to the command line.  If the
+directory contains an <code>mldb_plugin.json</code> file, then that will be loaded
+immediately.  If the directory contains no <code>mldb_plugin.json</code> file, but
+does contain subdirectories, than each subdirectory will be scanned
+recursively and found plugins loaded.</p>
+
+<p>Note that at a minimum, you will likely want to load up plugins from
+<code>/opt/mldb/plugins</code> as in the above examples.</p>
+
+<h2>Muting last log on error</h2>
+
+<p>When MLDB ends with an error condition, by default it logs data about the run.
+It can be disabled by using the <code>--mute-final-output</code> flag.</p>
+
+<h2>Environment Variables (advanced usage)</h2>
+
+<p>The following environment variables control MLDB:</p>
+
+<ul>
+<li><code>RETURN_OS_MEMORY</code> (0 or 1, default 1): if this is set (which it is by
+default), the whole set of deallocated memory will be returned to the
+OS whenever a dataset is destroyed.  If you observe long pauses after
+a dataset is destroyed and have a dedicated machine or a container
+with dedicated memory, you can set this to 0 to disable that behavior.</li>
+<li><code>PRINT_OS_MEMORY</code> (0 or 1, default 0): if this is set (it is <em>not</em> set
+by default), then each time a dataset is destroyed, the memory usage
+will be written to the console.  In addition, if <code>RETURN_OS_MEMORY=1</code>
+then the memory usage will be re-printed after the memory is returned
+to the operating system.</li>
+</ul>
+</body>
+</html>

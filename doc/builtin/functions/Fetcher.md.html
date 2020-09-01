@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset='utf-8' />
+<title>MLDB Documentation</title>
+<script src='/resources/js/mathjax_TeX-AMS-MML_HTMLorMML.js'></script>
+<link rel='stylesheet' href='/resources/css/prism.css'>
+<link rel='stylesheet' href='/resources/css/doc.css'>
+<script src='/resources/js/jquery-1.11.2.min.js'></script>
+<script src='/resources/js/prism.js'></script>
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  if(window.location.origin == 'http://mldb.ai')
+  { ga('create', 'UA-16909325-9', 'auto'); }
+  else
+  { ga('create', 'UA-16909325-10', {'cookieDomain': 'none'}); }
+  ga('send', 'pageview');
+</script>
+</head>
+<body style='margin-left: 50px; max-width: 1000px'>
+<h1>Fetcher Function</h1>
+
+<p>The fetcher function is used to fetch resources from a given file or
+URL.</p>
+
+<h2>Configuration</h2>
+
+<p><p>A new function of type <code>fetcher</code> named <code>&lt;id&gt;</code> can be created as follows:</p><pre><code class="language-python">mldb.put(&quot;/v1/functions/&quot;+&lt;id&gt;, {
+    &quot;type&quot;: &quot;fetcher&quot;,
+    &quot;params&quot;: {
+        "maxConcurrentFetch": &lt;int&gt;
+    }
+})</code></pre><p>with the following key-value definitions for <code>params</code>:</p><table class="params table" width='100%'><tr><th align='right'>Field, Type, Default</th><th>Description</th></tr>
+<tr><td align='right'><p><strong>maxConcurrentFetch</strong> <br/> <nobr>int</nobr> <br/> <code>-1</code></p></td><td><p>The maximum number of concurrent fetching operations to allow. -1 leaves the control to MLDB.</p>
+</td></tr>
+</table></p>
+
+<h2>Input and Output Values</h2>
+
+<p>The function takes a single input named <code>url</code> that contains the URL of the
+resource to load.</p>
+
+<p>It will return two output columns:</p>
+
+<ul>
+<li><code>content</code> is a binary BLOB field containing the (binary) content that
+was loaded from the URL.  If there was an error, it will be null.</li>
+<li><code>error</code> is a string containing the error message.  If the fetch
+succeeded, it will be null.</li>
+</ul>
+
+<h2>Example</h2>
+
+<p>The following Javascript creates and calls a function that will return the
+country code from an IP address from an external web service.</p>
+
+<pre><code class="language-python">mldb.put(&quot;/v1/functions/fetch&quot;, { &quot;type&quot;: &quot;fetcher&quot; })
+</code></pre>
+
+<pre><code class="language-sql">SELECT CAST (fetch({url: &#39;http://www.google.com&#39;})[content] AS STRING)
+</code></pre>
+
+<h2>Limitations</h2>
+
+<ul>
+<li>The fetcher function will only attempt one fetch of the given URL; for
+transient errors a manual retry will be required</li>
+<li>There is currently no timeout parameter.  Hung requests will timeout
+eventually, but there is no guarantee as to when.</li>
+<li>There is currently no rate limiting built in.</li>
+<li>There is currently no facility to limit the maximum size of data that
+will be fetched.</li>
+<li>There is currently no means to authenticate when fetching a URL,
+apart from using the credentials daemon built in to MLDB.</li>
+<li>There is currently no caching mechanism.</li>
+<li>There is currently no means to fetch a resource only if it has not
+changed since the last time it was fetched.</li>
+<li>There is currently no means to detemine a maximum number of redirects to
+follow. It will stop after an arbitrary count.</li>
+</ul>
+
+<h2>Design notes</h2>
+
+<p>The <code>fetcher</code> function is a function, and not a builtin, to allow
+configuration of authentication, caching and other parameters in
+a future release to address the limitations above.</p>
+</body>
+</html>

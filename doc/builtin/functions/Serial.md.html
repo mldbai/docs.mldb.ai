@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset='utf-8' />
+<title>MLDB Documentation</title>
+<script src='/resources/js/mathjax_TeX-AMS-MML_HTMLorMML.js'></script>
+<link rel='stylesheet' href='/resources/css/prism.css'>
+<link rel='stylesheet' href='/resources/css/doc.css'>
+<script src='/resources/js/jquery-1.11.2.min.js'></script>
+<script src='/resources/js/prism.js'></script>
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  if(window.location.origin == 'http://mldb.ai')
+  { ga('create', 'UA-16909325-9', 'auto'); }
+  else
+  { ga('create', 'UA-16909325-10', {'cookieDomain': 'none'}); }
+  ga('send', 'pageview');
+</script>
+</head>
+<body style='margin-left: 50px; max-width: 1000px'>
+<h1>Serial Function</h1>
+
+<p>Functions of this type apply a list of functions in sequence.  It can be used to compose
+functions into a more complex operation.</p>
+
+<p>The resulting function has input values that are available for each sub-function.
+Each sub-function in the sequence has access to these input values and all the
+output values of the preceding sub-functions.</p>
+
+<h2>Configuration</h2>
+
+<p>Error running %%config macro with params function serial<pre><code>{&quot;error&quot;:&quot;function entry &#39;serial&#39; does not exist or has been deleted&quot;,&quot;kind&quot;:&quot;function&quot;,&quot;resource&quot;:&quot;serial&quot;}</code></pre></p>
+
+<p>Type with name 'MLDB::SerialFunctionStepConfig' not found</p>
+
+<p>The <code>type</code> field can take any of the following function types:</p>
+
+<p><table class="table"><tr><th>Type</th><th>Description</th><th>Doc</th></tr>
+<tr><td><code>classifier</code></td><td>Apply a trained classifier to new data</td><td><a href="/doc/builtin/functions/ClassifierApply.md.html">[doc]</a></td></tr>
+<tr><td><code>classifier.explain</code></td><td>Explain the output of a classifier</td><td><a href="/doc/builtin/functions/ClassifierExplain.md.html">[doc]</a></td></tr>
+<tr><td><code>embedding.neighbors</code></td><td>Return the nearest neighbors of a known row in an embedding dataset</td><td><a href="/doc/builtin/functions/NearestNeighborsFunction.md.html">[doc]</a></td></tr>
+<tr><td><code>feature_hasher</code></td><td>Feature hashing feature generator</td><td><a href="/doc/builtin/functions/FeatureHashingFunction.md.html">[doc]</a></td></tr>
+<tr><td><code>fetcher</code></td><td>Fetches the contents of a URL each time it&#39;s invoked</td><td><a href="/doc/builtin/functions/Fetcher.md.html">[doc]</a></td></tr>
+<tr><td><code>http.useragent</code></td><td>Parse user agent strings into their components</td><td><a href="/doc/builtin/functions/ParseUserAgent.md.html">[doc]</a></td></tr>
+<tr><td><code>image.proximatevoxels</code></td><td>Find values in a cubic volume inside a 3d embedding</td><td><a href="/doc/builtin/functions/ProximateVoxelsFunction.md.html">[doc]</a></td></tr>
+<tr><td><code>image.readpixels</code></td><td>Wraps access to a 2d embedding</td><td><a href="/doc/builtin/functions/ReadPixelsFunction.md.html">[doc]</a></td></tr>
+<tr><td><code>kmeans</code></td><td>Apply a k-means clustering to new data</td><td><a href="/doc/builtin/functions/Kmeans.md.html">[doc]</a></td></tr>
+<tr><td><code>mongodb.query</code></td><td>Takes a MongoDB query, forwards it to MongDB, parses the result and returns it as an MLDB result.</td><td><a href="/v1/plugins/mongodb/doc/MongoQueryFunction.md.html">[doc]</a></td></tr>
+<tr><td><code>pooling</code></td><td>Apply a pooling function</td><td><a href="/doc/builtin/functions/Pooling.md.html">[doc]</a></td></tr>
+<tr><td><code>probabilizer</code></td><td>Apply a probability calibration model</td><td><a href="/doc/builtin/functions/ApplyProbabilizer.md.html">[doc]</a></td></tr>
+<tr><td><code>sql.expression</code></td><td>Run an SQL expression as a function</td><td><a href="/doc/builtin/functions/SqlExpressionFunction.md.html">[doc]</a></td></tr>
+<tr><td><code>sql.query</code></td><td>Run a single row SQL query against a dataset</td><td><a href="/doc/builtin/functions/SqlQueryFunction.md.html">[doc]</a></td></tr>
+<tr><td><code>statsTable.bagOfWords.posneg</code></td><td>Get the pos/neg p(outcome)</td><td><a href="/doc/builtin/functions/BagOfWordsStatsTablePosNeg.md.html">[doc]</a></td></tr>
+<tr><td><code>statsTable.getCounts</code></td><td>Get stats table counts for a row of keys</td><td><a href="/doc/builtin/functions/StatsTableGetCounts.md.html">[doc]</a></td></tr>
+<tr><td><code>stemmer</code></td><td>Apply a stemming algorithm column names</td><td><a href="/doc/builtin/functions/Stemmer.md.html">[doc]</a></td></tr>
+<tr><td><code>stemmerdoc</code></td><td>Apply a stemming algorithm on a single document</td><td><a href="/doc/builtin/functions/Stemmer.md.html">[doc]</a></td></tr>
+<tr><td><code>svd.embedRow</code></td><td>Apply a trained SVD to embed a row into a coordinate space</td><td><a href="/doc/builtin/functions/SvdEmbedRow.md.html">[doc]</a></td></tr>
+<tr><td><code>tensorflow.graph</code></td><td>Graph parameters for a trained TensorFlow model</td><td><a href="/v1/plugins/tensorflow/doc/TensorflowGraph.md.html">[doc]</a></td></tr>
+<tr><td><code>tfidf</code></td><td>Apply a TF-IDF scoring to a bag of words</td><td><a href="/doc/builtin/functions/Tfidf.md.html">[doc]</a></td></tr>
+<tr><td><code>tokensplit</code></td><td>Insert spaces after tokens from a dictionary</td><td><a href="/doc/builtin/functions/TokenSplit.md.html">[doc]</a></td></tr>
+</table></p>
+
+<h2>Connecting input to output</h2>
+
+<p>The matching of the output values of a function to the
+input values of another function appearing later in the sequence
+is done through their names.  This requires a mechanism to
+rename values or input values.  This is done via SQL expressions.</p>
+
+<p>Each sub-function is executed in its own context.  The input
+values of that context are defined via a <code>with</code> expression and the
+output values are defined via a <code>extract</code> expression.</p>
+
+<p>The following diagram shows this in detail:</p>
+
+<p><img src="../img/SerialFunction.svg" alt="Serial Function Diagram"/></p>
+
+<p>The following points are important:</p>
+
+<ul>
+<li>Sub-functions are always run in the order in which they are given.  (Future
+versions of MLDB will run sub-functions in parallel as an optimization,
+but the effect will always be the same as if they had run in sequence).</li>
+<li>Each sub-function runs in its own context, with its own input values and
+output values.</li>
+<li><code>with</code> and <code>extract</code> expressions are used to copy values between
+the serial function and its sub-functions.</li>
+<li><code>with</code> and <code>extract</code> expressions are normally of one of the forms
+
+<ul>
+<li><code>*</code>: (only for extract; doesn&#39;t work for with): copy all input values
+and output values without changing their names.  This may work
+for simple functions but can lead to name conflicts on more complex
+functions.</li>
+<li><code>arg1[,...]</code> or <code>val1[,...]</code>: copy only the given input values or output
+values without changing their names</li>
+<li><code>arg1 AS name1[,...]</code> or <code>val1 AS name1[,...]</code>:
+copy the input values or output values with a different  name</li>
+<li><code>expr AS name[,...]</code>: copy input values or output values transforming them
+on their output.</li>
+</ul></li>
+<li>The <code>with</code> expressions are used to copy input values or output values from the outer
+context to a sub-function&#39;s context.  For example, if the outer function outputs an integer
+value named <code>userid</code>, and the sub-function requires a string input value named <code>usernum</code>,
+then the <code>with</code> expression might be <code>CAST (userid AS STRING) AS usernum</code>.</li>
+<li>The <code>extract</code> expressions are used to copy output values from the
+sub-function to the output.  For example, if the output value <code>prob</code>
+is needed to be available as the <code>user_conversion_percentage</code> output value on
+the output of the serial function, then the <code>extract</code> expression
+might be <code>prob * 100 AS user_conversion_percentage</code>.</li>
+</ul>
+
+<p>The following example shows how two SQL expression functions can be
+connected together.  Consider a serial function with the following
+configuration:</p>
+
+<pre><code>{
+    type: &quot;serial&quot;,
+    id: &quot;test&quot;,
+    params: {
+        steps: [
+            {
+                type: &quot;sql.expression&quot;,
+                params: {
+                    expression: &quot;x + y AS z&quot;
+                },
+                &#39;with&#39;: &quot;x, y&quot;,
+                extract: &quot;z&quot;
+            },
+            {
+                type: &quot;sql.expression&quot;,
+                params: {
+                    expression: &quot;p + q AS z&quot;
+                },
+                &#39;with&#39;: &quot;z AS p, z AS q&quot;,
+                extract: &quot;z AS r&quot;
+            }
+        ]
+    }
+};
+</code></pre>
+
+<p>In this function, the value named <code>z</code> is used inside the second sub-function,
+but it is distinct from the value <code>z</code> returned by the first function, and is
+renamed to <code>r</code> when extracted from the second function.</p>
+
+<p>This serial function outputs all the values returned by the two functions, which
+are <code>z</code> (from the first function) and <code>r</code> (from the second function).</p>
+
+<p>The first sub-function calculates the value of \(z = x + y\), and the
+second the value of \(z = p + q\).</p>
+
+<p>Let&#39;s assume we run it with \(x = 1\) and \(y = 2\).  Then the
+value of the first expression is \(z = x + y = 1 + 2 = 3\)/</p>
+
+<p>The second expression calculates a different <code>z</code>, which we will call
+\(z&#39;\), as \(z&#39; = p + q\).  Both \(p\) and \(q\) are set from
+\(z\) from the output of the first function.  Thus, the value of the
+second sub-function is \(r = z&#39; = p + q = z + z = 3 + 3 = 6\), and
+the output of applying the function with \(x = 1\) and \(y = 2\)
+is:</p>
+
+<pre><code>GET /v1/functions/&lt;functionName&gt;/applications?input={&#39;x&#39;:1,&#39;y&#39;:2}
+</code></pre>
+
+<pre><code>{
+   &quot;output&quot; : {
+      &quot;r&quot; : 6,
+      &quot;z&quot; : 3
+   }
+}
+</code></pre>
+
+<h2>See Also</h2>
+
+<ul>
+<li><a href="Functions.md.html">Functions</a> for a description of functions</li>
+<li><a href="FunctionConfig.md.html">Function Configuration</a> for a description of the kinds of functions and how to configure them.</li>
+</ul>
+</body>
+</html>

@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset='utf-8' />
+<title>MLDB Documentation</title>
+<script src='/resources/js/mathjax_TeX-AMS-MML_HTMLorMML.js'></script>
+<link rel='stylesheet' href='/resources/css/prism.css'>
+<link rel='stylesheet' href='/resources/css/doc.css'>
+<script src='/resources/js/jquery-1.11.2.min.js'></script>
+<script src='/resources/js/prism.js'></script>
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  if(window.location.origin == 'http://mldb.ai')
+  { ga('create', 'UA-16909325-9', 'auto'); }
+  else
+  { ga('create', 'UA-16909325-10', {'cookieDomain': 'none'}); }
+  ga('send', 'pageview');
+</script>
+</head>
+<body style='margin-left: 50px; max-width: 1000px'>
+<h1>Function Configuration</h1>
+
+<p>A function configuration object is used to create or load a <a href="Functions.md.html">function</a>.</p>
+
+<p>It is a JSON object that looks like this:</p>
+
+<pre><code class="language-json">{ 
+  &quot;id&quot;: &lt;id&gt;, 
+  &quot;type&quot;: &lt;type&gt;, 
+  &quot;params&quot;: { 
+    &lt;params&gt; 
+  } 
+}
+</code></pre>
+
+<ul>
+<li><code>id</code> is a string that defines the URL at which the function will be available via the REST API</li>
+<li><code>type</code> is a string that specified the function&#39;s type (see below)</li>
+<li><code>params</code> is an object that configures the function, and whose contents will vary according to the type</li>
+</ul>
+
+<p>Not all three of these fields are required in all contexts:</p>
+
+<ul>
+<li>one or both of <code>id</code> and <code>type</code> must be specified
+
+<ul>
+<li>if only <code>id</code> is specified, MLDB will assume this is a pre-existing function and will try to load it (an error will ensue if it doesn&#39;t already exist)</li>
+<li>if <code>type</code> is specified, MLDB will assume that the function doesn&#39;t exist yet and will try to create it (an error will ensue if it already exists)
+
+<ul>
+<li>if <code>type</code> is specified without <code>id</code>, an id will be auto-generated</li>
+<li>if <code>type</code> is specified with <code>id</code>, the function will be created with the specified <code>id</code> unless a function already exists with that id</li>
+<li>if <code>type</code> is specified, then a corresponding <code>params</code> function must be specified if the type requires it</li>
+</ul></li>
+</ul></li>
+</ul>
+
+<p>The following types of functions are available:</p>
+
+<p><table class="table"><tr><th>Type</th><th>Description</th><th>Doc</th></tr>
+<tr><td><code>classifier</code></td><td>Apply a trained classifier to new data</td><td><a href="/doc/builtin/functions/ClassifierApply.md.html">[doc]</a></td></tr>
+<tr><td><code>classifier.explain</code></td><td>Explain the output of a classifier</td><td><a href="/doc/builtin/functions/ClassifierExplain.md.html">[doc]</a></td></tr>
+<tr><td><code>embedding.neighbors</code></td><td>Return the nearest neighbors of a known row in an embedding dataset</td><td><a href="/doc/builtin/functions/NearestNeighborsFunction.md.html">[doc]</a></td></tr>
+<tr><td><code>feature_hasher</code></td><td>Feature hashing feature generator</td><td><a href="/doc/builtin/functions/FeatureHashingFunction.md.html">[doc]</a></td></tr>
+<tr><td><code>fetcher</code></td><td>Fetches the contents of a URL each time it&#39;s invoked</td><td><a href="/doc/builtin/functions/Fetcher.md.html">[doc]</a></td></tr>
+<tr><td><code>http.useragent</code></td><td>Parse user agent strings into their components</td><td><a href="/doc/builtin/functions/ParseUserAgent.md.html">[doc]</a></td></tr>
+<tr><td><code>image.proximatevoxels</code></td><td>Find values in a cubic volume inside a 3d embedding</td><td><a href="/doc/builtin/functions/ProximateVoxelsFunction.md.html">[doc]</a></td></tr>
+<tr><td><code>image.readpixels</code></td><td>Wraps access to a 2d embedding</td><td><a href="/doc/builtin/functions/ReadPixelsFunction.md.html">[doc]</a></td></tr>
+<tr><td><code>kmeans</code></td><td>Apply a k-means clustering to new data</td><td><a href="/doc/builtin/functions/Kmeans.md.html">[doc]</a></td></tr>
+<tr><td><code>mongodb.query</code></td><td>Takes a MongoDB query, forwards it to MongDB, parses the result and returns it as an MLDB result.</td><td><a href="/v1/plugins/mongodb/doc/MongoQueryFunction.md.html">[doc]</a></td></tr>
+<tr><td><code>pooling</code></td><td>Apply a pooling function</td><td><a href="/doc/builtin/functions/Pooling.md.html">[doc]</a></td></tr>
+<tr><td><code>probabilizer</code></td><td>Apply a probability calibration model</td><td><a href="/doc/builtin/functions/ApplyProbabilizer.md.html">[doc]</a></td></tr>
+<tr><td><code>sql.expression</code></td><td>Run an SQL expression as a function</td><td><a href="/doc/builtin/functions/SqlExpressionFunction.md.html">[doc]</a></td></tr>
+<tr><td><code>sql.query</code></td><td>Run a single row SQL query against a dataset</td><td><a href="/doc/builtin/functions/SqlQueryFunction.md.html">[doc]</a></td></tr>
+<tr><td><code>statsTable.bagOfWords.posneg</code></td><td>Get the pos/neg p(outcome)</td><td><a href="/doc/builtin/functions/BagOfWordsStatsTablePosNeg.md.html">[doc]</a></td></tr>
+<tr><td><code>statsTable.getCounts</code></td><td>Get stats table counts for a row of keys</td><td><a href="/doc/builtin/functions/StatsTableGetCounts.md.html">[doc]</a></td></tr>
+<tr><td><code>stemmer</code></td><td>Apply a stemming algorithm column names</td><td><a href="/doc/builtin/functions/Stemmer.md.html">[doc]</a></td></tr>
+<tr><td><code>stemmerdoc</code></td><td>Apply a stemming algorithm on a single document</td><td><a href="/doc/builtin/functions/Stemmer.md.html">[doc]</a></td></tr>
+<tr><td><code>svd.embedRow</code></td><td>Apply a trained SVD to embed a row into a coordinate space</td><td><a href="/doc/builtin/functions/SvdEmbedRow.md.html">[doc]</a></td></tr>
+<tr><td><code>tensorflow.graph</code></td><td>Graph parameters for a trained TensorFlow model</td><td><a href="/v1/plugins/tensorflow/doc/TensorflowGraph.md.html">[doc]</a></td></tr>
+<tr><td><code>tfidf</code></td><td>Apply a TF-IDF scoring to a bag of words</td><td><a href="/doc/builtin/functions/Tfidf.md.html">[doc]</a></td></tr>
+<tr><td><code>tokensplit</code></td><td>Insert spaces after tokens from a dictionary</td><td><a href="/doc/builtin/functions/TokenSplit.md.html">[doc]</a></td></tr>
+</table></p>
+
+<h2>See also</h2>
+
+<ul>
+<li><a href="../datasets/Datasets.md.html">Datasets</a></li>
+<li><a href="../procedures/Procedures.md.html">Procedures</a></li>
+<li><a href="../functions/Functions.md.html">Functions</a></li>
+<li><a href="../plugins/Plugins.md.html">Plugins</a></li>
+</ul>
+</body>
+</html>

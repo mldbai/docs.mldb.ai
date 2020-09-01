@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset='utf-8' />
+<title>MLDB Documentation</title>
+<script src='/resources/js/mathjax_TeX-AMS-MML_HTMLorMML.js'></script>
+<link rel='stylesheet' href='/resources/css/prism.css'>
+<link rel='stylesheet' href='/resources/css/doc.css'>
+<script src='/resources/js/jquery-1.11.2.min.js'></script>
+<script src='/resources/js/prism.js'></script>
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  if(window.location.origin == 'http://mldb.ai')
+  { ga('create', 'UA-16909325-9', 'auto'); }
+  else
+  { ga('create', 'UA-16909325-10', {'cookieDomain': 'none'}); }
+  ga('send', 'pageview');
+</script>
+</head>
+<body style='margin-left: 50px; max-width: 1000px'>
+<h1>Union Dataset</h1>
+
+<p>The union dataset allows for rows from multiple datasets to be appended
+into a single dataset. Columns that match up between the datasets will be
+combined together. Row names are altered to reflect the dataset they came
+from and avoid having them merged together.</p>
+
+<p>For example, the row names of to unified datasets will have the following
+format.</p>
+
+<pre><code>0.dataset index 0 row name
+...
+n.dataset index n row name
+</code></pre>
+
+<p>The union is done on the fly which means it is relatively rapid to unify even
+large datasets together.</p>
+
+<p>Aside from the resulting row names, creating a union dataset is equivalent to
+the following SQL:</p>
+
+<pre><code class="language-sql">SELECT s1.* AS *, s2.* AS *
+FROM (SELECT * FROM ds1 ) AS s1
+OUTER JOIN (SELECT * FROM ds2) AS s2 ON false
+</code></pre>
+
+<h2>Configuration</h2>
+
+<p><p>A new dataset of type <code>union</code> named <code>&lt;id&gt;</code> can be created as follows:</p><pre><code class="language-python">mldb.put(&quot;/v1/datasets/&quot;+&lt;id&gt;, {
+    &quot;type&quot;: &quot;union&quot;,
+    &quot;params&quot;: {
+        "datasets": &lt;ARRAY [ <a href="/doc/builtin/datasets/DatasetConfig.md.html">Dataset (read-only)</a> ]&gt;
+    }
+})</code></pre><p>with the following key-value definitions for <code>params</code>:</p><table class="params table" width='100%'><tr><th align='right'>Field, Type, Default</th><th>Description</th></tr>
+<tr><td align='right'><p><strong>datasets</strong> <br/> <nobr>ARRAY [ <a href="/doc/builtin/datasets/DatasetConfig.md.html">Dataset (read-only)</a> ]</nobr> <br/> <code></code></p></td><td><p>Datasets to unify together</p>
+</td></tr>
+</table></p>
+</body>
+</html>

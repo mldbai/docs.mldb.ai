@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset='utf-8' />
+<title>MLDB Documentation</title>
+<script src='/resources/js/mathjax_TeX-AMS-MML_HTMLorMML.js'></script>
+<link rel='stylesheet' href='/resources/css/prism.css'>
+<link rel='stylesheet' href='/resources/css/doc.css'>
+<script src='/resources/js/jquery-1.11.2.min.js'></script>
+<script src='/resources/js/prism.js'></script>
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  if(window.location.origin == 'http://mldb.ai')
+  { ga('create', 'UA-16909325-9', 'auto'); }
+  else
+  { ga('create', 'UA-16909325-10', {'cookieDomain': 'none'}); }
+  ga('send', 'pageview');
+</script>
+</head>
+<body style='margin-left: 50px; max-width: 1000px'>
+<h1>MongoDB Dataset</h1>
+
+<p>The MongoDB Dataset is a read only <a href="/doc/builtin/datasets/Datasets.md.html">dataset</a>
+based on a MongoDB collection. It is meant to be used as a bridge between MLDB
+and MongoDB by allowing MLDB SQL queries to run over a MongoDB collection.</p>
+
+<h2>Caveat</h2>
+
+<ul>
+<li>mongodb.dataset will not work on collections having key &quot;_id&quot; that are not
+ObjectIDs. See <a href="https://docs.mongodb.com/manual/reference/method/ObjectId/" target="_blank">MongoDB ObjectID</a></li>
+<li>Some less popular BSON types are not supported.
+See <a href="https://docs.mongodb.com/master/reference/bson-types/" target="_blank">BSON Types</a>
+-- Regular Expression
+-- DBPointer
+-- JavaScript
+-- JavaScript (with scope)
+-- Min key
+-- Max key</li>
+</ul>
+
+<h2>Configuration</h2>
+
+<p><p>A new dataset of type <code>mongodb.dataset</code> named <code>&lt;id&gt;</code> can be created as follows:</p><pre><code class="language-python">mldb.put(&quot;/v1/datasets/&quot;+&lt;id&gt;, {
+    &quot;type&quot;: &quot;mongodb.dataset&quot;,
+    &quot;params&quot;: {
+        "uriConnectionScheme": &lt;string&gt;,
+        "collection": &lt;string&gt;
+    }
+})</code></pre><p>with the following key-value definitions for <code>params</code>:</p><table class="params table" width='100%'><tr><th align='right'>Field, Type, Default</th><th>Description</th></tr>
+<tr><td align='right'><p><strong>uriConnectionScheme</strong> <br/> <nobr>string</nobr> <br/> <code></code></p></td><td><p>MongoDB connection scheme. mongodb://[username:password@]host1[:port1][,host2[:port2],...[,hostN[:portN]]][/[database]]</p>
+</td></tr>
+<tr><td align='right'><p><strong>collection</strong> <br/> <nobr>string</nobr> <br/> <code></code></p></td><td><p>The collection to import</p>
+</td></tr>
+</table></p>
+
+<h2>Example</h2>
+
+<p>For this example, we will use a MongoDB database populated with data provided by
+the book MongoDB In Action. The zipped json file is available at
+<a href="http://mng.bz/dOpd" target="_blank">http://mng.bz/dOpd</a>.</p>
+
+<p>Here we create a dataset named <code>mongodb_zips_bridge</code>.</p>
+
+<pre><code class="language-python">mldb.put(&#39;/v1/datasets/mongodb_zips_bridge&#39;, {
+    &#39;type&#39; : &#39;mongodb.dataset&#39;,
+    &#39;params&#39; : {
+        &#39;connectionScheme&#39;: &#39;mongodb://somehost.mldb.ai:11712/zips&#39;,
+        &#39;collection&#39;: &#39;zips&#39;
+    }
+})
+</code></pre>
+
+<p>We can directly query it.</p>
+
+<pre><code class="language-python">mldb.query(&quot;SELECT * NAMED zip FROM mongodb_zips_bridge ORDER BY pop DESC LIMIT 5&quot;)
+</code></pre>
+
+<table>
+<thead>
+<tr>
+<th>_id</th>
+<th>city</th>
+<th>loc.x</th>
+<th>loc.y</th>
+<th>pop</th>
+<th>state</th>
+<th>zip</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>_rowName</td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>60623</td>
+<td>57d2f5eb21af5ee9c4e22302</td>
+<td>CHICAGO</td>
+<td>87.715700</td>
+<td>41.849015</td>
+<td>112047</td>
+<td>IL</td>
+</tr>
+<tr>
+<td>11226</td>
+<td>57d2f5eb21af5ee9c4e24f28</td>
+<td>BROOKLYN</td>
+<td>73.956985</td>
+<td>40.646694</td>
+<td>111396</td>
+<td>NY</td>
+</tr>
+<tr>
+<td>10021</td>
+<td>57d2f5eb21af5ee9c4e24e7f</td>
+<td>NEW YORK</td>
+<td>73.958805</td>
+<td>40.768476</td>
+<td>106564</td>
+<td>NY</td>
+</tr>
+<tr>
+<td>10025</td>
+<td>57d2f5eb21af5ee9c4e24e4f</td>
+<td>NEW YORK</td>
+<td>73.968312</td>
+<td>40.797466</td>
+<td>100027</td>
+<td>NY</td>
+</tr>
+<tr>
+<td>90201</td>
+<td>57d2f5eb21af5ee9c4e21258</td>
+<td>BELL GARDENS</td>
+<td>118.172050</td>
+<td>33.969177</td>
+<td>99568</td>
+<td>CA</td>
+</tr>
+</tbody>
+</table>
+</body>
+</html>

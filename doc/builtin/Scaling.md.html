@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset='utf-8' />
+<title>MLDB Documentation</title>
+<script src='/resources/js/mathjax_TeX-AMS-MML_HTMLorMML.js'></script>
+<link rel='stylesheet' href='/resources/css/prism.css'>
+<link rel='stylesheet' href='/resources/css/doc.css'>
+<script src='/resources/js/jquery-1.11.2.min.js'></script>
+<script src='/resources/js/prism.js'></script>
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  if(window.location.origin == 'http://mldb.ai')
+  { ga('create', 'UA-16909325-9', 'auto'); }
+  else
+  { ga('create', 'UA-16909325-10', {'cookieDomain': 'none'}); }
+  ga('send', 'pageview');
+</script>
+</head>
+<body style='margin-left: 50px; max-width: 1000px'>
+<h1>Scaling MLDB</h1>
+
+<p>A single instance of MLDB can be run on a laptop for remote or day-to-day data science work, or multiple instances can be run across multiple machines for high-availability production deployments. MLDB exposes an HTTP REST API, so horizontal scaling is just a matter of spinning up more MLDB nodes and putting a load balancer in front of them.</p>
+
+<div style="text-align: center;"><img src="img/DistributedSetup.svg"></div>
+
+<p>The following diagram shows a typical distributed MLDB deployment. At the center of the diagram is a shared storage system such as Amazon S3 or the Hadoop Distributed File System (HDFS). Individual MLDB nodes in a distributed deployment will read and write data from this shared storage. The three main functions of an MLDB node are:</p>
+
+<ul>
+<li>Data collection: continuously recording data to shared storage in response to HTTP POST requests</li>
+<li>Scoring: continuously applying machine learning models (defined by files retrieved from shared storage) in response to HTTP GET requests</li>
+<li>Model training &amp; batch application: running long analytic queries and jobs on data from shared storage, and save the results back in shared storage</li>
+</ul>
+
+<p>Data collection and scoring scale horizontally: you can add more nodes to collect data or score faster.</p>
+
+<p>Model training &amp; batch operations scale vertically, then horizontally. Any given model is trained on a single node, so training speed is limited by the CPU of the node and input size is limited by the RAM of the node. That said, multiple nodes can train multiple models in parallel. In a typical high-throughput deployment, a small number of high-memory/high-compute machines handles training.</p>
+</body>
+</html>

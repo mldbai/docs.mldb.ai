@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset='utf-8' />
+<title>MLDB Documentation</title>
+<script src='/resources/js/mathjax_TeX-AMS-MML_HTMLorMML.js'></script>
+<link rel='stylesheet' href='/resources/css/prism.css'>
+<link rel='stylesheet' href='/resources/css/doc.css'>
+<script src='/resources/js/jquery-1.11.2.min.js'></script>
+<script src='/resources/js/prism.js'></script>
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  if(window.location.origin == 'http://mldb.ai')
+  { ga('create', 'UA-16909325-9', 'auto'); }
+  else
+  { ga('create', 'UA-16909325-10', {'cookieDomain': 'none'}); }
+  ga('send', 'pageview');
+</script>
+</head>
+<body style='margin-left: 50px; max-width: 1000px'>
+<h1>Git importer procedure</h1>
+
+<p>This procedure allows commit metadata from a local git repository
+to be imported.</p>
+
+<p>This allows for exploration and prediction to be performed over Git
+repositories.</p>
+
+<h2>Configuration</h2>
+
+<p><p>A new procedure of type <code>import.git</code> named <code>&lt;id&gt;</code> can be created as follows:</p><pre><code class="language-python">mldb.put(&quot;/v1/procedures/&quot;+&lt;id&gt;, {
+    &quot;type&quot;: &quot;import.git&quot;,
+    &quot;params&quot;: {
+        "repository": &lt;<a href="/doc/builtin/Url.md.html">Url</a>&gt;,
+        "outputDataset": &lt;<a href="/doc/builtin/procedures/OutputDatasetSpec.md.html">OutputDatasetSpec</a>&gt;,
+        "revisions": &lt;ARRAY [ string ]&gt;,
+        "importStats": &lt;bool&gt;,
+        "importTree": &lt;bool&gt;,
+        "ignoreUnknownEncodings": &lt;bool&gt;,
+        "runOnCreation": &lt;bool&gt;
+    }
+})</code></pre><p>with the following key-value definitions for <code>params</code>:</p><table class="params table" width='100%'><tr><th align='right'>Field, Type, Default</th><th>Description</th></tr>
+<tr><td align='right'><p><strong>repository</strong> <br/> <nobr><a href="/doc/builtin/Url.md.html">Url</a></nobr> <br/> <code></code></p></td><td><p>Git repository to load from.  This is currently limited to file:// urls which point to an already cloned repository on local disk.  Remote repositories will need to be checked out beforehand using the git command line tools.</p>
+</td></tr>
+<tr><td align='right'><p><strong>outputDataset</strong> <br/> <nobr><a href="/doc/builtin/procedures/OutputDatasetSpec.md.html">OutputDatasetSpec</a></nobr> <br/> <code>{"type":"sparse.mutable"}</code></p></td><td><p>Output dataset for result.  One row will be produced per commit. See the documentation for the output format.</p>
+</td></tr>
+<tr><td align='right'><p><strong>revisions</strong> <br/> <nobr>ARRAY [ string ]</nobr> <br/> <code>["HEAD"]</code></p></td><td><p>Revisions to load from Git (eg, HEAD, HEAD~20..HEAD, tags/*). See the gitrevisions (7) documentation.  Default is all revisions reachable from HEAD</p>
+</td></tr>
+<tr><td align='right'><p><strong>importStats</strong> <br/> <nobr>bool</nobr> <br/> <code>false</code></p></td><td><p>If true, then import the stats (number of files changed, lines added and lines deleted)</p>
+</td></tr>
+<tr><td align='right'><p><strong>importTree</strong> <br/> <nobr>bool</nobr> <br/> <code>false</code></p></td><td><p>If true, then import the tree (names of files changed)</p>
+</td></tr>
+<tr><td align='right'><p><strong>ignoreUnknownEncodings</strong> <br/> <nobr>bool</nobr> <br/> <code>false</code></p></td><td><p>If true (default), ignore commit messages with unknown encodings (supported are ISO-8859-1 and UTF-8) and replace with a placeholder.  If false, messages with unknown encodings will cause the commit to abort.</p>
+</td></tr>
+<tr><td align='right'><p><strong>runOnCreation</strong> <br/> <nobr>bool</nobr> <br/> <code>true</code></p></td><td><p>If true, the procedure will be run immediately. The response will contain an extra field called <code>firstRun</code> pointing to the URL of the run.</p>
+</td></tr>
+</table></p>
+
+<p>The <code>repository</code> parameter should point to a <em>local directory</em> that
+contains a <code>.git</code> subdirectory with the git metadata.  It is not
+necessary that the local directory be checked out, in other words
+a bare repository is acceptable.</p>
+
+<p>The <code>revision</code> parameter is a GIT revision specification.  For example,
+it can be <code>HEAD</code> or <code>/tags/*</code> or <code>/revs/*</code>.  See the <a href="https://www.kernel.org/pub/software/scm/git/docs/gitrevisions.html" target="_blank">gitrevisions documentation</a> for
+more details on how a revspec is specified.</p>
+
+<h2>Output format</h2>
+
+<p>Each row will contain the following fixed columns:</p>
+
+<ul>
+<li><code>committer</code>: the full name of the committer</li>
+<li><code>committerEmail</code>: the email address of the committer</li>
+<li><code>author</code>: the full name of the author</li>
+<li><code>authorEmail</code>: the email address of the author</li>
+<li><code>message</code>: the text of the commit message</li>
+<li><code>parentCount</code>: the number of parent revisions.  This will be one for
+normal commits, zero for the initial commit and two or more for
+merge commits.</li>
+<li><code>parent</code>: the commit ID of each of the parent commits.  This can be
+used to traverse the tree of commits.</li>
+</ul>
+
+<p>In addition, if the <code>importStats</code> option is true, then non-merge commits
+will have the following columns:</p>
+
+<ul>
+<li><code>insertions</code>: the number of inserted lines in the commit</li>
+<li><code>deletions</code>: the number of deleted lines in the commit</li>
+<li><code>filesChanged</code>: the total number of files changed in the commit</li>
+</ul>
+
+<p>In addition, if the <code>importTree</code> option is true, then non-merge commits
+will have the following columns for each file that was modified by the
+commit:</p>
+
+<ul>
+<li><code>file</code>: the name of each file modified by this commit.</li>
+<li><code>file.&lt;path&gt;.insertions</code>: the number of lines inserted into the given
+filename.</li>
+<li><code>file.&lt;path&gt;.deletions</code>: the number of lines deleted from the given
+filename.</li>
+<li><p><code>file.&lt;path&gt;.op</code>: the operation on the file.  This will be one of</p>
+
+<ul>
+<li><code>added</code> meaning the file was added in the commit.</li>
+<li><code>deleted</code> meaning the file was deleted by the commit.</li>
+<li><code>modified</code> meaning the file was modified by the commit.</li>
+<li><code>renamed</code> meaning the file was renamed by the commit.</li>
+<li><code>copied</code> meaning the file was copied by the commit.</li>
+</ul></li>
+</ul>
+
+<h2>Example</h2>
+
+<p>To load the Docker git repository into a dataset that has been checked
+out from <code>https://github.com/docker/docker.git</code> in <code>/mldb_data/docker</code>,
+the following procedure can be posted and run:</p>
+
+<pre><code class="language-python">mldb.put(&quot;/v1/procedures/gitimport&quot;, {
+    &quot;type&quot;: &quot;import.git&quot;,
+    &quot;params&quot;: {
+        &quot;repository&quot;: &quot;file:///mldb_data/docker&quot;,
+        &quot;outputDataset&quot;: &quot;git&quot;,
+        &quot;runOnCreation&quot;: true
+    }
+})
+</code></pre>
+
+<p>This can then be queried for the top 5 contributors in terms of commits:</p>
+
+<pre><code class="language-sql">SELECT count(*) AS cnt,
+       author,
+       min(when({*})) AS earliest,
+       max(when({*})) AS latest,
+       sum(filesChanged) as changes,
+       sum(insertions) as insertions,
+       sum(deletions) as deletions
+FROM git
+GROUP BY author
+ORDER BY cnt DESC
+LIMIT 5
+</code></pre>
+
+<p>which yields</p>
+
+<table>
+<thead>
+<tr>
+<th>cnt</th>
+<th>author</th>
+<th>earliest</th>
+<th>latest</th>
+<th>changes</th>
+<th>insertions</th>
+<th>deletion</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>1844</td>
+<td>&quot;Michael Crosby&quot;</td>
+<td>&quot;2013-06-03T21:39:00Z&quot;</td>
+<td>&quot;2015-11-18T11:08:13Z&quot;</td>
+<td>3239</td>
+<td>71376</td>
+<td>103630</td>
+</tr>
+<tr>
+<td>1483</td>
+<td>&quot;Victor Vieux&quot;</td>
+<td>&quot;2013-04-10T19:30:57Z&quot;</td>
+<td>&quot;2015-10-14T17:46:59Z&quot;</td>
+<td>2024</td>
+<td>62727</td>
+<td>72644</td>
+</tr>
+<tr>
+<td>1248</td>
+<td>&quot;Solomon Hykes&quot;</td>
+<td>&quot;2013-01-19T16:07:19Z&quot;</td>
+<td>&quot;2015-11-05T15:22:37Z&quot;</td>
+<td>2144</td>
+<td>48645</td>
+<td>127953</td>
+</tr>
+<tr>
+<td>744</td>
+<td>&quot;Tianon Gravi&quot;</td>
+<td>&quot;2013-04-21T19:19:38Z&quot;</td>
+<td>&quot;2015-11-17T09:44:36Z&quot;</td>
+<td>1925</td>
+<td>144679</td>
+<td>33214</td>
+</tr>
+<tr>
+<td>632</td>
+<td>&quot;Jessie Frazelle&quot;</td>
+<td>&quot;2014-09-02T15:18:32Z&quot;</td>
+<td>&quot;2015-09-04T13:38:41Z&quot;</td>
+<td>11</td>
+<td>197</td>
+<td>186</td>
+</tr>
+</tbody>
+</table>
+</body>
+</html>
